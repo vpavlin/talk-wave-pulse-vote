@@ -12,9 +12,26 @@ import SubmitTalkDialog from "@/components/SubmitTalkDialog";
 import TalkCard from "@/components/TalkCard";
 import { format } from "date-fns";
 
+interface Talk {
+  id: string;
+  title: string;
+  speaker: string;
+  description: string;
+  votes: number;
+  createdAt: string;
+}
+
+interface Event {
+  id: string;
+  title: string;
+  description: string;
+  date: string;
+  talks: Talk[];
+}
+
 const EventDetail = () => {
   const { eventId } = useParams();
-  const [event, setEvent] = useState(null);
+  const [event, setEvent] = useState<Event | null>(null);
   const [sortOption, setSortOption] = useState("votes");
   const [isSubmitTalkOpen, setIsSubmitTalkOpen] = useState(false);
   const { toast } = useToast();
@@ -57,7 +74,9 @@ const EventDetail = () => {
     setEvent(demoEvent);
   }, [eventId]);
 
-  const handleSubmitTalk = (talkData) => {
+  const handleSubmitTalk = (talkData: Omit<Talk, 'id' | 'votes' | 'createdAt'>) => {
+    if (!event) return;
+    
     const newTalk = {
       id: `talk-${Date.now()}`,
       ...talkData,
@@ -78,7 +97,9 @@ const EventDetail = () => {
     setIsSubmitTalkOpen(false);
   };
 
-  const handleVote = (talkId) => {
+  const handleVote = (talkId: string) => {
+    if (!event) return;
+    
     setEvent({
       ...event,
       talks: event.talks.map(talk => {
@@ -104,7 +125,7 @@ const EventDetail = () => {
       case "votes":
         return sortedTalks.sort((a, b) => b.votes - a.votes);
       case "time":
-        return sortedTalks.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        return sortedTalks.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       case "random":
         return sortedTalks.sort(() => Math.random() - 0.5);
       default:
