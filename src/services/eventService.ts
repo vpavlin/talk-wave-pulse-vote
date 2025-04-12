@@ -7,6 +7,7 @@ import {
   voteTalk,
   getTalks
 } from "@/utils/qakulib";
+import { EnhancedQuestionMessage } from "qakulib";
 
 export interface Talk {
   id: string;
@@ -47,15 +48,16 @@ export const fetchEvents = async (): Promise<Event[]> => {
     title: event.title,
     description: event.content,
     date: event.createdAt || new Date().toISOString(),
-    talks: (event.questions || []).map((talk: any) => {
-      const parsedContent = parseTalkContent(talk.content);
+    talks: (event.questions || []).map((talk: EnhancedQuestionMessage) => {
+      console.log(event)
+      const parsedContent = parseTalkContent(talk.question);
       return {
-        id: talk.id,
-        title: parsedContent.title || talk.title || "Untitled Talk",
-        speaker: parsedContent.speaker || talk.author || "Anonymous",
-        description: parsedContent.description || talk.content,
-        votes: talk.votes || 0,
-        createdAt: talk.createdAt || new Date().toISOString(),
+        id: talk.hash,
+        title: parsedContent.title ||  "Untitled Talk",
+        speaker: parsedContent.speaker || "Anonymous",
+        description: parsedContent.description,
+        votes: talk.upvotes || 0,
+        createdAt: talk.timestamp || new Date().toISOString(),
       };
     }),
   }));
@@ -76,13 +78,13 @@ export const fetchEventById = async (eventId: string): Promise<Event | null> => 
     description: rawEvent.content,
     date: rawEvent.createdAt || new Date().toISOString(),
     talks: rawTalks.map((talk: any) => {
-      const parsedContent = parseTalkContent(talk.content);
+      const parsedContent = parseTalkContent(talk.question);
       return {
-        id: talk.id,
+        id: talk.hash,
         title: parsedContent.title || talk.title || "Untitled Talk",
         speaker: parsedContent.speaker || talk.author || "Anonymous",
         description: parsedContent.description || talk.content,
-        votes: talk.votes || 0,
+        votes: talk.upvotes || 0,
         createdAt: talk.createdAt || new Date().toISOString(),
       };
     }),
