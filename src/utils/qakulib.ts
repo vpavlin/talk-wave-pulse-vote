@@ -95,8 +95,8 @@ export const getEvents = async (): Promise<any[]> => {
     console.log("Fetching all events from qakulib");
     const qakulib = await getQakulib();
     
-    // Ensure we're loading latest data from IndexedDB and Waku network
-    await qakulib.refresh();
+    // Instead of calling refresh(), just work with the data we have
+    // The event listeners will take care of real-time updates
     
     const eventsList = qakulib.qas.values();
     const events = [];
@@ -116,8 +116,8 @@ export const getEventById = async (eventId: string): Promise<any | null> => {
     console.log(`Fetching event with ID ${eventId}`);
     const qakulib = await getQakulib();
     
-    // Ensure we're loading latest data for this specific event
-    await qakulib.refreshQA(eventId);
+    // Instead of refreshQA, just access the event directly
+    // Event listeners will ensure data is updated in real time
     
     const event = qakulib.qas.get(eventId);
     if (!event) {
@@ -138,9 +138,7 @@ export const getTalks = async (eventId: string): Promise<EnhancedQuestionMessage
     console.log(`Fetching talks for event ${eventId}`);
     const qakulib = await getQakulib();
     
-    // Ensure we're loading latest data for this specific event
-    await qakulib.refreshQA(eventId);
-    
+    // Get the event without refreshQA
     const event = qakulib.qas.get(eventId);
     if (!event) {
       console.warn(`Event with ID ${eventId} not found when fetching talks`);
@@ -171,9 +169,6 @@ export const submitTalk = async (
     console.log(`Submitting talk "${title}" for event ${eventId}`);
     const qakulib = await getQakulib();
     
-    // Ensure we have the latest data for this event
-    await qakulib.refreshQA(eventId);
-    
     // Format talk data for submission
     const talkData = JSON.stringify({title, description, speaker});
     
@@ -192,9 +187,6 @@ export const voteTalk = async (eventId: string, talkId: string): Promise<boolean
   try {
     console.log(`Voting for talk ${talkId} in event ${eventId}`);
     const qakulib = await getQakulib();
-    
-    // Ensure we have the latest data for this event
-    await qakulib.refreshQA(eventId);
     
     // Cast vote for the talk
     await qakulib.upvote(eventId, talkId);
