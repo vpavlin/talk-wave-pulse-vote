@@ -1,4 +1,3 @@
-
 // Using the locally installed qakulib package
 import {EnhancedQuestionMessage, Qaku} from "qakulib";
 import { wakuPeerExchangeDiscovery } from "@waku/discovery";
@@ -53,7 +52,11 @@ const loadHistoryAndInitializeQAs = async (qakulib: Qaku) => {
   try {
     console.log("Loading QA events from history");
     const history = qakulib.history;
-    const qaEvents = history.qaEvents || [];
+    
+    // Access the events we've previously interacted with
+    // In the Qakulib API, we need to get QA event IDs from the history object
+    // The correct way to access this is through the history.getEvents() method
+    const qaEvents = history.getEvents ? history.getEvents() : [];
     
     console.log(`Found ${qaEvents.length} QA events in history`);
     
