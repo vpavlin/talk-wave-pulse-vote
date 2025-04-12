@@ -15,8 +15,12 @@ const bootstrapNodes: string[] = [
 
 const networkConfig =  {clusterId: 42, shards: [0]}
 
+// Event handlers for qakulib events
+let eventListeners: any[] = [];
+
 export const getQakulib = async ():Promise<Qaku> => {
   if (!qakulibInstance) {
+    console.log("Initializing Qakulib instance");
     const node:IWaku = await createLightNode({            
       networkConfig:networkConfig,
       defaultBootstrap: false,
@@ -34,24 +38,72 @@ export const getQakulib = async ():Promise<Qaku> => {
     
     qakulibInstance = new Qaku(node as LightNode);
     await qakulibInstance.init();
+
+    // Set up event listeners for qakulib events
+    setupEventListeners();
   }
   return qakulibInstance;
 };
 
+// Set up event listeners for Qakulib instance
+const setupEventListeners = () => {
+  if (!qakulibInstance) return;
+
+  // Clean up existing listeners to avoid duplicates
+  for (const listener of eventListeners) {
+    if (listener && listener.remove) {
+      listener.remove();
+    }
+  }
+  eventListeners = [];
+
+  // Listen for new QA events
+  const newQaListener = qakulibInstance.on('qa:new', (qaId: string) => {
+    console.log('New QA event received:', qaId);
+    // This will trigger a data refresh in the UI through React Query's invalidation
+  });
+
+  // Listen for new questions (talks) within a QA event
+  const newQuestionListener = qakulibInstance.on('question:new', (qaId: string, questionId: string) => {
+    console.log('New question received for QA:', qaId, 'Question ID:', questionId);
+    // This will trigger a data refresh in the UI through React Query's invalidation
+  });
+
+  // Listen for vote updates
+  const voteUpdateListener = qakulibInstance.on('question:vote', (qaId: string, questionId: string) => {
+    console.log('Vote update for QA:', qaId, 'Question ID:', questionId);
+    // This will trigger a data refresh in the UI through React Query's invalidation
+  });
+
+  // Store listeners for cleanup
+  eventListeners.push(newQaListener, newQuestionListener, voteUpdateListener);
+};
+
 export const publishEvent = async (title:string, desc:string, moderation:boolean):Promise<string> => {
+  console.log("Publishing new event:", title);
   const qakulib = await getQakulib();
-  const eventId = await qakulib.newQA(title, desc, true, [], moderation)
-  return eventId
+  
+  // Create new QA event
+  const eventId = await qakulib.newQA(title, desc, true, [], moderation);
+  
+  console.log("Event published with ID:", eventId);
+  return eventId;
 }
 
 export const getEvents = async (): Promise<any[]> => {
   try {
+    console.log("Fetching all events from qakulib");
     const qakulib = await getQakulib();
+    
+    // Ensure we're loading latest data from IndexedDB and Waku network
+    await qakulib.refresh();
+    
     const eventsList = qakulib.qas.values();
-    const events = []
+    const events = [];
     for (const event of eventsList) {
       events.push(event.controlState);
     }
+    console.log(`Found ${events.length} events`);
     return events;
   } catch (error) {
     console.error("Failed to fetch events:", error);
@@ -61,8 +113,19 @@ export const getEvents = async (): Promise<any[]> => {
 
 export const getEventById = async (eventId: string): Promise<any | null> => {
   try {
+    console.log(`Fetching event with ID ${eventId}`);
     const qakulib = await getQakulib();
+    
+    // Ensure we're loading latest data for this specific event
+    await qakulib.refreshQA(eventId);
+    
     const event = qakulib.qas.get(eventId);
+    if (!event) {
+      console.warn(`Event with ID ${eventId} not found`);
+      return null;
+    }
+    
+    console.log(`Successfully retrieved event: ${event.controlState.title}`);
     return event.controlState;
   } catch (error) {
     console.error(`Failed to fetch event with ID ${eventId}:`, error);
@@ -72,12 +135,25 @@ export const getEventById = async (eventId: string): Promise<any | null> => {
 
 export const getTalks = async (eventId: string): Promise<EnhancedQuestionMessage[]> => {
   try {
+    console.log(`Fetching talks for event ${eventId}`);
     const qakulib = await getQakulib();
-    const talksList = qakulib.qas.get(eventId)?.questions.values();
-    const talks = []
+    
+    // Ensure we're loading latest data for this specific event
+    await qakulib.refreshQA(eventId);
+    
+    const event = qakulib.qas.get(eventId);
+    if (!event) {
+      console.warn(`Event with ID ${eventId} not found when fetching talks`);
+      return [];
+    }
+    
+    const talksList = event.questions.values();
+    const talks = [];
     for (const talk of talksList) {
       talks.push(talk);
     }
+    
+    console.log(`Found ${talks.length} talks for event ${eventId}`);
     return talks;
   } catch (error) {
     console.error("Failed to fetch talks:", error);
@@ -92,8 +168,19 @@ export const submitTalk = async (
   speaker: string
 ): Promise<string | null> => {
   try {
+    console.log(`Submitting talk "${title}" for event ${eventId}`);
     const qakulib = await getQakulib();
-    const talkId = await qakulib.newQuestion(eventId, JSON.stringify({title, description, speaker}));
+    
+    // Ensure we have the latest data for this event
+    await qakulib.refreshQA(eventId);
+    
+    // Format talk data for submission
+    const talkData = JSON.stringify({title, description, speaker});
+    
+    // Submit the new question (talk)
+    const talkId = await qakulib.newQuestion(eventId, talkData);
+    
+    console.log(`Talk submitted successfully with ID: ${talkId}`);
     return talkId;
   } catch (error) {
     console.error("Failed to submit talk:", error);
@@ -103,8 +190,16 @@ export const submitTalk = async (
 
 export const voteTalk = async (eventId: string, talkId: string): Promise<boolean> => {
   try {
+    console.log(`Voting for talk ${talkId} in event ${eventId}`);
     const qakulib = await getQakulib();
+    
+    // Ensure we have the latest data for this event
+    await qakulib.refreshQA(eventId);
+    
+    // Cast vote for the talk
     await qakulib.upvote(eventId, talkId);
+    
+    console.log(`Vote recorded successfully for talk ${talkId}`);
     return true;
   } catch (error) {
     console.error("Failed to vote for talk:", error);

@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import EventList from "@/components/EventList";
 import { Button } from "@/components/ui/button";
@@ -15,12 +15,14 @@ const Index = () => {
   const [isCreateEventOpen, setIsCreateEventOpen] = useState(false);
   const { toast } = useToast();
   const { connected } = useWallet();
+  const queryClient = useQueryClient();
   
-  // Use React Query for data fetching
-  const { data: events = [], refetch } = useQuery({
+  // Use React Query for data fetching with improved polling for real-time updates
+  const { data: events = [], refetch, isLoading } = useQuery({
     queryKey: ['events'],
     queryFn: fetchEvents,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true,
+    refetchInterval: 10000, // Refresh data every 10 seconds
   });
 
   const handleCreateEvent = async (eventData: { title: string; description: string; date: string }) => {
@@ -34,8 +36,8 @@ const Index = () => {
         });
         setIsCreateEventOpen(false);
         
-        // Refetch events to update the list
-        setTimeout(() => refetch(), 1000);
+        // Invalidate and refetch events to update the list
+        queryClient.invalidateQueries({ queryKey: ['events'] });
       } else {
         toast({
           title: "Error",

@@ -4,7 +4,8 @@ import {
   getEventById,
   publishEvent,
   submitTalk,
-  voteTalk
+  voteTalk,
+  getTalks
 } from "@/utils/qakulib";
 
 export interface Talk {
@@ -24,7 +25,18 @@ export interface Event {
   talks: Talk[];
 }
 
+// Helper function to parse question content
+const parseTalkContent = (content: string): { title: string; description: string; speaker: string } => {
+  try {
+    return JSON.parse(content);
+  } catch (e) {
+    console.error("Failed to parse talk content:", e);
+    return { title: "Untitled Talk", description: "No description available", speaker: "Anonymous" };
+  }
+};
+
 export const fetchEvents = async (): Promise<Event[]> => {
+  console.log("Fetching events through service layer");
   const rawEvents = await getEvents();
   
   // Transform the raw data into our app format
@@ -33,35 +45,45 @@ export const fetchEvents = async (): Promise<Event[]> => {
     title: event.title,
     description: event.content,
     date: event.createdAt || new Date().toISOString(),
-    talks: (event.answers || []).map((talk: any) => ({
-      id: talk.id,
-      title: talk.title,
-      speaker: talk.author || "Anonymous",
-      description: talk.content,
-      votes: talk.votes || 0,
-      createdAt: talk.createdAt || new Date().toISOString(),
-    })),
+    talks: (event.answers || []).map((talk: any) => {
+      const parsedContent = parseTalkContent(talk.content);
+      return {
+        id: talk.id,
+        title: parsedContent.title || talk.title || "Untitled Talk",
+        speaker: parsedContent.speaker || talk.author || "Anonymous",
+        description: parsedContent.description || talk.content,
+        votes: talk.votes || 0,
+        createdAt: talk.createdAt || new Date().toISOString(),
+      };
+    }),
   }));
 };
 
 export const fetchEventById = async (eventId: string): Promise<Event | null> => {
+  console.log(`Fetching event ${eventId} through service layer`);
   const rawEvent = await getEventById(eventId);
   
   if (!rawEvent) return null;
+  
+  // Get detailed talks for this event
+  const rawTalks = await getTalks(eventId);
   
   return {
     id: rawEvent.id,
     title: rawEvent.title,
     description: rawEvent.content,
     date: rawEvent.createdAt || new Date().toISOString(),
-    talks: (rawEvent.answers || []).map((talk: any) => ({
-      id: talk.id,
-      title: talk.title,
-      speaker: talk.author || "Anonymous",
-      description: talk.content,
-      votes: talk.votes || 0,
-      createdAt: talk.createdAt || new Date().toISOString(),
-    })),
+    talks: rawTalks.map((talk: any) => {
+      const parsedContent = parseTalkContent(talk.content);
+      return {
+        id: talk.id,
+        title: parsedContent.title || talk.title || "Untitled Talk",
+        speaker: parsedContent.speaker || talk.author || "Anonymous",
+        description: parsedContent.description || talk.content,
+        votes: talk.votes || 0,
+        createdAt: talk.createdAt || new Date().toISOString(),
+      };
+    }),
   };
 };
 
@@ -70,6 +92,7 @@ export const createEvent = async (
   description: string, 
   date: string
 ): Promise<string | null> => {
+  console.log(`Creating new event: ${title}`);
   // Format date to include in description
   const formattedDescription = `${description}\n\nEvent Date: ${date}`;
   
@@ -82,9 +105,11 @@ export const createTalk = async (
   description: string, 
   speaker: string
 ): Promise<string | null> => {
+  console.log(`Creating new talk: ${title} by ${speaker}`);
   return await submitTalk(eventId, title, description, speaker);
 };
 
 export const upvoteTalk = async (eventId: string, talkId: string): Promise<boolean> => {
+  console.log(`Upvoting talk ${talkId} in event ${eventId}`);
   return await voteTalk(eventId, talkId);
 };

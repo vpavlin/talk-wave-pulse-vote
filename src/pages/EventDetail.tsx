@@ -1,7 +1,7 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,12 +22,15 @@ const EventDetail = () => {
   const [isSubmitTalkOpen, setIsSubmitTalkOpen] = useState(false);
   const { toast } = useToast();
   const { connected, connect } = useWallet();
+  const queryClient = useQueryClient();
   
-  // Fetch event data
-  const { data: event, refetch } = useQuery({
+  // Fetch event data with improved polling for real-time updates
+  const { data: event, refetch, isLoading } = useQuery({
     queryKey: ['event', eventId],
     queryFn: () => fetchEventById(eventId),
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true,
+    refetchInterval: 5000, // Refresh data every 5 seconds for real-time updates
+    enabled: !!eventId, // Only run the query if we have an eventId
   });
 
   const handleSubmitTalk = async (talkData: { title: string; speaker: string; description: string }) => {
@@ -49,8 +52,8 @@ const EventDetail = () => {
         
         setIsSubmitTalkOpen(false);
         
-        // Refetch event to update the talks list
-        setTimeout(() => refetch(), 1000);
+        // Invalidate and refetch event to update the talks list
+        queryClient.invalidateQueries({ queryKey: ['event', eventId] });
       } else {
         toast({
           title: "Error",
@@ -87,8 +90,8 @@ const EventDetail = () => {
           description: "Your vote has been counted",
         });
         
-        // Refetch event to update the vote count
-        setTimeout(() => refetch(), 1000);
+        // Invalidate and refetch event to update the vote count
+        queryClient.invalidateQueries({ queryKey: ['event', eventId] });
       } else {
         toast({
           title: "Error",
