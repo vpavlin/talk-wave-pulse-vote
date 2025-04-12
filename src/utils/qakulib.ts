@@ -1,8 +1,8 @@
 
-// Import directly from the @vpavlin/qakulib package instead
-import { Qakulib } from "@vpavlin/qakulib";
+// Using the locally installed qakulib package instead of @vpavlin/qakulib
+import { Qakulib } from "qakulib";
 
-// Initialize the Qakulib SDK
+// Initialize the Qakulib instance
 let qakulibInstance: Qakulib | null = null;
 
 export const getQakulib = (): Qakulib => {
