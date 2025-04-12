@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useWallet } from "@/contexts/WalletContext";
 
 interface SubmitTalkDialogProps {
   open: boolean;
@@ -19,13 +20,13 @@ const SubmitTalkDialog = ({ open, onOpenChange, onSubmit }: SubmitTalkDialogProp
   const [speaker, setSpeaker] = useState("");
   const [description, setDescription] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isWalletConnected, setIsWalletConnected] = useState(false);
+  const { connected, connect } = useWallet();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!isWalletConnected) {
-      setIsWalletConnected(true);
+    if (!connected) {
+      connect();
       return;
     }
     
@@ -43,7 +44,6 @@ const SubmitTalkDialog = ({ open, onOpenChange, onSubmit }: SubmitTalkDialogProp
     setTitle("");
     setSpeaker("");
     setDescription("");
-    setIsWalletConnected(false);
   };
 
   return (
@@ -57,7 +57,7 @@ const SubmitTalkDialog = ({ open, onOpenChange, onSubmit }: SubmitTalkDialogProp
             </DialogDescription>
           </DialogHeader>
           
-          {!isWalletConnected && (
+          {!connected && (
             <Alert className="my-4 bg-amber-50 text-amber-800 border-amber-200">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
@@ -114,7 +114,7 @@ const SubmitTalkDialog = ({ open, onOpenChange, onSubmit }: SubmitTalkDialogProp
               disabled={isSubmitting}
               className="bg-purple-600 hover:bg-purple-700"
             >
-              {!isWalletConnected ? "Connect Wallet" : isSubmitting ? "Submitting..." : "Submit Talk"}
+              {!connected ? "Connect Wallet" : isSubmitting ? "Submitting..." : "Submit Talk"}
             </Button>
           </DialogFooter>
         </form>

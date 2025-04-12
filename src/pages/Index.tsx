@@ -5,11 +5,14 @@ import EventList from "@/components/EventList";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
 import CreateEventDialog from "@/components/CreateEventDialog";
+import WalletConnectButton from "@/components/WalletConnectButton";
+import { useWallet } from "@/contexts/WalletContext";
 
 const Index = () => {
   const [events, setEvents] = useState([]);
   const [isCreateEventOpen, setIsCreateEventOpen] = useState(false);
   const { toast } = useToast();
+  const { connected } = useWallet();
   
   useEffect(() => {
     // Simulate loading events
@@ -87,14 +90,13 @@ const Index = () => {
             <Button 
               className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
               onClick={() => setIsCreateEventOpen(true)}
+              disabled={!connected}
             >
               <PlusCircle className="mr-2 h-5 w-5" />
               Create Event
             </Button>
             
-            <Button variant="outline" className="border-purple-300 text-purple-700 hover:bg-purple-50">
-              Connect Wallet
-            </Button>
+            <WalletConnectButton />
           </div>
         </div>
         

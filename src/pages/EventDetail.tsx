@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -7,10 +6,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { ArrowLeft, Calendar, MessageSquarePlus, ArrowUpCircle, Shuffle, Clock, TrendingUp } from "lucide-react";
+import { ArrowLeft, Calendar, MessageSquarePlus, Shuffle, Clock, TrendingUp } from "lucide-react";
 import SubmitTalkDialog from "@/components/SubmitTalkDialog";
 import TalkCard from "@/components/TalkCard";
 import { format } from "date-fns";
+import { useWallet } from "@/contexts/WalletContext";
 
 interface Talk {
   id: string;
@@ -35,9 +35,9 @@ const EventDetail = () => {
   const [sortOption, setSortOption] = useState("votes");
   const [isSubmitTalkOpen, setIsSubmitTalkOpen] = useState(false);
   const { toast } = useToast();
+  const { connected, connect } = useWallet();
   
   useEffect(() => {
-    // Simulate loading an event
     const demoEvent = {
       id: eventId,
       title: "React Conference 2025",
@@ -100,6 +100,15 @@ const EventDetail = () => {
   const handleVote = (talkId: string) => {
     if (!event) return;
     
+    if (!connected) {
+      connect();
+      toast({
+        title: "Connect Wallet",
+        description: "Please connect your wallet to vote",
+      });
+      return;
+    }
+    
     setEvent({
       ...event,
       talks: event.talks.map(talk => {
@@ -156,15 +165,15 @@ const EventDetail = () => {
             <div className="flex justify-between items-start flex-wrap gap-2">
               <div>
                 <CardTitle className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
-                  {event.title}
+                  {event?.title}
                 </CardTitle>
                 <CardDescription className="mt-1 text-base">
-                  {event.description}
+                  {event?.description}
                 </CardDescription>
               </div>
               <Badge className="flex items-center gap-1 bg-purple-100 text-purple-700 hover:bg-purple-200">
                 <Calendar className="h-3 w-3" />
-                {format(new Date(event.date), "MMMM d, yyyy")}
+                {event?.date ? format(new Date(event.date), "MMMM d, yyyy") : ""}
               </Badge>
             </div>
           </CardHeader>
@@ -172,6 +181,7 @@ const EventDetail = () => {
             <Button 
               onClick={() => setIsSubmitTalkOpen(true)}
               className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
+              disabled={!connected}
             >
               <MessageSquarePlus className="mr-2 h-5 w-5" />
               Submit a Lightning Talk
@@ -183,7 +193,7 @@ const EventDetail = () => {
           <h2 className="text-xl font-bold text-gray-800">
             Submitted Talks 
             <span className="ml-2 text-sm font-normal text-gray-500">
-              ({event.talks.length})
+              ({event?.talks.length || 0})
             </span>
           </h2>
           
