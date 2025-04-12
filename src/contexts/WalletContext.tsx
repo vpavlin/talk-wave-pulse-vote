@@ -1,6 +1,5 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { connectWallet, getCurrentWalletAddress, disconnectWallet, isWalletConnected } from "../utils/qakulib";
 import { useToast } from "@/hooks/use-toast";
 
 interface WalletContextType {

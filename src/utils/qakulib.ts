@@ -1,6 +1,6 @@
 
 // Using the locally installed qakulib package
-import {Qaku} from "qakulib";
+import {EnhancedQuestionMessage, Qaku} from "qakulib";
 import { wakuPeerExchangeDiscovery } from "@waku/discovery";
 import { derivePubsubTopicsFromNetworkConfig } from "@waku/utils"
 import { createLightNode, IWaku, LightNode, Protocols } from '@waku/sdk';
@@ -15,7 +15,7 @@ const bootstrapNodes: string[] = [
 
 const networkConfig =  {clusterId: 42, shards: [0]}
 
-export const getQakulib = async () => {
+export const getQakulib = async ():Promise<Qaku> => {
   if (!qakulibInstance) {
     const node:IWaku = await createLightNode({            
       networkConfig:networkConfig,
@@ -44,50 +44,14 @@ export const publishEvent = async (title:string, desc:string, moderation:boolean
   return eventId
 }
 
-export const connectWallet = async (): Promise<string | null> => {
-  try {
-    const qakulib = await getQakulib();
-    const address = await qakulib.connectWallet();
-    return address;
-  } catch (error) {
-    console.error("Failed to connect wallet:", error);
-    return null;
-  }
-};
-
-export const isWalletConnected = async (): Promise<boolean> => {
-  try {
-    const qakulib = await getQakulib();
-    return await qakulib.isWalletConnected();
-  } catch (error) {
-    console.error("Failed to check wallet connection:", error);
-    return false;
-  }
-};
-
-export const getCurrentWalletAddress = async (): Promise<string | null> => {
-  try {
-    const qakulib = await getQakulib();
-    return await qakulib.getCurrentWalletAddress();
-  } catch (error) {
-    console.error("Failed to get current wallet address:", error);
-    return null;
-  }
-};
-
-export const disconnectWallet = async (): Promise<void> => {
-  try {
-    const qakulib = await getQakulib();
-    await qakulib.disconnectWallet();
-  } catch (error) {
-    console.error("Failed to disconnect wallet:", error);
-  }
-};
-
 export const getEvents = async (): Promise<any[]> => {
   try {
     const qakulib = await getQakulib();
-    const events = await qakulib.getQAs();
+    const eventsList = qakulib.qas.values();
+    const events = []
+    for (const event of eventsList) {
+      events.push(event.controlState);
+    }
     return events;
   } catch (error) {
     console.error("Failed to fetch events:", error);
@@ -98,11 +62,26 @@ export const getEvents = async (): Promise<any[]> => {
 export const getEventById = async (eventId: string): Promise<any | null> => {
   try {
     const qakulib = await getQakulib();
-    const event = await qakulib.getQA(eventId);
-    return event;
+    const event = qakulib.qas.get(eventId);
+    return event.controlState;
   } catch (error) {
     console.error(`Failed to fetch event with ID ${eventId}:`, error);
     return null;
+  }
+};
+
+export const getTalks = async (eventId: string): Promise<EnhancedQuestionMessage[]> => {
+  try {
+    const qakulib = await getQakulib();
+    const talksList = qakulib.qas.get(eventId)?.questions.values();
+    const talks = []
+    for (const talk of talksList) {
+      talks.push(talk);
+    }
+    return talks;
+  } catch (error) {
+    console.error("Failed to fetch talks:", error);
+    return [];
   }
 };
 
@@ -114,7 +93,7 @@ export const submitTalk = async (
 ): Promise<string | null> => {
   try {
     const qakulib = await getQakulib();
-    const talkId = await qakulib.newAnswer(eventId, title, description, speaker);
+    const talkId = await qakulib.newQuestion(eventId, JSON.stringify({title, description, speaker}));
     return talkId;
   } catch (error) {
     console.error("Failed to submit talk:", error);
@@ -125,7 +104,7 @@ export const submitTalk = async (
 export const voteTalk = async (eventId: string, talkId: string): Promise<boolean> => {
   try {
     const qakulib = await getQakulib();
-    await qakulib.vote(eventId, talkId);
+    await qakulib.upvote(eventId, talkId);
     return true;
   } catch (error) {
     console.error("Failed to vote for talk:", error);
