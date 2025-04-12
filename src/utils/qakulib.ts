@@ -51,17 +51,14 @@ export const getQakulib = async ():Promise<Qaku> => {
 const loadHistoryAndInitializeQAs = async (qakulib: Qaku) => {
   try {
     console.log("Loading QA events from history");
-    const history = qakulib.history;
     
-    // Instead of directly trying to access properties that don't exist,
-    // check if the history object itself has a method to get QA events
-    // or try to access any available QA event IDs from the instance
-    const qaEvents = qakulib.qas ? Array.from(qakulib.qas.keys()) : [];
+    // Use the getAll method from the history object to retrieve all known QAs
+    const knownQAs = qakulib.history.getAll ? qakulib.history.getAll() : [];
     
-    console.log(`Found ${qaEvents.length} QA events in history`);
+    console.log(`Found ${knownQAs.length} QA events in history`);
     
     // Initialize each QA event from history to ensure proper subscription
-    for (const qaEvent of qaEvents) {
+    for (const qaEvent of knownQAs) {
       console.log(`Initializing QA event from history: ${qaEvent}`);
       try {
         await qakulib.initQA(qaEvent);
