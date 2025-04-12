@@ -39,10 +39,37 @@ export const getQakulib = async ():Promise<Qaku> => {
     qakulibInstance = new Qaku(node as LightNode);
     await qakulibInstance.init();
 
+    // Load history and initialize all QA events we've interacted with
+    await loadHistoryAndInitializeQAs(qakulibInstance);
+
     // Set up event listeners for qakulib events
     setupEventListeners();
   }
   return qakulibInstance;
+};
+
+// Load history and initialize QA events from history
+const loadHistoryAndInitializeQAs = async (qakulib: Qaku) => {
+  try {
+    console.log("Loading QA events from history");
+    const history = qakulib.history;
+    const qaEvents = history.qaEvents || [];
+    
+    console.log(`Found ${qaEvents.length} QA events in history`);
+    
+    // Initialize each QA event from history to ensure proper subscription
+    for (const qaEvent of qaEvents) {
+      console.log(`Initializing QA event from history: ${qaEvent}`);
+      try {
+        await qakulib.initQA(qaEvent);
+        console.log(`Successfully initialized QA event: ${qaEvent}`);
+      } catch (error) {
+        console.error(`Failed to initialize QA event ${qaEvent}:`, error);
+      }
+    }
+  } catch (error) {
+    console.error("Error loading history:", error);
+  }
 };
 
 // Set up event listeners for Qakulib instance
@@ -116,8 +143,11 @@ export const getEventById = async (eventId: string): Promise<any | null> => {
     console.log(`Fetching event with ID ${eventId}`);
     const qakulib = await getQakulib();
     
-    // Instead of refreshQA, just access the event directly
-    // Event listeners will ensure data is updated in real time
+    // Make sure the QA is initialized
+    if (!qakulib.qas.has(eventId)) {
+      console.log(`Event ${eventId} not initialized yet, initializing...`);
+      await qakulib.initQA(eventId);
+    }
     
     const event = qakulib.qas.get(eventId);
     if (!event) {
@@ -138,7 +168,12 @@ export const getTalks = async (eventId: string): Promise<EnhancedQuestionMessage
     console.log(`Fetching talks for event ${eventId}`);
     const qakulib = await getQakulib();
     
-    // Get the event without refreshQA
+    // Make sure the QA is initialized
+    if (!qakulib.qas.has(eventId)) {
+      console.log(`Event ${eventId} not initialized yet, initializing...`);
+      await qakulib.initQA(eventId);
+    }
+    
     const event = qakulib.qas.get(eventId);
     if (!event) {
       console.warn(`Event with ID ${eventId} not found when fetching talks`);
@@ -169,6 +204,12 @@ export const submitTalk = async (
     console.log(`Submitting talk "${title}" for event ${eventId}`);
     const qakulib = await getQakulib();
     
+    // Make sure the QA is initialized
+    if (!qakulib.qas.has(eventId)) {
+      console.log(`Event ${eventId} not initialized yet, initializing...`);
+      await qakulib.initQA(eventId);
+    }
+    
     // Format talk data for submission
     const talkData = JSON.stringify({title, description, speaker});
     
@@ -187,6 +228,12 @@ export const voteTalk = async (eventId: string, talkId: string): Promise<boolean
   try {
     console.log(`Voting for talk ${talkId} in event ${eventId}`);
     const qakulib = await getQakulib();
+    
+    // Make sure the QA is initialized
+    if (!qakulib.qas.has(eventId)) {
+      console.log(`Event ${eventId} not initialized yet, initializing...`);
+      await qakulib.initQA(eventId);
+    }
     
     // Cast vote for the talk
     await qakulib.upvote(eventId, talkId);
