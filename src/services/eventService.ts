@@ -25,12 +25,14 @@ export interface Event {
   talks: Talk[];
 }
 
-// Helper function to parse question content
+// Helper function to parse question content with better error handling
 const parseTalkContent = (content: string): { title: string; description: string; speaker: string } => {
   try {
-    return JSON.parse(content);
+    // Ensure we're working with a string before parsing
+    const contentString = typeof content === 'string' ? content : JSON.stringify(content);
+    return JSON.parse(contentString);
   } catch (e) {
-    console.error("Failed to parse talk content:", e);
+    console.error("Failed to parse talk content:", e, "Content was:", content);
     return { title: "Untitled Talk", description: "No description available", speaker: "Anonymous" };
   }
 };
@@ -45,7 +47,7 @@ export const fetchEvents = async (): Promise<Event[]> => {
     title: event.title,
     description: event.content,
     date: event.createdAt || new Date().toISOString(),
-    talks: (event.answers || []).map((talk: any) => {
+    talks: (event.questions || []).map((talk: any) => {
       const parsedContent = parseTalkContent(talk.content);
       return {
         id: talk.id,
