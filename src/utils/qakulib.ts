@@ -1,5 +1,5 @@
 // Using the locally installed qakulib package
-import {EnhancedQuestionMessage, Qaku} from "qakulib";
+import {ControlMessage, EnhancedQuestionMessage, Qaku} from "qakulib";
 import { wakuPeerExchangeDiscovery } from "@waku/discovery";
 import { derivePubsubTopicsFromNetworkConfig } from "@waku/utils"
 import { createLightNode, IWaku, LightNode, Protocols } from '@waku/sdk';
@@ -141,7 +141,7 @@ export const getEvents = async (): Promise<any[]> => {
   }
 };
 
-export const getEventById = async (eventId: string): Promise<any | null> => {
+export const getEventById = async (eventId: string): Promise<ControlMessage | null> => {
   try {
     console.log(`Fetching event with ID ${eventId}`);
     const qakulib = await getQakulib();

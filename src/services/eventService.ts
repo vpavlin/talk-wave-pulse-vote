@@ -22,7 +22,7 @@ export interface Event {
   id: string;
   title: string;
   description: string;
-  date: string;
+  date: number;
   talks: Talk[];
 }
 
@@ -46,7 +46,7 @@ export const fetchEvents = async (): Promise<Event[]> => {
   return rawEvents.map((event: any) => ({
     id: event.id,
     title: event.title,
-    description: event.content,
+    description: event.description,
     date: event.createdAt || new Date().toISOString(),
     talks: (event.questions || []).map((talk: EnhancedQuestionMessage) => {
       console.log(event)
@@ -75,8 +75,8 @@ export const fetchEventById = async (eventId: string): Promise<Event | null> => 
   return {
     id: rawEvent.id,
     title: rawEvent.title,
-    description: rawEvent.content,
-    date: rawEvent.createdAt || new Date().toISOString(),
+    description: rawEvent.description,
+    date: rawEvent.timestamp,
     talks: rawTalks.map((talk: any) => {
       const parsedContent = parseTalkContent(talk.question);
       return {
