@@ -1,4 +1,3 @@
-
 // Using the locally installed qakulib package
 import {EnhancedQuestionMessage, Qaku} from "qakulib";
 import { wakuPeerExchangeDiscovery } from "@waku/discovery";
@@ -61,7 +60,7 @@ const loadHistoryAndInitializeQAs = async (qakulib: Qaku) => {
     // Initialize each QA event from history to ensure proper subscription
     for (const qaEvent of knownQAs) {
       // Extract the QA ID from the history entry
-      const qaId = typeof qaEvent === 'string' ? qaEvent : qaEvent.id || qaEvent.qaId || qaEvent.toString();
+      const qaId = typeof qaEvent === 'string' ? qaEvent : qaEvent.id || (qaEvent as any).qaId || qaEvent.toString();
       
       console.log(`Initializing QA event from history: ${qaId}`);
       try {
