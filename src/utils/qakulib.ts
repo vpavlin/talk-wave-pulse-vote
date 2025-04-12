@@ -1,3 +1,4 @@
+
 // Using the locally installed qakulib package
 import {EnhancedQuestionMessage, Qaku} from "qakulib";
 import { wakuPeerExchangeDiscovery } from "@waku/discovery";
@@ -59,12 +60,15 @@ const loadHistoryAndInitializeQAs = async (qakulib: Qaku) => {
     
     // Initialize each QA event from history to ensure proper subscription
     for (const qaEvent of knownQAs) {
-      console.log(`Initializing QA event from history: ${qaEvent}`);
+      // Extract the QA ID from the history entry
+      const qaId = typeof qaEvent === 'string' ? qaEvent : qaEvent.id || qaEvent.qaId || qaEvent.toString();
+      
+      console.log(`Initializing QA event from history: ${qaId}`);
       try {
-        await qakulib.initQA(qaEvent);
-        console.log(`Successfully initialized QA event: ${qaEvent}`);
+        await qakulib.initQA(qaId);
+        console.log(`Successfully initialized QA event: ${qaId}`);
       } catch (error) {
-        console.error(`Failed to initialize QA event ${qaEvent}:`, error);
+        console.error(`Failed to initialize QA event ${qaId}:`, error);
       }
     }
   } catch (error) {
