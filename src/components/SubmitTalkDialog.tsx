@@ -22,7 +22,7 @@ const SubmitTalkDialog = ({ open, onOpenChange, onSubmit }: SubmitTalkDialogProp
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { connected, connect } = useWallet();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!connected) {
@@ -32,12 +32,14 @@ const SubmitTalkDialog = ({ open, onOpenChange, onSubmit }: SubmitTalkDialogProp
     
     setIsSubmitting(true);
     
-    // Simulate submission delay
-    setTimeout(() => {
-      onSubmit({ title, speaker, description });
+    try {
+      await onSubmit({ title, speaker, description });
+    } catch (error) {
+      console.error("Error submitting talk:", error);
+    } finally {
       resetForm();
       setIsSubmitting(false);
-    }, 500);
+    }
   };
 
   const resetForm = () => {
@@ -48,17 +50,17 @@ const SubmitTalkDialog = ({ open, onOpenChange, onSubmit }: SubmitTalkDialogProp
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] dark:bg-gray-800 dark:border-gray-700">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold">Submit a Lightning Talk</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-xl font-bold dark:text-white">Submit a Lightning Talk</DialogTitle>
+            <DialogDescription className="dark:text-gray-300">
               Share your knowledge with the community! Lightning talks are 5-10 minute presentations.
             </DialogDescription>
           </DialogHeader>
           
           {!connected && (
-            <Alert className="my-4 bg-amber-50 text-amber-800 border-amber-200">
+            <Alert className="my-4 bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-200 dark:border-amber-800/50">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
                 You'll need to connect your wallet to submit a talk.
@@ -68,29 +70,31 @@ const SubmitTalkDialog = ({ open, onOpenChange, onSubmit }: SubmitTalkDialogProp
           
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="title">Talk Title</Label>
+              <Label htmlFor="title" className="dark:text-gray-200">Talk Title</Label>
               <Input
                 id="title"
                 placeholder="e.g., Modern React Patterns"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 required
+                className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
               />
             </div>
             
             <div className="grid gap-2">
-              <Label htmlFor="speaker">Speaker Name</Label>
+              <Label htmlFor="speaker" className="dark:text-gray-200">Speaker Name</Label>
               <Input
                 id="speaker"
                 placeholder="Your name"
                 value={speaker}
                 onChange={(e) => setSpeaker(e.target.value)}
                 required
+                className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
               />
             </div>
             
             <div className="grid gap-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description" className="dark:text-gray-200">Description</Label>
               <Textarea
                 id="description"
                 placeholder="Brief description of your lightning talk (max 200 characters)"
@@ -98,21 +102,22 @@ const SubmitTalkDialog = ({ open, onOpenChange, onSubmit }: SubmitTalkDialogProp
                 onChange={(e) => setDescription(e.target.value)}
                 maxLength={200}
                 required
+                className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
               />
-              <p className="text-xs text-gray-500 text-right">
+              <p className="text-xs text-gray-500 dark:text-gray-400 text-right">
                 {description.length}/200
               </p>
             </div>
           </div>
           
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700">
               Cancel
             </Button>
             <Button 
               type="submit" 
               disabled={isSubmitting}
-              className="bg-purple-600 hover:bg-purple-700"
+              className="bg-purple-600 hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-800"
             >
               {!connected ? "Connect Wallet" : isSubmitting ? "Submitting..." : "Submit Talk"}
             </Button>

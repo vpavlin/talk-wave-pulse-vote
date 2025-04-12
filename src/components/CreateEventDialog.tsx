@@ -18,16 +18,18 @@ const CreateEventDialog = ({ open, onOpenChange, onSubmit }: CreateEventDialogPr
   const [date, setDate] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Simulate submission delay
-    setTimeout(() => {
-      onSubmit({ title, description, date });
+    try {
+      await onSubmit({ title, description, date });
+    } catch (error) {
+      console.error("Error creating event:", error);
+    } finally {
       resetForm();
       setIsSubmitting(false);
-    }, 500);
+    }
   };
 
   const resetForm = () => {
@@ -38,58 +40,61 @@ const CreateEventDialog = ({ open, onOpenChange, onSubmit }: CreateEventDialogPr
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] dark:bg-gray-800 dark:border-gray-700">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold">Create New Event</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-xl font-bold dark:text-white">Create New Event</DialogTitle>
+            <DialogDescription className="dark:text-gray-300">
               Fill out the form below to create a new event for lightning talk submissions.
             </DialogDescription>
           </DialogHeader>
           
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="title">Event Title</Label>
+              <Label htmlFor="title" className="dark:text-gray-200">Event Title</Label>
               <Input
                 id="title"
                 placeholder="e.g., React Conference 2025"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 required
+                className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
               />
             </div>
             
             <div className="grid gap-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description" className="dark:text-gray-200">Description</Label>
               <Textarea
                 id="description"
                 placeholder="Brief description of the event"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 required
+                className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
               />
             </div>
             
             <div className="grid gap-2">
-              <Label htmlFor="date">Event Date</Label>
+              <Label htmlFor="date" className="dark:text-gray-200">Event Date</Label>
               <Input
                 id="date"
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
                 required
+                className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
               />
             </div>
           </div>
           
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700">
               Cancel
             </Button>
             <Button 
               type="submit" 
               disabled={isSubmitting}
-              className="bg-purple-600 hover:bg-purple-700"
+              className="bg-purple-600 hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-800"
             >
               {isSubmitting ? "Creating..." : "Create Event"}
             </Button>

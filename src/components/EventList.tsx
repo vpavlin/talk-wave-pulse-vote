@@ -6,22 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar, ArrowRight } from "lucide-react";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
-
-interface Talk {
-  id: string;
-  title: string;
-  speaker: string;
-  description: string;
-  votes: number;
-}
-
-interface Event {
-  id: string;
-  title: string;
-  description: string;
-  date: string;
-  talks: Talk[];
-}
+import { Event } from "@/services/eventService";
 
 interface EventListProps {
   events: Event[];
@@ -42,13 +27,13 @@ const EventList = ({ events }: EventListProps) => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-800">Events</h2>
+        <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Events</h2>
         <div className="flex gap-2">
           <Button 
             variant={filter === "all" ? "default" : "outline"}
             size="sm"
             onClick={() => setFilter("all")}
-            className={filter === "all" ? "bg-purple-600 hover:bg-purple-700" : ""}
+            className={filter === "all" ? "bg-purple-600 dark:bg-purple-700 hover:bg-purple-700 dark:hover:bg-purple-800" : ""}
           >
             All Events
           </Button>
@@ -56,7 +41,7 @@ const EventList = ({ events }: EventListProps) => {
             variant={filter === "upcoming" ? "default" : "outline"}
             size="sm"
             onClick={() => setFilter("upcoming")}
-            className={filter === "upcoming" ? "bg-purple-600 hover:bg-purple-700" : ""}
+            className={filter === "upcoming" ? "bg-purple-600 dark:bg-purple-700 hover:bg-purple-700 dark:hover:bg-purple-800" : ""}
           >
             Upcoming
           </Button>
@@ -64,33 +49,33 @@ const EventList = ({ events }: EventListProps) => {
       </div>
       
       {filteredEvents.length === 0 ? (
-        <Card className="bg-white/70 backdrop-blur">
+        <Card className="bg-white/70 dark:bg-gray-800/70 backdrop-blur">
           <CardContent className="pt-6 text-center">
-            <p className="text-gray-500">No events found. Create a new event to get started!</p>
+            <p className="text-gray-500 dark:text-gray-400">No events found. Create a new event to get started!</p>
           </CardContent>
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredEvents.map((event) => (
-            <Card key={event.id} className="overflow-hidden transition-all duration-300 hover:shadow-lg">
-              <CardHeader className="bg-gradient-to-r from-purple-600/10 to-indigo-600/10 pb-3">
+            <Card key={event.id} className="overflow-hidden transition-all duration-300 hover:shadow-lg border-gray-200 dark:border-gray-700">
+              <CardHeader className="bg-gradient-to-r from-purple-600/10 to-indigo-600/10 dark:from-purple-900/20 dark:to-indigo-900/20 pb-3">
                 <div className="flex justify-between items-start">
                   <div>
-                    <CardTitle className="text-xl text-purple-800">{event.title}</CardTitle>
-                    <CardDescription className="mt-1">{event.description}</CardDescription>
+                    <CardTitle className="text-xl text-purple-800 dark:text-purple-300">{event.title}</CardTitle>
+                    <CardDescription className="mt-1 dark:text-gray-300">{event.description}</CardDescription>
                   </div>
-                  <Badge variant="outline" className="flex items-center gap-1 border-purple-200 text-purple-700">
+                  <Badge variant="outline" className="flex items-center gap-1 border-purple-200 text-purple-700 dark:border-purple-700 dark:text-purple-300">
                     <Calendar className="h-3 w-3" />
                     {format(new Date(event.date), "MMM d, yyyy")}
                   </Badge>
                 </div>
               </CardHeader>
-              <CardContent className="pt-4">
+              <CardContent className="pt-4 bg-white dark:bg-gray-800">
                 <div className="mb-3">
-                  <p className="text-sm text-gray-500">{event.talks.length} talk submissions</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{event.talks.length} talk submissions</p>
                 </div>
                 <Link to={`/event/${event.id}`}>
-                  <Button variant="outline" className="w-full mt-2 border-purple-200 text-purple-700 hover:bg-purple-50 group">
+                  <Button variant="outline" className="w-full mt-2 border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-700 dark:text-purple-300 dark:hover:bg-purple-900/30 group">
                     View Event
                     <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                   </Button>
