@@ -76,7 +76,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   }, []);
 
-  const connect = async () => {
+  const connect = async (): Promise<void> => {
     try {
       setConnecting(true);
       
@@ -96,7 +96,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         description: `Connected to ${address.substring(0, 6)}...${address.substring(address.length - 4)}`,
       });
       
-      return address;
+      // Don't return the address, just return void
     } catch (error) {
       console.error("Connection error:", error);
       toast({
@@ -104,7 +104,6 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         description: "Could not connect to wallet",
         variant: "destructive",
       });
-      return null;
     } finally {
       setConnecting(false);
     }
