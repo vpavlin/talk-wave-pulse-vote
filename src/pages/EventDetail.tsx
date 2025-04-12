@@ -8,7 +8,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { ArrowLeft, Calendar, MessageSquarePlus, Shuffle, Clock, TrendingUp } from "lucide-react";
+import { 
+  ArrowLeft, 
+  Calendar, 
+  MessageSquarePlus, 
+  Shuffle, 
+  Clock, 
+  TrendingUp, 
+  AlertCircle 
+} from "lucide-react";
 import SubmitTalkDialog from "@/components/SubmitTalkDialog";
 import TalkCard from "@/components/TalkCard";
 import { format } from "date-fns";
@@ -25,7 +33,7 @@ const EventDetail = () => {
   const queryClient = useQueryClient();
   
   // Fetch event data with improved polling for real-time updates
-  const { data: event, refetch, isLoading } = useQuery({
+  const { data: event, refetch, isLoading, isError } = useQuery({
     queryKey: ['event', eventId],
     queryFn: () => fetchEventById(eventId),
     refetchOnWindowFocus: true,
@@ -125,10 +133,37 @@ const EventDetail = () => {
     }
   };
 
-  if (!event) {
+  if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-12 text-center text-gray-600 dark:text-gray-300">
-        <p>Loading event details...</p>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-indigo-50 to-purple-50 dark:from-gray-900 dark:to-indigo-950">
+        <div className="text-center">
+          <div className="animate-pulse mx-auto h-12 w-12 rounded-full bg-accent mb-4"></div>
+          <p className="text-xl font-medium text-gray-600 dark:text-gray-300">Loading event details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isError || !event) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-indigo-50 to-purple-50 dark:from-gray-900 dark:to-indigo-950">
+        <Card className="max-w-md mx-auto">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <AlertCircle className="mr-2 h-6 w-6 text-destructive" />
+              Error Loading Event
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4">We couldn't load the event details. The event may have been removed or you may not have access.</p>
+            <Link to="/">
+              <Button variant="default" className="w-full">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Events
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -136,76 +171,116 @@ const EventDetail = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-purple-50 dark:from-gray-900 dark:to-indigo-950 transition-colors">
       <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex justify-between items-center mb-6">
           <Link to="/">
-            <Button variant="ghost" className="text-gray-700 dark:text-gray-300">
-              <ArrowLeft className="mr-2 h-4 w-4" />
+            <Button 
+              variant="outline" 
+              size="lg" 
+              className="text-lg text-gray-700 dark:text-gray-300 focus-ring"
+              aria-label="Back to events list"
+            >
+              <ArrowLeft className="mr-2 h-5 w-5" />
               Back to Events
             </Button>
           </Link>
           <ThemeToggle />
         </div>
         
-        <Card className="mb-8 border-purple-100 dark:border-purple-900 bg-white/80 dark:bg-gray-800/80 backdrop-blur">
+        <Card className="mb-8 border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-800/90 backdrop-blur glass-card">
           <CardHeader className="pb-3">
-            <div className="flex justify-between items-start flex-wrap gap-2">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div>
-                <CardTitle className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 dark:from-purple-400 dark:to-indigo-400 bg-clip-text text-transparent">
-                  {event?.title}
+                <CardTitle className="text-3xl md:text-4xl font-bold text-purple-800 dark:text-purple-300 mb-2">
+                  {event.title}
                 </CardTitle>
-                <CardDescription className="mt-1 text-base dark:text-gray-300">
-                  {event?.description}
+                <CardDescription className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed">
+                  {event.description}
                 </CardDescription>
               </div>
-              <Badge className="flex items-center gap-1 bg-purple-100 text-purple-700 hover:bg-purple-200 dark:bg-purple-900/50 dark:text-purple-300 dark:hover:bg-purple-900">
-                <Calendar className="h-3 w-3" />
-                {event?.date ? format(new Date(event.date), "MMMM d, yyyy") : ""}
+              <Badge className="date-badge text-lg">
+                <Calendar className="h-5 w-5" />
+                {event.date ? format(new Date(event.date), "MMMM d, yyyy") : ""}
               </Badge>
             </div>
           </CardHeader>
           <CardContent>
             <Button 
               onClick={() => setIsSubmitTalkOpen(true)}
-              className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 dark:from-purple-700 dark:to-indigo-700 dark:hover:from-purple-800 dark:hover:to-indigo-800"
+              className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 dark:from-purple-600 dark:to-indigo-600 dark:hover:from-purple-700 dark:hover:to-indigo-700 text-lg px-6 py-6 h-auto focus-ring"
               disabled={!connected}
+              size="lg"
+              aria-label="Submit a lightning talk"
             >
-              <MessageSquarePlus className="mr-2 h-5 w-5" />
+              <MessageSquarePlus className="mr-2 h-6 w-6" />
               Submit a Lightning Talk
             </Button>
+            {!connected && (
+              <p className="mt-2 text-amber-600 dark:text-amber-400 text-sm flex items-center">
+                <AlertCircle className="inline-block mr-1 h-4 w-4" />
+                Connect your wallet to submit a talk
+              </p>
+            )}
           </CardContent>
         </Card>
         
-        <div className="mb-6 flex justify-between items-center">
-          <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">
+        <div className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-100">
             Submitted Talks 
-            <span className="ml-2 text-sm font-normal text-gray-500 dark:text-gray-400">
-              ({event?.talks.length || 0})
+            <span className="ml-2 text-lg font-normal text-gray-500 dark:text-gray-400">
+              ({event.talks.length || 0})
             </span>
           </h2>
           
-          <ToggleGroup type="single" value={sortOption} onValueChange={(value) => value && setSortOption(value)}>
-            <ToggleGroupItem value="votes" aria-label="Sort by votes" className="flex items-center gap-1 data-[state=on]:bg-purple-100 data-[state=on]:text-purple-700 dark:data-[state=on]:bg-purple-900/50 dark:data-[state=on]:text-purple-300">
-              <TrendingUp className="h-4 w-4" />
+          <ToggleGroup 
+            type="single" 
+            value={sortOption} 
+            onValueChange={(value) => value && setSortOption(value)}
+            aria-label="Sort talks by"
+          >
+            <ToggleGroupItem 
+              value="votes" 
+              aria-label="Sort by votes" 
+              className="text-base flex items-center gap-1 data-[state=on]:bg-purple-100 data-[state=on]:text-purple-700 dark:data-[state=on]:bg-purple-900/70 dark:data-[state=on]:text-purple-200 focus-ring"
+            >
+              <TrendingUp className="h-5 w-5" />
               <span className="hidden sm:inline">Votes</span>
             </ToggleGroupItem>
-            <ToggleGroupItem value="time" aria-label="Sort by time" className="flex items-center gap-1 data-[state=on]:bg-purple-100 data-[state=on]:text-purple-700 dark:data-[state=on]:bg-purple-900/50 dark:data-[state=on]:text-purple-300">
-              <Clock className="h-4 w-4" />
+            <ToggleGroupItem 
+              value="time" 
+              aria-label="Sort by time" 
+              className="text-base flex items-center gap-1 data-[state=on]:bg-purple-100 data-[state=on]:text-purple-700 dark:data-[state=on]:bg-purple-900/70 dark:data-[state=on]:text-purple-200 focus-ring"
+            >
+              <Clock className="h-5 w-5" />
               <span className="hidden sm:inline">Recent</span>
             </ToggleGroupItem>
-            <ToggleGroupItem value="random" aria-label="Sort randomly" className="flex items-center gap-1 data-[state=on]:bg-purple-100 data-[state=on]:text-purple-700 dark:data-[state=on]:bg-purple-900/50 dark:data-[state=on]:text-purple-300">
-              <Shuffle className="h-4 w-4" />
+            <ToggleGroupItem 
+              value="random" 
+              aria-label="Sort randomly" 
+              className="text-base flex items-center gap-1 data-[state=on]:bg-purple-100 data-[state=on]:text-purple-700 dark:data-[state=on]:bg-purple-900/70 dark:data-[state=on]:text-purple-200 focus-ring"
+            >
+              <Shuffle className="h-5 w-5" />
               <span className="hidden sm:inline">Random</span>
             </ToggleGroupItem>
           </ToggleGroup>
         </div>
         
-        <Tabs defaultValue="all" className="mb-6">
-          <TabsList className="bg-purple-100/50 dark:bg-purple-900/30">
-            <TabsTrigger value="all" className="data-[state=active]:bg-purple-200 data-[state=active]:text-purple-800 dark:data-[state=active]:bg-purple-800 dark:data-[state=active]:text-purple-100">All Talks</TabsTrigger>
-            <TabsTrigger value="top" className="data-[state=active]:bg-purple-200 data-[state=active]:text-purple-800 dark:data-[state=active]:bg-purple-800 dark:data-[state=active]:text-purple-100">Top Rated</TabsTrigger>
+        <Tabs defaultValue="all" className="mb-8">
+          <TabsList className="bg-purple-100/70 dark:bg-purple-900/40 p-1">
+            <TabsTrigger 
+              value="all" 
+              className="text-lg data-[state=active]:bg-purple-200 data-[state=active]:text-purple-800 dark:data-[state=active]:bg-purple-800 dark:data-[state=active]:text-purple-100 focus-ring"
+            >
+              All Talks
+            </TabsTrigger>
+            <TabsTrigger 
+              value="top" 
+              className="text-lg data-[state=active]:bg-purple-200 data-[state=active]:text-purple-800 dark:data-[state=active]:bg-purple-800 dark:data-[state=active]:text-purple-100 focus-ring"
+            >
+              Top Rated
+            </TabsTrigger>
           </TabsList>
-          <TabsContent value="all" className="mt-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <TabsContent value="all" className="mt-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {getSortedTalks().map(talk => (
                 <TalkCard 
                   key={talk.id} 
@@ -214,14 +289,14 @@ const EventDetail = () => {
                 />
               ))}
               {getSortedTalks().length === 0 && (
-                <p className="text-gray-500 dark:text-gray-400 col-span-2 text-center py-8">
+                <p className="text-lg text-gray-500 dark:text-gray-400 col-span-2 text-center py-12 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
                   No talks have been submitted yet. Be the first to submit a talk!
                 </p>
               )}
             </div>
           </TabsContent>
-          <TabsContent value="top" className="mt-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <TabsContent value="top" className="mt-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {getSortedTalks()
                 .filter(talk => talk.votes >= 10) // Only show talks with 10+ votes
                 .map(talk => (
@@ -233,7 +308,7 @@ const EventDetail = () => {
                 ))
               }
               {getSortedTalks().filter(talk => talk.votes >= 10).length === 0 && (
-                <p className="text-gray-500 dark:text-gray-400 col-span-2 text-center py-8">
+                <p className="text-lg text-gray-500 dark:text-gray-400 col-span-2 text-center py-12 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
                   No talks have received 10 or more votes yet.
                 </p>
               )}

@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, ArrowRight } from "lucide-react";
+import { Calendar, ArrowRight, MessageSquare } from "lucide-react";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
 import { Event } from "@/services/eventService";
@@ -25,23 +25,25 @@ const EventList = ({ events }: EventListProps) => {
   });
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Events</h2>
+    <div className="space-y-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-100">Events</h2>
         <div className="flex gap-2">
           <Button 
             variant={filter === "all" ? "default" : "outline"}
-            size="sm"
+            size="lg"
             onClick={() => setFilter("all")}
-            className={filter === "all" ? "bg-purple-600 dark:bg-purple-700 hover:bg-purple-700 dark:hover:bg-purple-800" : ""}
+            className={filter === "all" ? "bg-accent hover:bg-accent/90 text-lg" : "text-lg"}
+            aria-pressed={filter === "all"}
           >
             All Events
           </Button>
           <Button 
             variant={filter === "upcoming" ? "default" : "outline"}
-            size="sm"
+            size="lg"
             onClick={() => setFilter("upcoming")}
-            className={filter === "upcoming" ? "bg-purple-600 dark:bg-purple-700 hover:bg-purple-700 dark:hover:bg-purple-800" : ""}
+            className={filter === "upcoming" ? "bg-accent hover:bg-accent/90 text-lg" : "text-lg"}
+            aria-pressed={filter === "upcoming"}
           >
             Upcoming
           </Button>
@@ -49,35 +51,42 @@ const EventList = ({ events }: EventListProps) => {
       </div>
       
       {filteredEvents.length === 0 ? (
-        <Card className="bg-white/70 dark:bg-gray-800/70 backdrop-blur">
+        <Card className="glass-card">
           <CardContent className="pt-6 text-center">
-            <p className="text-gray-500 dark:text-gray-400">No events found. Create a new event to get started!</p>
+            <p className="text-lg text-gray-500 dark:text-gray-400">No events found. Create a new event to get started!</p>
           </CardContent>
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredEvents.map((event) => (
-            <Card key={event.id} className="overflow-hidden transition-all duration-300 hover:shadow-lg border-gray-200 dark:border-gray-700">
-              <CardHeader className="bg-gradient-to-r from-purple-600/10 to-indigo-600/10 dark:from-purple-900/20 dark:to-indigo-900/20 pb-3">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle className="text-xl text-purple-800 dark:text-purple-300">{event.title}</CardTitle>
-                    <CardDescription className="mt-1 dark:text-gray-300">{event.description}</CardDescription>
+            <Card key={event.id} className="overflow-hidden transition-all duration-300 hover:shadow-xl border-gray-200 dark:border-gray-700 card-hover">
+              <CardHeader className="bg-gradient-to-r from-purple-500/10 to-indigo-500/10 dark:from-purple-900/20 dark:to-indigo-900/20 pb-3">
+                <div className="flex flex-col gap-3">
+                  <div className="flex justify-between items-start">
+                    <CardTitle className="text-2xl text-purple-800 dark:text-purple-300 font-bold">
+                      {event.title}
+                    </CardTitle>
+                    <Badge className="date-badge">
+                      <Calendar className="h-4 w-4" />
+                      {format(new Date(event.date), "MMM d, yyyy")}
+                    </Badge>
                   </div>
-                  <Badge variant="outline" className="flex items-center gap-1 border-purple-200 text-purple-700 dark:border-purple-700 dark:text-purple-300">
-                    <Calendar className="h-3 w-3" />
-                    {format(new Date(event.date), "MMM d, yyyy")}
-                  </Badge>
+                  <CardDescription className="mt-1 text-base dark:text-gray-300">
+                    {event.description}
+                  </CardDescription>
                 </div>
               </CardHeader>
               <CardContent className="pt-4 bg-white dark:bg-gray-800">
-                <div className="mb-3">
-                  <p className="text-sm text-gray-500 dark:text-gray-400">{event.talks.length} talk submissions</p>
+                <div className="mb-3 flex gap-2 items-center">
+                  <MessageSquare className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                  <p className="text-base font-medium text-gray-700 dark:text-gray-300">
+                    {event.talks.length} {event.talks.length === 1 ? 'talk' : 'talks'} submitted
+                  </p>
                 </div>
-                <Link to={`/event/${event.id}`}>
-                  <Button variant="outline" className="w-full mt-2 border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-700 dark:text-purple-300 dark:hover:bg-purple-900/30 group">
+                <Link to={`/event/${event.id}`} className="block">
+                  <Button variant="outline" size="lg" className="w-full mt-2 border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-700 dark:text-purple-300 dark:hover:bg-purple-900/30 group text-lg focus-ring">
                     View Event
-                    <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                    <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
                   </Button>
                 </Link>
               </CardContent>
