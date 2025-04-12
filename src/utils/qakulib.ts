@@ -54,9 +54,11 @@ const loadHistoryAndInitializeQAs = async (qakulib: Qaku) => {
     const history = qakulib.history;
     
     // Access the events we've previously interacted with
-    // In the Qakulib API, we need to get QA event IDs from the history object
-    // The correct way to access this is through the history.getEvents() method
-    const qaEvents = history.getEvents ? history.getEvents() : [];
+    // Since getEvents() method doesn't exist, let's try to access QA events directly 
+    // from the history object. We'll check various possible properties.
+    // Note: This will need to be adjusted based on the actual structure of the history object
+    const qaEvents = Array.isArray(history.events) ? history.events : 
+                    Array.isArray(history.qaEvents) ? history.qaEvents : [];
     
     console.log(`Found ${qaEvents.length} QA events in history`);
     
