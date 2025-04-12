@@ -1,12 +1,13 @@
 
-import { QakulibSDK } from "qakulib";
+// Import directly from the @vpavlin/qakulib package instead
+import { Qakulib } from "@vpavlin/qakulib";
 
 // Initialize the Qakulib SDK
-let qakulibInstance: QakulibSDK | null = null;
+let qakulibInstance: Qakulib | null = null;
 
-export const getQakulib = (): QakulibSDK => {
+export const getQakulib = (): Qakulib => {
   if (!qakulibInstance) {
-    qakulibInstance = new QakulibSDK();
+    qakulibInstance = new Qakulib();
   }
   return qakulibInstance;
 };
