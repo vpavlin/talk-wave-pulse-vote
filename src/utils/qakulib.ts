@@ -53,12 +53,10 @@ const loadHistoryAndInitializeQAs = async (qakulib: Qaku) => {
     console.log("Loading QA events from history");
     const history = qakulib.history;
     
-    // Access the events we've previously interacted with
-    // Since getEvents() method doesn't exist, let's try to access QA events directly 
-    // from the history object. We'll check various possible properties.
-    // Note: This will need to be adjusted based on the actual structure of the history object
-    const qaEvents = Array.isArray(history.events) ? history.events : 
-                    Array.isArray(history.qaEvents) ? history.qaEvents : [];
+    // Instead of directly trying to access properties that don't exist,
+    // check if the history object itself has a method to get QA events
+    // or try to access any available QA event IDs from the instance
+    const qaEvents = qakulib.qas ? Array.from(qakulib.qas.keys()) : [];
     
     console.log(`Found ${qaEvents.length} QA events in history`);
     
