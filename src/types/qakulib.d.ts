@@ -1,6 +1,6 @@
 
 declare module 'qakulib' {
-  export class Qakulib {
+  export default class Qakulib {
     constructor();
     
     // Wallet methods
