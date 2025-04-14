@@ -32,6 +32,16 @@ const EventList = ({ events }: EventListProps) => {
     return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
   };
 
+  // Function to extract the first line of text
+  const getFirstLine = (text: string) => {
+    const firstLine = text.split('\n')[0].trim();
+    // If first line is too long, truncate it
+    if (firstLine.length > 120) {
+      return firstLine.substring(0, 120) + '...';
+    }
+    return firstLine;
+  };
+
   return (
     <div className="space-y-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -82,7 +92,7 @@ const EventList = ({ events }: EventListProps) => {
                     </Badge>
                   </div>
                   <CardDescription className="mt-1 text-base dark:text-gray-300">
-                    {event.description}
+                    {getFirstLine(event.description)}
                   </CardDescription>
                   {event.ownerAddress && (
                     <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">

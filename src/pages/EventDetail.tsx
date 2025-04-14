@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+
+import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -7,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import ReactMarkdown from "react-markdown";
 import { 
   ArrowLeft, 
   Calendar, 
@@ -23,7 +25,7 @@ import {
 } from "lucide-react";
 import SubmitTalkDialog from "@/components/SubmitTalkDialog";
 import TalkCard from "@/components/TalkCard";
-import { format, parseISO } from "date-fns";
+import { format } from "date-fns";
 import { useWallet } from "@/contexts/WalletContext";
 import ThemeToggle from "@/components/ThemeToggle";
 import { fetchEventById, createTalk, upvoteTalk } from "@/services/eventService";
@@ -212,9 +214,9 @@ const EventDetail = () => {
                 <CardTitle className="text-3xl md:text-4xl font-bold text-purple-800 dark:text-purple-300 mb-2">
                   {event.title}
                 </CardTitle>
-                <CardDescription className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed">
-                  {event.description}
-                </CardDescription>
+                <div className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed prose dark:prose-invert prose-p:my-2 max-w-none">
+                  <ReactMarkdown>{event.description}</ReactMarkdown>
+                </div>
                 
                 <div className="mt-4 space-y-2">
                   {event.ownerAddress && (

@@ -5,14 +5,16 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ThumbsUp, Clock, Wallet } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import ReactMarkdown from "react-markdown";
 import { Talk } from "@/services/eventService";
 
 interface TalkCardProps {
   talk: Talk;
   onVote: () => void;
+  showFullDescription?: boolean;
 }
 
-const TalkCard = ({ talk, onVote }: TalkCardProps) => {
+const TalkCard = ({ talk, onVote, showFullDescription = false }: TalkCardProps) => {
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -29,6 +31,20 @@ const TalkCard = ({ talk, onVote }: TalkCardProps) => {
     if (!address) return "Unknown";
     return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
   };
+
+  // Function to extract the first line of text
+  const getFirstLine = (text: string) => {
+    const firstLine = text.split('\n')[0].trim();
+    // If first line is too long, truncate it
+    if (firstLine.length > 100) {
+      return firstLine.substring(0, 100) + '...';
+    }
+    return firstLine;
+  };
+
+  const description = showFullDescription 
+    ? talk.description 
+    : getFirstLine(talk.description);
 
   return (
     <Card className="overflow-hidden transition-all duration-300 hover:shadow-lg border-gray-700 bg-gray-800 card-hover">
@@ -61,9 +77,13 @@ const TalkCard = ({ talk, onVote }: TalkCardProps) => {
         )}
       </CardHeader>
       <CardContent>
-        <p className="text-gray-300 text-base leading-relaxed">
-          {talk.description}
-        </p>
+        <div className="text-gray-300 text-base leading-relaxed prose dark:prose-invert prose-p:my-2 max-w-none">
+          {showFullDescription ? (
+            <ReactMarkdown>{description}</ReactMarkdown>
+          ) : (
+            <p>{description}</p>
+          )}
+        </div>
       </CardContent>
       <CardFooter className="border-t border-gray-700/50 pt-3 pb-3">
         <Button 
