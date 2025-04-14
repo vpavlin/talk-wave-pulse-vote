@@ -1,4 +1,3 @@
-
 import {
   getEvents,
   getEventById,
@@ -22,7 +21,8 @@ export interface Event {
   id: string;
   title: string;
   description: string;
-  date: number;
+  date: number;  // creation timestamp
+  eventDate: string; // actual event date
   talks: Talk[];
 }
 
@@ -38,29 +38,60 @@ const parseTalkContent = (content: string): { title: string; description: string
   }
 };
 
+// Helper function to parse event description for structured data
+const parseEventContent = (description: string): { description: string; eventDate?: string } => {
+  try {
+    // Try to parse as JSON first
+    if (description.startsWith('{') && description.endsWith('}')) {
+      return JSON.parse(description);
+    }
+    
+    // Legacy format: look for Event Date in description
+    const dateMatch = description.match(/Event Date: (.+?)(?:\n|$)/);
+    if (dateMatch && dateMatch[1]) {
+      // Extract the pure description without the date line
+      const pureDescription = description.replace(/Event Date: .+?(?:\n|$)/, '').trim();
+      return {
+        description: pureDescription,
+        eventDate: dateMatch[1]
+      };
+    }
+    
+    // No structured data found
+    return { description };
+  } catch (e) {
+    console.error("Failed to parse event content:", e);
+    return { description };
+  }
+};
+
 export const fetchEvents = async (): Promise<Event[]> => {
   console.log("Fetching events through service layer");
   const rawEvents = await getEvents();
   
   // Transform the raw data into our app format
-  return rawEvents.map((event: any) => ({
-    id: event.id,
-    title: event.title,
-    description: event.description,
-    date: event.createdAt || new Date().toISOString(),
-    talks: (event.questions || []).map((talk: EnhancedQuestionMessage) => {
-      console.log(event)
-      const parsedContent = parseTalkContent(talk.question);
-      return {
-        id: talk.hash,
-        title: parsedContent.title ||  "Untitled Talk",
-        speaker: parsedContent.speaker || "Anonymous",
-        description: parsedContent.description,
-        votes: talk.upvotes || 0,
-        createdAt: talk.timestamp || new Date().toISOString(),
-      };
-    }),
-  }));
+  return rawEvents.map((event: any) => {
+    const parsedContent = parseEventContent(event.description || '');
+    
+    return {
+      id: event.id,
+      title: event.title,
+      description: parsedContent.description || event.description,
+      date: event.createdAt || Date.now(),
+      eventDate: parsedContent.eventDate || '',
+      talks: (event.questions || []).map((talk: EnhancedQuestionMessage) => {
+        const parsedContent = parseTalkContent(talk.question);
+        return {
+          id: talk.hash,
+          title: parsedContent.title || "Untitled Talk",
+          speaker: parsedContent.speaker || "Anonymous",
+          description: parsedContent.description,
+          votes: talk.upvotes || 0,
+          createdAt: talk.timestamp || new Date().toISOString(),
+        };
+      }),
+    };
+  });
 };
 
 export const fetchEventById = async (eventId: string): Promise<Event | null> => {
@@ -72,11 +103,15 @@ export const fetchEventById = async (eventId: string): Promise<Event | null> => 
   // Get detailed talks for this event
   const rawTalks = await getTalks(eventId);
   
+  // Parse the event description for structured data
+  const parsedContent = parseEventContent(rawEvent.description || '');
+  
   return {
     id: rawEvent.id,
     title: rawEvent.title,
-    description: rawEvent.description,
+    description: parsedContent.description || rawEvent.description,
     date: rawEvent.timestamp,
+    eventDate: parsedContent.eventDate || '',
     talks: rawTalks.map((talk: any) => {
       const parsedContent = parseTalkContent(talk.question);
       return {
@@ -97,10 +132,14 @@ export const createEvent = async (
   date: string
 ): Promise<string | null> => {
   console.log(`Creating new event: ${title}`);
-  // Format date to include in description
-  const formattedDescription = `${description}\n\nEvent Date: ${date}`;
   
-  return await publishEvent(title, formattedDescription, true);
+  // Create structured event data
+  const eventData = JSON.stringify({
+    description,
+    eventDate: date
+  });
+  
+  return await publishEvent(title, eventData, true);
 };
 
 export const createTalk = async (

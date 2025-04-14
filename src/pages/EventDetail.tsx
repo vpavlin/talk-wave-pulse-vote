@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import SubmitTalkDialog from "@/components/SubmitTalkDialog";
 import TalkCard from "@/components/TalkCard";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { useWallet } from "@/contexts/WalletContext";
 import ThemeToggle from "@/components/ThemeToggle";
 import { fetchEventById, createTalk, upvoteTalk } from "@/services/eventService";
@@ -169,7 +169,7 @@ const EventDetail = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-purple-50 dark:from-gray-900 dark:to-indigo-950 transition-colors">
+    <div className="min-h-screen bg-gradient-to-b from-purple-950 to-indigo-950 transition-colors">
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
           <Link to="/">
@@ -199,7 +199,7 @@ const EventDetail = () => {
               </div>
               <Badge className="date-badge text-lg">
                 <Calendar className="h-5 w-5" />
-                {event.date ? format(new Date(event.date), "MMMM d, yyyy") : ""}
+                {event.eventDate ? format(new Date(event.eventDate), "MMMM d, yyyy") : "Date TBD"}
               </Badge>
             </div>
           </CardHeader>
