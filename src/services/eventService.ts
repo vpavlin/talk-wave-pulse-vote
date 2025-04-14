@@ -1,4 +1,3 @@
-
 import {
   getEvents,
   getEventById,
@@ -17,6 +16,7 @@ export interface Talk {
   votes: number;
   createdAt: string;
   walletAddress?: string; // Author's wallet address
+  voterAddresses?: string[]; // Array of wallet addresses that voted for this talk
 }
 
 export interface Event {
@@ -34,10 +34,8 @@ export interface Event {
   bannerImage?: string; // URL to banner image
 }
 
-// Helper function to parse question content with better error handling
 const parseTalkContent = (content: string): { title: string; description: string; speaker: string } => {
   try {
-    // Ensure we're working with a string before parsing
     const contentString = typeof content === 'string' ? content : JSON.stringify(content);
     return JSON.parse(contentString);
   } catch (e) {
@@ -46,7 +44,6 @@ const parseTalkContent = (content: string): { title: string; description: string
   }
 };
 
-// Helper function to parse event description for structured data
 const parseEventContent = (description: string): { 
   description: string; 
   eventDate?: string;
@@ -56,19 +53,16 @@ const parseEventContent = (description: string): {
   bannerImage?: string;
 } => {
   try {
-    // Try to parse as JSON first
     if (description.startsWith('{') && description.endsWith('}')) {
       return JSON.parse(description);
     }
     
-    // Legacy format: look for structured data in description
     const dateMatch = description.match(/Event Date: (.+?)(?:\n|$)/);
     const websiteMatch = description.match(/Website: (.+?)(?:\n|$)/);
     const locationMatch = description.match(/Location: (.+?)(?:\n|$)/);
     const contactMatch = description.match(/Contact: (.+?)(?:\n|$)/);
     const bannerMatch = description.match(/Banner: (.+?)(?:\n|$)/);
     
-    // Extract the pure description without the metadata lines
     let pureDescription = description;
     const metadataRegex = /(Event Date|Website|Location|Contact|Banner): .+?(?:\n|$)/g;
     pureDescription = pureDescription.replace(metadataRegex, '').trim();
@@ -91,14 +85,11 @@ export const fetchEvents = async (): Promise<Event[]> => {
   console.log("Fetching events through service layer");
   const rawEvents = await getEvents();
   
-  // Create an array to hold the fully populated events
   const populatedEvents = [];
   
-  // Transform the raw data into our app format and fetch detailed talks for each event
   for (const event of rawEvents) {
     const parsedContent = parseEventContent(event.description || '');
     
-    // Fetch detailed talks for this event
     console.log(`Fetching talks for event ${event.id} on main page`);
     const rawTalks = await getTalks(event.id);
     
@@ -115,6 +106,12 @@ export const fetchEvents = async (): Promise<Event[]> => {
       bannerImage: parsedContent.bannerImage || '',
       talks: rawTalks.map((talk: any) => {
         const parsedContent = parseTalkContent(talk.question);
+        
+        let voterAddresses: string[] = [];
+        if (talk.voters && Array.isArray(talk.voters)) {
+          voterAddresses = talk.voters;
+        }
+        
         return {
           id: talk.hash,
           title: parsedContent.title || "Untitled Talk",
@@ -123,6 +120,7 @@ export const fetchEvents = async (): Promise<Event[]> => {
           votes: talk.upvotes || 0,
           createdAt: talk.timestamp || new Date().toISOString(),
           walletAddress: talk.signer || '',
+          voterAddresses: voterAddresses,
         };
       }),
     });
@@ -137,10 +135,8 @@ export const fetchEventById = async (eventId: string): Promise<Event | null> => 
   
   if (!rawEvent) return null;
   
-  // Get detailed talks for this event
   const rawTalks = await getTalks(eventId);
   
-  // Parse the event description for structured data
   const parsedContent = parseEventContent(rawEvent.description || '');
   
   return {
@@ -156,6 +152,12 @@ export const fetchEventById = async (eventId: string): Promise<Event | null> => 
     bannerImage: parsedContent.bannerImage || '',
     talks: rawTalks.map((talk: any) => {
       const parsedContent = parseTalkContent(talk.question);
+      
+      let voterAddresses: string[] = [];
+      if (talk.voters && Array.isArray(talk.voters)) {
+        voterAddresses = talk.voters;
+      }
+      
       return {
         id: talk.hash,
         title: parsedContent.title || talk.title || "Untitled Talk",
@@ -164,6 +166,7 @@ export const fetchEventById = async (eventId: string): Promise<Event | null> => 
         votes: talk.upvotes || 0,
         createdAt: talk.createdAt || new Date().toISOString(),
         walletAddress: talk.signer || '',
+        voterAddresses: voterAddresses,
       };
     }),
   };
@@ -180,7 +183,6 @@ export const createEvent = async (
 ): Promise<string | null> => {
   console.log(`Creating new event: ${title}`);
   
-  // Create structured event data
   const eventData = JSON.stringify({
     description,
     eventDate: date,

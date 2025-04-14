@@ -3,10 +3,11 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, ArrowRight, MessageSquare, Wallet, ChevronDown } from "lucide-react";
+import { Calendar, ArrowRight, MessageSquare, Wallet, User, MessageSquarePlus, Vote } from "lucide-react";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
 import { Event } from "@/services/eventService";
+import { useWallet } from "@/contexts/WalletContext";
 
 interface EventListProps {
   events: Event[];
@@ -14,6 +15,7 @@ interface EventListProps {
 
 const EventList = ({ events }: EventListProps) => {
   const [filter, setFilter] = useState("all");
+  const { walletAddress } = useWallet();
   
   const filteredEvents = events.filter(event => {
     if (filter === "all") return true;
@@ -23,6 +25,17 @@ const EventList = ({ events }: EventListProps) => {
         ? new Date(event.eventDate) 
         : new Date(event.date);
       return eventDate >= new Date();
+    }
+    if (filter === "created" && walletAddress) {
+      return event.ownerAddress === walletAddress;
+    }
+    if (filter === "submitted" && walletAddress) {
+      return event.talks.some(talk => talk.walletAddress === walletAddress);
+    }
+    if (filter === "voted" && walletAddress) {
+      // If the event has any talks the user has voted on
+      // This assumes there's a way to track which talks a user voted on
+      return event.talks.some(talk => talk.voterAddresses?.includes(walletAddress));
     }
     return false;
   });
@@ -46,24 +59,52 @@ const EventList = ({ events }: EventListProps) => {
     <div className="space-y-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-100">Events</h2>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button 
             variant={filter === "all" ? "default" : "outline"}
-            size="lg"
             onClick={() => setFilter("all")}
-            className={filter === "all" ? "bg-accent hover:bg-accent/90 text-lg" : "text-lg"}
+            className={filter === "all" ? "bg-accent hover:bg-accent/90" : ""}
             aria-pressed={filter === "all"}
           >
             All Events
           </Button>
           <Button 
             variant={filter === "upcoming" ? "default" : "outline"}
-            size="lg"
             onClick={() => setFilter("upcoming")}
-            className={filter === "upcoming" ? "bg-accent hover:bg-accent/90 text-lg" : "text-lg"}
+            className={filter === "upcoming" ? "bg-accent hover:bg-accent/90" : ""}
             aria-pressed={filter === "upcoming"}
           >
             Upcoming
+          </Button>
+          <Button 
+            variant={filter === "created" ? "default" : "outline"}
+            onClick={() => setFilter("created")}
+            className={filter === "created" ? "bg-accent hover:bg-accent/90" : ""}
+            aria-pressed={filter === "created"}
+            disabled={!walletAddress}
+          >
+            <User className="mr-1 h-4 w-4" />
+            Created
+          </Button>
+          <Button 
+            variant={filter === "submitted" ? "default" : "outline"}
+            onClick={() => setFilter("submitted")}
+            className={filter === "submitted" ? "bg-accent hover:bg-accent/90" : ""}
+            aria-pressed={filter === "submitted"}
+            disabled={!walletAddress}
+          >
+            <MessageSquarePlus className="mr-1 h-4 w-4" />
+            Submitted
+          </Button>
+          <Button 
+            variant={filter === "voted" ? "default" : "outline"}
+            onClick={() => setFilter("voted")}
+            className={filter === "voted" ? "bg-accent hover:bg-accent/90" : ""}
+            aria-pressed={filter === "voted"}
+            disabled={!walletAddress}
+          >
+            <Vote className="mr-1 h-4 w-4" />
+            Voted
           </Button>
         </div>
       </div>
@@ -71,7 +112,17 @@ const EventList = ({ events }: EventListProps) => {
       {filteredEvents.length === 0 ? (
         <Card className="glass-card">
           <CardContent className="pt-6 text-center">
-            <p className="text-lg text-gray-500 dark:text-gray-400">No events found. Create a new event to get started!</p>
+            {!walletAddress && (filter === "created" || filter === "submitted" || filter === "voted") ? (
+              <p className="text-lg text-gray-500 dark:text-gray-400">Connect your wallet to see your events.</p>
+            ) : (
+              <p className="text-lg text-gray-500 dark:text-gray-400">
+                No events found for this filter. 
+                {filter === "created" && "Create a new event to get started!"}
+                {filter === "submitted" && "Submit talks to events to see them here!"}
+                {filter === "voted" && "Vote on talks to see events here!"}
+                {filter === "upcoming" && "No upcoming events found."}
+              </p>
+            )}
           </CardContent>
         </Card>
       ) : (

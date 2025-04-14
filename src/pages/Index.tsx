@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import EventList from "@/components/EventList";
@@ -14,8 +14,13 @@ import { fetchEvents, createEvent } from "@/services/eventService";
 const Index = () => {
   const [isCreateEventOpen, setIsCreateEventOpen] = useState(false);
   const { toast } = useToast();
-  const { connected } = useWallet();
+  const { connected, walletAddress } = useWallet();
   const queryClient = useQueryClient();
+  
+  // Refresh events data when wallet state changes
+  useEffect(() => {
+    queryClient.invalidateQueries({ queryKey: ['events'] });
+  }, [walletAddress, connected, queryClient]);
   
   // Use React Query for data fetching with improved polling for real-time updates
   const { data: events = [], isLoading, isError } = useQuery({

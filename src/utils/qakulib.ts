@@ -186,7 +186,24 @@ export const getTalks = async (eventId: string): Promise<EnhancedQuestionMessage
     const talksList = event.questions.values();
     const talks = [];
     for (const talk of talksList) {
-      talks.push(talk);
+      // Add voters information (this will come from the qakulib instance)
+      // Note: If qakulib doesn't provide this info natively, we're adding it here 
+      // as a placeholder. This might need to be adjusted based on actual implementation.
+      const talkWithVoters = {...talk};
+      
+      // Simulate or get actual voters based on qakulib implementation
+      if (!talkWithVoters.voters) {
+        // If qakulib doesn't track voters, initialize an empty array
+        talkWithVoters.voters = [];
+        
+        // Optional: Check if the current user has voted for this talk
+        const currentUserAddress = qakulib.identity?.address;
+        if (currentUserAddress && talk.upvoter && talk.upvoter.includes(currentUserAddress)) {
+          talkWithVoters.voters.push(currentUserAddress);
+        }
+      }
+      
+      talks.push(talkWithVoters);
     }
     
     console.log(`Found ${talks.length} talks for event ${eventId}`);
@@ -240,6 +257,25 @@ export const voteTalk = async (eventId: string, talkId: string): Promise<boolean
     
     // Cast vote for the talk
     await qakulib.upvote(eventId, talkId);
+    
+    // Get the current user's wallet address
+    const currentUserAddress = qakulib.identity?.address;
+    
+    // If we have a wallet address, update our local state to track this vote
+    if (currentUserAddress) {
+      const event = qakulib.qas.get(eventId);
+      if (event) {
+        const talk = event.questions.get(talkId);
+        if (talk) {
+          if (!talk.voters) {
+            talk.voters = [];
+          }
+          if (!talk.voters.includes(currentUserAddress)) {
+            talk.voters.push(currentUserAddress);
+          }
+        }
+      }
+    }
     
     console.log(`Vote recorded successfully for talk ${talkId}`);
     return true;
