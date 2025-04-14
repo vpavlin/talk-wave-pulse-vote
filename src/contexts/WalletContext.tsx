@@ -32,9 +32,8 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const qakulib = await getQakulib();
       
       if (qakulib.identity?.address) {
-        const address = qakulib.identity.address;
-        // Handle the case where address might be a function or a string
-        const addressValue = typeof address === 'function' ? address() : address;
+        // Call the address function to get the actual address string
+        const addressValue = qakulib.identity.address();
         setWalletAddress(addressValue);
         setConnected(true);
       }

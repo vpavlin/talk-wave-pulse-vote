@@ -1,4 +1,3 @@
-
 // Using the locally installed qakulib package
 import {ControlMessage, EnhancedQuestionMessage, Qaku} from "qakulib";
 import { wakuPeerExchangeDiscovery } from "@waku/discovery";
@@ -144,15 +143,14 @@ export const getEvents = async (): Promise<any[]> => {
     const events = [];
     
     // Get current user address for comparison
-    const currentUserAddress = qakulib.identity?.address;
-    const userAddr = typeof currentUserAddress === 'function' ? currentUserAddress() : currentUserAddress || '';
+    const currentUserAddress = qakulib.identity?.address ? qakulib.identity.address() : '';
     
     for (const event of eventsList) {
       // Create extended control state with additional properties
       const extendedEvent = {...event.controlState} as ExtendedControlMessage;
       
       // Check if the current user is the creator of this event
-      if (extendedEvent.owner === userAddr) {
+      if (extendedEvent.owner === currentUserAddress) {
         extendedEvent.isCreator = true;
       }
       
@@ -185,13 +183,12 @@ export const getEventById = async (eventId: string): Promise<ControlMessage | nu
     }
     
     // Add identity check for creator
-    const currentUserAddress = qakulib.identity?.address;
-    const userAddr = typeof currentUserAddress === 'function' ? currentUserAddress() : currentUserAddress || '';
+    const currentUserAddress = qakulib.identity?.address ? qakulib.identity.address() : '';
     
     // We need to cast to ExtendedControlMessage to add our custom property
     const extendedControlState = event.controlState as ExtendedControlMessage;
     
-    if (extendedControlState.owner === userAddr) {
+    if (extendedControlState.owner === currentUserAddress) {
       extendedControlState.isCreator = true;
     }
     
@@ -224,8 +221,7 @@ export const getTalks = async (eventId: string): Promise<EnhancedQuestionMessage
     const talks = [];
     
     // Get current user address as a string
-    const currentUserAddress = qakulib.identity?.address;
-    const userAddr = typeof currentUserAddress === 'function' ? currentUserAddress() : currentUserAddress || '';
+    const currentUserAddress = qakulib.identity?.address ? qakulib.identity.address() : '';
     
     for (const talk of talksList) {
       // Create an extended talk with our custom properties
@@ -240,15 +236,15 @@ export const getTalks = async (eventId: string): Promise<EnhancedQuestionMessage
       }
       
       // Check if the current user has upvoted this talk
-      if (userAddr && extendedTalk.upvotedByMe) {
+      if (currentUserAddress && extendedTalk.upvotedByMe) {
         // Make sure the current user is in the voterAddresses array
-        if (!extendedTalk.voterAddresses.includes(userAddr)) {
-          extendedTalk.voterAddresses.push(userAddr);
+        if (!extendedTalk.voterAddresses.includes(currentUserAddress)) {
+          extendedTalk.voterAddresses.push(currentUserAddress);
         }
       }
       
       // Check if the current user is the author
-      if (extendedTalk.signer === userAddr) {
+      if (extendedTalk.signer === currentUserAddress) {
         extendedTalk.isAuthor = true;
       }
       
