@@ -297,4 +297,3 @@ export const voteTalk = async (eventId: string, talkId: string): Promise<boolean
     return false;
   }
 };
-
