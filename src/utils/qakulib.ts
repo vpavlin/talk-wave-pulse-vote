@@ -1,3 +1,4 @@
+
 // Using the locally installed qakulib package
 import {ControlMessage, EnhancedQuestionMessage, Qaku} from "qakulib";
 import { wakuPeerExchangeDiscovery } from "@waku/discovery";
@@ -191,15 +192,14 @@ export const getTalks = async (eventId: string): Promise<EnhancedQuestionMessage
       // as a placeholder. This might need to be adjusted based on actual implementation.
       const talkWithVoters = {...talk};
       
-      // Simulate or get actual voters based on qakulib implementation
-      if (!talkWithVoters.voters) {
-        // If qakulib doesn't track voters, initialize an empty array
-        talkWithVoters.voters = [];
+      // Track upvoters as voterAddresses for our UI
+      if (!talkWithVoters.voterAddresses) {
+        talkWithVoters.voterAddresses = [];
         
-        // Optional: Check if the current user has voted for this talk
+        // Use upvoters instead of voters/upvoter
         const currentUserAddress = qakulib.identity?.address;
-        if (currentUserAddress && talk.upvoter && talk.upvoter.includes(currentUserAddress)) {
-          talkWithVoters.voters.push(currentUserAddress);
+        if (currentUserAddress && talkWithVoters.upvoters && talkWithVoters.upvoters.includes(currentUserAddress)) {
+          talkWithVoters.voterAddresses.push(currentUserAddress);
         }
       }
       
@@ -267,11 +267,14 @@ export const voteTalk = async (eventId: string, talkId: string): Promise<boolean
       if (event) {
         const talk = event.questions.get(talkId);
         if (talk) {
-          if (!talk.voters) {
-            talk.voters = [];
+          // Add voterAddresses property if it doesn't exist
+          if (!talk.voterAddresses) {
+            talk.voterAddresses = [];
           }
-          if (!talk.voters.includes(currentUserAddress)) {
-            talk.voters.push(currentUserAddress);
+          
+          // Add current user to voterAddresses if not already included
+          if (!talk.voterAddresses.includes(currentUserAddress)) {
+            talk.voterAddresses.push(currentUserAddress);
           }
         }
       }

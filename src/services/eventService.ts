@@ -1,3 +1,4 @@
+
 import {
   getEvents,
   getEventById,
@@ -108,8 +109,11 @@ export const fetchEvents = async (): Promise<Event[]> => {
         const parsedContent = parseTalkContent(talk.question);
         
         let voterAddresses: string[] = [];
-        if (talk.voters && Array.isArray(talk.voters)) {
-          voterAddresses = talk.voters;
+        if (talk.voterAddresses && Array.isArray(talk.voterAddresses)) {
+          voterAddresses = talk.voterAddresses;
+        } else if (talk.upvoters && Array.isArray(talk.upvoters)) {
+          // Fallback to upvoters if voterAddresses doesn't exist
+          voterAddresses = talk.upvoters;
         }
         
         return {
