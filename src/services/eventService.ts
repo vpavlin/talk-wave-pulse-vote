@@ -1,4 +1,3 @@
-
 import {
   getEvents,
   getEventById,
@@ -108,6 +107,7 @@ export const fetchEvents = async (): Promise<Event[]> => {
       talks: rawTalks.map((talk: any) => {
         const parsedContent = parseTalkContent(talk.question);
         
+        // Handle voter addresses safely with fallbacks
         let voterAddresses: string[] = [];
         if (talk.voterAddresses && Array.isArray(talk.voterAddresses)) {
           voterAddresses = talk.voterAddresses;
@@ -157,6 +157,7 @@ export const fetchEventById = async (eventId: string): Promise<Event | null> => 
     talks: rawTalks.map((talk: any) => {
       const parsedContent = parseTalkContent(talk.question);
       
+      // Handle voter addresses safely with fallbacks
       let voterAddresses: string[] = [];
       if (talk.voters && Array.isArray(talk.voters)) {
         voterAddresses = talk.voters;

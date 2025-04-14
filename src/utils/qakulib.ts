@@ -5,6 +5,11 @@ import { wakuPeerExchangeDiscovery } from "@waku/discovery";
 import { derivePubsubTopicsFromNetworkConfig } from "@waku/utils"
 import { createLightNode, IWaku, LightNode, Protocols } from '@waku/sdk';
 
+// Define an extended interface for the talk with our custom properties
+interface ExtendedTalk extends EnhancedQuestionMessage {
+  voterAddresses?: string[];
+}
+
 // Initialize the Qakulib instance
 let qakulibInstance: any | null = null;
 
@@ -187,23 +192,28 @@ export const getTalks = async (eventId: string): Promise<EnhancedQuestionMessage
     const talksList = event.questions.values();
     const talks = [];
     for (const talk of talksList) {
-      // Add voters information (this will come from the qakulib instance)
-      // Note: If qakulib doesn't provide this info natively, we're adding it here 
-      // as a placeholder. This might need to be adjusted based on actual implementation.
-      const talkWithVoters = {...talk};
+      // Create an extended talk with our custom properties
+      const extendedTalk = {...talk} as ExtendedTalk;
       
-      // Track upvoters as voterAddresses for our UI
-      if (!talkWithVoters.voterAddresses) {
-        talkWithVoters.voterAddresses = [];
-        
-        // Use upvoters instead of voters/upvoter
-        const currentUserAddress = qakulib.identity?.address;
-        if (currentUserAddress && talkWithVoters.upvoters && talkWithVoters.upvoters.includes(currentUserAddress)) {
-          talkWithVoters.voterAddresses.push(currentUserAddress);
-        }
+      // Add voterAddresses property based on upvoters
+      extendedTalk.voterAddresses = [];
+      
+      // Use upvoters for voter tracking
+      if (extendedTalk.upvoters && Array.isArray(extendedTalk.upvoters)) {
+        extendedTalk.voterAddresses = [...extendedTalk.upvoters];
       }
       
-      talks.push(talkWithVoters);
+      // Add current user if they have voted
+      const currentUserAddress = qakulib.identity?.address;
+      if (currentUserAddress && 
+          extendedTalk.upvoters && 
+          Array.isArray(extendedTalk.upvoters) && 
+          extendedTalk.upvoters.includes(currentUserAddress) && 
+          !extendedTalk.voterAddresses.includes(currentUserAddress)) {
+        extendedTalk.voterAddresses.push(currentUserAddress);
+      }
+      
+      talks.push(extendedTalk);
     }
     
     console.log(`Found ${talks.length} talks for event ${eventId}`);
@@ -265,11 +275,11 @@ export const voteTalk = async (eventId: string, talkId: string): Promise<boolean
     if (currentUserAddress) {
       const event = qakulib.qas.get(eventId);
       if (event) {
-        const talk = event.questions.get(talkId);
+        const talk = event.questions.get(talkId) as ExtendedTalk;
         if (talk) {
-          // Add voterAddresses property if it doesn't exist
+          // Initialize voterAddresses property if needed
           if (!talk.voterAddresses) {
-            talk.voterAddresses = [];
+            (talk as ExtendedTalk).voterAddresses = [];
           }
           
           // Add current user to voterAddresses if not already included
@@ -287,3 +297,4 @@ export const voteTalk = async (eventId: string, talkId: string): Promise<boolean
     return false;
   }
 };
+
