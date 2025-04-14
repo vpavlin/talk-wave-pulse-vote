@@ -27,7 +27,7 @@ export interface Event {
   eventDate: string; // actual event date
   talks: Talk[];
   ownerAddress?: string; // Event owner's wallet address
-  // Added new optional metadata fields
+  // Added metadata fields
   website?: string;
   location?: string;
   contact?: string;
@@ -108,7 +108,7 @@ export const fetchEvents = async (): Promise<Event[]> => {
       description: parsedContent.description || event.description,
       date: event.createdAt || Date.now(),
       eventDate: parsedContent.eventDate || '',
-      ownerAddress: event.owner || '', // Changed: Use owner property for events
+      ownerAddress: event.owner || '',
       website: parsedContent.website || '',
       location: parsedContent.location || '',
       contact: parsedContent.contact || '',
@@ -122,7 +122,7 @@ export const fetchEvents = async (): Promise<Event[]> => {
           description: parsedContent.description,
           votes: talk.upvotes || 0,
           createdAt: talk.timestamp || new Date().toISOString(),
-          walletAddress: talk.signer || '', // Changed: Use signer property for talks
+          walletAddress: talk.signer || '',
         };
       }),
     });
@@ -149,7 +149,7 @@ export const fetchEventById = async (eventId: string): Promise<Event | null> => 
     description: parsedContent.description || rawEvent.description,
     date: rawEvent.timestamp,
     eventDate: parsedContent.eventDate || '',
-    ownerAddress: rawEvent.owner || '', // Changed: Use owner property for events
+    ownerAddress: rawEvent.owner || '',
     website: parsedContent.website || '',
     location: parsedContent.location || '',
     contact: parsedContent.contact || '',
@@ -163,7 +163,7 @@ export const fetchEventById = async (eventId: string): Promise<Event | null> => 
         description: parsedContent.description || talk.content,
         votes: talk.upvotes || 0,
         createdAt: talk.createdAt || new Date().toISOString(),
-        walletAddress: talk.signer || '', // Changed: Use signer property for talks
+        walletAddress: talk.signer || '',
       };
     }),
   };
