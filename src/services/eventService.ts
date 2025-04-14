@@ -89,7 +89,7 @@ export const fetchEvents = async (): Promise<Event[]> => {
       description: parsedContent.description || event.description,
       date: event.createdAt || Date.now(),
       eventDate: parsedContent.eventDate || '',
-      ownerAddress: event.creator || '', // Use creator property instead of author
+      ownerAddress: event.owner || '', // Changed: Use owner property for events
       talks: rawTalks.map((talk: any) => {
         const parsedContent = parseTalkContent(talk.question);
         return {
@@ -99,7 +99,7 @@ export const fetchEvents = async (): Promise<Event[]> => {
           description: parsedContent.description,
           votes: talk.upvotes || 0,
           createdAt: talk.timestamp || new Date().toISOString(),
-          walletAddress: talk.author || '',
+          walletAddress: talk.signer || '', // Changed: Use signer property for talks
         };
       }),
     });
@@ -126,7 +126,7 @@ export const fetchEventById = async (eventId: string): Promise<Event | null> => 
     description: parsedContent.description || rawEvent.description,
     date: rawEvent.timestamp,
     eventDate: parsedContent.eventDate || '',
-    ownerAddress: rawEvent.creator || '', // Changed: Use creator property instead of author
+    ownerAddress: rawEvent.owner || '', // Changed: Use owner property for events
     talks: rawTalks.map((talk: any) => {
       const parsedContent = parseTalkContent(talk.question);
       return {
@@ -136,7 +136,7 @@ export const fetchEventById = async (eventId: string): Promise<Event | null> => 
         description: parsedContent.description || talk.content,
         votes: talk.upvotes || 0,
         createdAt: talk.createdAt || new Date().toISOString(),
-        walletAddress: talk.author || '',
+        walletAddress: talk.signer || '', // Changed: Use signer property for talks
       };
     }),
   };
