@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -52,35 +53,32 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans tracking-tight;
   }
   
-  /* Improved heading hierarchy */
   h1 {
-    @apply text-4xl font-bold;
+    @apply text-4xl font-bold tracking-tight;
   }
   
   h2 {
-    @apply text-3xl font-bold;
+    @apply text-3xl font-bold tracking-tight;
   }
   
   h3 {
-    @apply text-2xl font-semibold;
+    @apply text-2xl font-semibold tracking-tight;
   }
   
   h4 {
-    @apply text-xl font-semibold;
+    @apply text-xl font-semibold tracking-tight;
   }
 }
 
-/* Custom glass morphism effect for cards */
 .glass-card {
   @apply backdrop-blur-sm border rounded-xl shadow-lg;
   @apply border-purple-800/50;
   @apply bg-purple-900/80;
 }
 
-/* Custom animations */
 .fade-in {
   animation: fadeIn 0.3s ease-in-out;
 }
@@ -99,22 +97,18 @@
   to { transform: translateY(0); opacity: 1; }
 }
 
-/* Gradient text */
 .gradient-text {
   @apply bg-clip-text text-transparent bg-gradient-to-r from-purple-200 to-indigo-300;
 }
 
-/* Enhanced focus styles for better accessibility */
 .focus-ring {
   @apply focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background transition-all;
 }
 
-/* Accessibility improvements */
 .sr-only {
   @apply absolute w-px h-px p-0 -m-px overflow-hidden whitespace-nowrap border-0;
 }
 
-/* Card and button enhancements */
 .card-hover {
   @apply transition-all duration-200 hover:shadow-md hover:border-purple-500/50;
 }
@@ -123,13 +117,11 @@
   @apply transition-all duration-200 hover:shadow-md hover:translate-y-[-2px];
 }
 
-/* Date badge for better visibility */
 .date-badge {
   @apply text-lg px-3 py-1.5 rounded-full font-medium inline-flex items-center gap-1.5;
   @apply bg-purple-800/30 text-purple-300;
 }
 
-/* Better avatar styling */
 .avatar-base {
   @apply flex items-center justify-center rounded-full text-white font-semibold;
 }
