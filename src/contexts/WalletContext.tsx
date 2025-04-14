@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { getQakulib } from "@/utils/qakulib";
@@ -52,15 +53,17 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         setWalletAddress(qakulib.identity.address);
         setConnected(true);
       } else {
-        await qakulib.refresh();
+        // Instead of qakulib.refresh(), we need to re-initialize
+        await getQakulib();
         
         if (qakulib.identity?.address) {
           setWalletAddress(qakulib.identity.address);
           setConnected(true);
           
+          const address = qakulib.identity.address;
           toast({
             title: "Connected",
-            description: `Connected with ID ${qakulib.identity.address.substring(0, 6)}...${qakulib.identity.address.substring(qakulib.identity.address.length - 4)}`,
+            description: `Connected with ID ${address.substring(0, 6)}...${address.substring(address.length - 4)}`,
           });
         } else {
           throw new Error("Failed to get qakulib identity");
