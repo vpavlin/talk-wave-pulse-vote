@@ -27,13 +27,13 @@ const EventList = ({ events }: EventListProps) => {
   return (
     <div className="space-y-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-100">Events</h2>
+        <h2 className="text-3xl font-bold text-black dark:text-white">Events</h2>
         <div className="flex gap-2">
           <Button 
             variant={filter === "all" ? "default" : "outline"}
             size="lg"
             onClick={() => setFilter("all")}
-            className={filter === "all" ? "bg-accent hover:bg-accent/90 text-lg" : "text-lg"}
+            className={`text-lg ${filter === "all" ? "bg-black text-white" : "text-black dark:text-white border-black dark:border-white"}`}
             aria-pressed={filter === "all"}
           >
             All Events
@@ -42,7 +42,7 @@ const EventList = ({ events }: EventListProps) => {
             variant={filter === "upcoming" ? "default" : "outline"}
             size="lg"
             onClick={() => setFilter("upcoming")}
-            className={filter === "upcoming" ? "bg-accent hover:bg-accent/90 text-lg" : "text-lg"}
+            className={`text-lg ${filter === "upcoming" ? "bg-black text-white" : "text-black dark:text-white border-black dark:border-white"}`}
             aria-pressed={filter === "upcoming"}
           >
             Upcoming
@@ -51,40 +51,45 @@ const EventList = ({ events }: EventListProps) => {
       </div>
       
       {filteredEvents.length === 0 ? (
-        <Card className="glass-card">
+        <Card className="border-gray-300 dark:border-gray-700">
           <CardContent className="pt-6 text-center">
-            <p className="text-lg text-gray-500 dark:text-gray-400">No events found. Create a new event to get started!</p>
+            <p className="text-lg text-gray-600 dark:text-gray-400">No events found. Create a new event to get started!</p>
           </CardContent>
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredEvents.map((event) => (
-            <Card key={event.id} className="overflow-hidden transition-all duration-300 hover:shadow-xl border-gray-200 dark:border-gray-700 card-hover">
-              <CardHeader className="bg-gradient-to-r from-purple-500/10 to-indigo-500/10 dark:from-purple-900/20 dark:to-indigo-900/20 pb-3">
-                <div className="flex flex-col gap-3">
-                  <div className="flex justify-between items-start">
-                    <CardTitle className="text-2xl text-purple-800 dark:text-purple-300 font-bold">
-                      {event.title}
-                    </CardTitle>
-                    <Badge className="date-badge">
-                      <Calendar className="h-4 w-4" />
-                      {format(new Date(event.date), "MMM d, yyyy")}
-                    </Badge>
-                  </div>
-                  <CardDescription className="mt-1 text-base dark:text-gray-300">
-                    {event.description}
-                  </CardDescription>
+            <Card 
+              key={event.id} 
+              className="border-gray-300 dark:border-gray-700 hover:border-black dark:hover:border-white transition-colors"
+            >
+              <CardHeader className="pb-3">
+                <div className="flex justify-between items-start">
+                  <CardTitle className="text-2xl text-black dark:text-white font-bold">
+                    {event.title}
+                  </CardTitle>
+                  <Badge className="bg-gray-200 dark:bg-gray-800 text-black dark:text-white border-gray-300 dark:border-gray-700">
+                    <Calendar className="h-4 w-4 mr-1" />
+                    {format(new Date(event.date), "MMM d, yyyy")}
+                  </Badge>
                 </div>
+                <CardDescription className="mt-2 text-gray-700 dark:text-gray-300">
+                  {event.description}
+                </CardDescription>
               </CardHeader>
-              <CardContent className="pt-4 bg-white dark:bg-gray-800">
+              <CardContent className="pt-4">
                 <div className="mb-3 flex gap-2 items-center">
-                  <MessageSquare className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                  <MessageSquare className="h-5 w-5 text-gray-600 dark:text-gray-400" />
                   <p className="text-base font-medium text-gray-700 dark:text-gray-300">
                     {event.talks.length} {event.talks.length === 1 ? 'talk' : 'talks'} submitted
                   </p>
                 </div>
                 <Link to={`/event/${event.id}`} className="block">
-                  <Button variant="outline" size="lg" className="w-full mt-2 border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-700 dark:text-purple-300 dark:hover:bg-purple-900/30 group text-lg focus-ring">
+                  <Button 
+                    variant="outline" 
+                    size="lg" 
+                    className="w-full border-black dark:border-white text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-900 group"
+                  >
                     View Event
                     <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
                   </Button>
@@ -99,3 +104,4 @@ const EventList = ({ events }: EventListProps) => {
 };
 
 export default EventList;
+
