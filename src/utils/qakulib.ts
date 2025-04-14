@@ -1,3 +1,4 @@
+
 // Using the locally installed qakulib package
 import {ControlMessage, EnhancedQuestionMessage, Qaku} from "qakulib";
 import { wakuPeerExchangeDiscovery } from "@waku/discovery";
@@ -7,6 +8,12 @@ import { createLightNode, IWaku, LightNode, Protocols } from '@waku/sdk';
 // Define an extended interface for the talk with our custom properties
 interface ExtendedTalk extends EnhancedQuestionMessage {
   voterAddresses?: string[];
+  isAuthor?: boolean; // Add isAuthor property
+}
+
+// Define an extended interface for the control message
+interface ExtendedControlMessage extends ControlMessage {
+  isCreator?: boolean; // Add isCreator property
 }
 
 // Initialize the Qakulib instance
@@ -165,12 +172,15 @@ export const getEventById = async (eventId: string): Promise<ControlMessage | nu
     
     // Add identity check for creator
     const currentUserAddress = qakulib.identity?.address || '';
-    if (event.controlState.owner === currentUserAddress) {
-      event.controlState.isCreator = true;
+    // We need to cast to ExtendedControlMessage to add our custom property
+    const extendedControlState = event.controlState as ExtendedControlMessage;
+    
+    if (extendedControlState.owner === currentUserAddress) {
+      extendedControlState.isCreator = true;
     }
     
     console.log(`Successfully retrieved event: ${event.controlState.title}`);
-    return event.controlState;
+    return extendedControlState;
   } catch (error) {
     console.error(`Failed to fetch event with ID ${eventId}:`, error);
     return null;
@@ -291,7 +301,7 @@ export const voteTalk = async (eventId: string, talkId: string): Promise<boolean
         if (talk) {
           // Initialize voterAddresses property if needed
           if (!talk.voterAddresses) {
-            (talk as ExtendedTalk).voterAddresses = [];
+            talk.voterAddresses = [];
           }
           
           // Add current user to voterAddresses if not already included
