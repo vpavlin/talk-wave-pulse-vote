@@ -21,7 +21,10 @@ import {
   Link as LinkIcon,
   MapPin,
   Phone,
-  Image
+  Share,
+  Twitter,
+  Copy,
+  CheckCircle
 } from "lucide-react";
 import SubmitTalkDialog from "@/components/SubmitTalkDialog";
 import TalkCard from "@/components/TalkCard";
@@ -34,6 +37,7 @@ const EventDetail = () => {
   const { eventId = "" } = useParams();
   const [sortOption, setSortOption] = useState("votes");
   const [isSubmitTalkOpen, setIsSubmitTalkOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
   const { toast } = useToast();
   const { connected, connect } = useWallet();
   const queryClient = useQueryClient();
@@ -80,6 +84,36 @@ const EventDetail = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const handleCopyLink = () => {
+    const url = window.location.href;
+    navigator.clipboard.writeText(url)
+      .then(() => {
+        setCopied(true);
+        toast({
+          title: "Link Copied",
+          description: "Event link has been copied to clipboard",
+        });
+        
+        // Reset copied state after 2 seconds
+        setTimeout(() => setCopied(false), 2000);
+      })
+      .catch(() => {
+        toast({
+          title: "Copy Failed",
+          description: "Could not copy the link to clipboard",
+          variant: "destructive",
+        });
+      });
+  };
+
+  const handleShareTwitter = () => {
+    if (!event) return;
+    
+    const title = encodeURIComponent(`Check out "${event.title}" on Lightning Talk Wave`);
+    const url = encodeURIComponent(window.location.href);
+    window.open(`https://twitter.com/intent/tweet?text=${title}&url=${url}`, '_blank');
   };
 
   const handleVote = async (talkId: string) => {
@@ -202,7 +236,30 @@ const EventDetail = () => {
               Back to Events
             </Button>
           </Link>
-          <ThemeToggle />
+          <div className="flex space-x-2">
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handleCopyLink}
+                className="bg-purple-800/30 border-purple-700/50 hover:bg-purple-700/50 text-purple-100 focus-ring"
+                aria-label="Copy event link"
+              >
+                {copied ? <CheckCircle className="h-5 w-5" /> : <Copy className="h-5 w-5" />}
+              </Button>
+              
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handleShareTwitter}
+                className="bg-blue-600/30 border-blue-500/50 hover:bg-blue-600/50 text-blue-100 focus-ring"
+                aria-label="Share on Twitter"
+              >
+                <Twitter className="h-5 w-5" />
+              </Button>
+            </div>
+            <ThemeToggle />
+          </div>
         </div>
         
         {eventBanner}
@@ -279,16 +336,29 @@ const EventDetail = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <Button 
-              onClick={() => setIsSubmitTalkOpen(true)}
-              className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 dark:from-purple-600 dark:to-indigo-600 dark:hover:from-purple-700 dark:hover:to-indigo-700 text-lg px-6 py-6 h-auto focus-ring"
-              disabled={!connected}
-              size="lg"
-              aria-label="Submit a lightning talk"
-            >
-              <MessageSquarePlus className="mr-2 h-6 w-6" />
-              Submit a Lightning Talk
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-4 mb-4">
+              <Button 
+                onClick={() => setIsSubmitTalkOpen(true)}
+                className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 dark:from-purple-600 dark:to-indigo-600 dark:hover:from-purple-700 dark:hover:to-indigo-700 text-lg px-6 py-6 h-auto focus-ring"
+                disabled={!connected}
+                size="lg"
+                aria-label="Submit a lightning talk"
+              >
+                <MessageSquarePlus className="mr-2 h-6 w-6" />
+                Submit a Lightning Talk
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                className="text-lg px-6 py-6 h-auto border-purple-300 dark:border-purple-700 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/40 focus-ring"
+                onClick={handleCopyLink}
+                aria-label="Share event"
+              >
+                <Share className="mr-2 h-6 w-6" />
+                Share Event
+              </Button>
+            </div>
+            
             {!connected && (
               <p className="mt-2 text-amber-600 dark:text-amber-400 text-sm flex items-center">
                 <AlertCircle className="inline-block mr-1 h-4 w-4" />
