@@ -163,6 +163,12 @@ export const getEventById = async (eventId: string): Promise<ControlMessage | nu
       return null;
     }
     
+    // Add identity check for creator
+    const currentUserAddress = qakulib.identity?.address || '';
+    if (event.controlState.owner === currentUserAddress) {
+      event.controlState.isCreator = true;
+    }
+    
     console.log(`Successfully retrieved event: ${event.controlState.title}`);
     return event.controlState;
   } catch (error) {
@@ -190,6 +196,10 @@ export const getTalks = async (eventId: string): Promise<EnhancedQuestionMessage
     
     const talksList = event.questions.values();
     const talks = [];
+    
+    // Get current user address as a string
+    const currentUserAddress = qakulib.identity?.address || '';
+    
     for (const talk of talksList) {
       // Create an extended talk with our custom properties
       const extendedTalk = {...talk} as ExtendedTalk;
@@ -203,12 +213,16 @@ export const getTalks = async (eventId: string): Promise<EnhancedQuestionMessage
       }
       
       // Check if the current user has upvoted this talk
-      const currentUserAddress = qakulib.identity?.address;
       if (currentUserAddress && extendedTalk.upvotedByMe) {
         // Make sure the current user is in the voterAddresses array
         if (!extendedTalk.voterAddresses.includes(currentUserAddress)) {
           extendedTalk.voterAddresses.push(currentUserAddress);
         }
+      }
+      
+      // Check if the current user is the author
+      if (extendedTalk.signer === currentUserAddress) {
+        extendedTalk.isAuthor = true;
       }
       
       talks.push(extendedTalk);
@@ -267,7 +281,7 @@ export const voteTalk = async (eventId: string, talkId: string): Promise<boolean
     await qakulib.upvote(eventId, talkId);
     
     // Get the current user's wallet address
-    const currentUserAddress = qakulib.identity?.address;
+    const currentUserAddress = qakulib.identity?.address || '';
     
     // If we have a wallet address, update our local state to track this vote
     if (currentUserAddress) {

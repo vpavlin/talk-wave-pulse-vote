@@ -1,10 +1,12 @@
+
 import {
   getEvents,
   getEventById,
   publishEvent,
   submitTalk,
   voteTalk,
-  getTalks
+  getTalks,
+  getQakulib
 } from "@/utils/qakulib";
 import { EnhancedQuestionMessage } from "qakulib";
 
@@ -95,6 +97,9 @@ export const fetchEvents = async (): Promise<Event[]> => {
     console.log(`Fetching talks for event ${event.id} on main page`);
     const rawTalks = await getTalks(event.id);
     
+    const qakulib = await getQakulib();
+    const currentUserAddress = qakulib.identity?.address || '';
+    
     populatedEvents.push({
       id: event.id,
       title: event.title,
@@ -106,7 +111,7 @@ export const fetchEvents = async (): Promise<Event[]> => {
       location: parsedContent.location || '',
       contact: parsedContent.contact || '',
       bannerImage: parsedContent.bannerImage || '',
-      isCreator: event.owner === (await getQakulib()).identity?.address,
+      isCreator: event.owner === currentUserAddress,
       talks: rawTalks.map((talk: any) => {
         const parsedContent = parseTalkContent(talk.question);
         
@@ -138,6 +143,9 @@ export const fetchEventById = async (eventId: string): Promise<Event | null> => 
   
   const parsedContent = parseEventContent(rawEvent.description || '');
   
+  const qakulib = await getQakulib();
+  const currentUserAddress = qakulib.identity?.address || '';
+  
   return {
     id: rawEvent.id,
     title: rawEvent.title,
@@ -149,7 +157,7 @@ export const fetchEventById = async (eventId: string): Promise<Event | null> => 
     location: parsedContent.location || '',
     contact: parsedContent.contact || '',
     bannerImage: parsedContent.bannerImage || '',
-    isCreator: rawEvent.owner === (await getQakulib()).identity?.address,
+    isCreator: rawEvent.owner === currentUserAddress,
     talks: rawTalks.map((talk: any) => {
       const parsedContent = parseTalkContent(talk.question);
       
