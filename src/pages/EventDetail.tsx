@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -15,7 +14,8 @@ import {
   Shuffle, 
   Clock, 
   TrendingUp, 
-  AlertCircle 
+  AlertCircle,
+  Wallet
 } from "lucide-react";
 import SubmitTalkDialog from "@/components/SubmitTalkDialog";
 import TalkCard from "@/components/TalkCard";
@@ -32,13 +32,12 @@ const EventDetail = () => {
   const { connected, connect } = useWallet();
   const queryClient = useQueryClient();
   
-  // Fetch event data with improved polling for real-time updates
   const { data: event, refetch, isLoading, isError } = useQuery({
     queryKey: ['event', eventId],
     queryFn: () => fetchEventById(eventId),
     refetchOnWindowFocus: true,
-    refetchInterval: 5000, // Refresh data every 5 seconds for real-time updates
-    enabled: !!eventId, // Only run the query if we have an eventId
+    refetchInterval: 5000,
+    enabled: !!eventId,
   });
 
   const handleSubmitTalk = async (talkData: { title: string; speaker: string; description: string }) => {
@@ -60,7 +59,6 @@ const EventDetail = () => {
         
         setIsSubmitTalkOpen(false);
         
-        // Invalidate and refetch event to update the talks list
         queryClient.invalidateQueries({ queryKey: ['event', eventId] });
       } else {
         toast({
@@ -98,7 +96,6 @@ const EventDetail = () => {
           description: "Your vote has been counted",
         });
         
-        // Invalidate and refetch event to update the vote count
         queryClient.invalidateQueries({ queryKey: ['event', eventId] });
       } else {
         toast({
@@ -131,6 +128,11 @@ const EventDetail = () => {
       default:
         return sortedTalks;
     }
+  };
+
+  const formatWalletAddress = (address: string | undefined) => {
+    if (!address) return "Unknown";
+    return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
   };
 
   if (isLoading) {
@@ -196,6 +198,12 @@ const EventDetail = () => {
                 <CardDescription className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed">
                   {event.description}
                 </CardDescription>
+                {event.ownerAddress && (
+                  <div className="mt-2 flex items-center text-gray-600 dark:text-gray-400 text-sm">
+                    <Wallet className="h-4 w-4 mr-1" />
+                    <span>Created by: {formatWalletAddress(event.ownerAddress)}</span>
+                  </div>
+                )}
               </div>
               <Badge className="date-badge text-lg">
                 <Calendar className="h-5 w-5" />
@@ -298,7 +306,7 @@ const EventDetail = () => {
           <TabsContent value="top" className="mt-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {getSortedTalks()
-                .filter(talk => talk.votes >= 10) // Only show talks with 10+ votes
+                .filter(talk => talk.votes >= 10)
                 .map(talk => (
                   <TalkCard 
                     key={talk.id} 

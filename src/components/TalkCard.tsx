@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { ThumbsUp, Clock } from "lucide-react";
+import { ThumbsUp, Clock, Wallet } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { Talk } from "@/services/eventService";
 
@@ -23,6 +23,11 @@ const TalkCard = ({ talk, onVote }: TalkCardProps) => {
 
   const getTimeAgo = (date: string) => {
     return formatDistanceToNow(new Date(date), { addSuffix: true });
+  };
+
+  const formatWalletAddress = (address: string | undefined) => {
+    if (!address) return "Unknown";
+    return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
   };
 
   return (
@@ -48,6 +53,12 @@ const TalkCard = ({ talk, onVote }: TalkCardProps) => {
             {getTimeAgo(talk.createdAt)}
           </span>
         </CardDescription>
+        {talk.walletAddress && (
+          <div className="mt-1 flex items-center text-xs text-gray-400">
+            <Wallet className="h-3 w-3 mr-1" />
+            <span>{formatWalletAddress(talk.walletAddress)}</span>
+          </div>
+        )}
       </CardHeader>
       <CardContent>
         <p className="text-gray-300 text-base leading-relaxed">

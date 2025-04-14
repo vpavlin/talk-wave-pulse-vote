@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, ArrowRight, MessageSquare } from "lucide-react";
+import { Calendar, ArrowRight, MessageSquare, Wallet } from "lucide-react";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
 import { Event } from "@/services/eventService";
@@ -26,6 +26,11 @@ const EventList = ({ events }: EventListProps) => {
     }
     return false;
   });
+
+  const formatWalletAddress = (address: string | undefined) => {
+    if (!address) return "Unknown";
+    return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
+  };
 
   return (
     <div className="space-y-8">
@@ -79,6 +84,12 @@ const EventList = ({ events }: EventListProps) => {
                   <CardDescription className="mt-1 text-base dark:text-gray-300">
                     {event.description}
                   </CardDescription>
+                  {event.ownerAddress && (
+                    <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
+                      <Wallet className="h-3 w-3 mr-1" />
+                      <span>Created by: {formatWalletAddress(event.ownerAddress)}</span>
+                    </div>
+                  )}
                 </div>
               </CardHeader>
               <CardContent className="pt-4 bg-white dark:bg-gray-800">

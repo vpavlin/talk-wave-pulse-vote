@@ -1,3 +1,4 @@
+
 import {
   getEvents,
   getEventById,
@@ -15,6 +16,7 @@ export interface Talk {
   description: string;
   votes: number;
   createdAt: string;
+  walletAddress?: string; // Author's wallet address
 }
 
 export interface Event {
@@ -24,6 +26,7 @@ export interface Event {
   date: number;  // creation timestamp
   eventDate: string; // actual event date
   talks: Talk[];
+  ownerAddress?: string; // Event owner's wallet address
 }
 
 // Helper function to parse question content with better error handling
@@ -86,6 +89,7 @@ export const fetchEvents = async (): Promise<Event[]> => {
       description: parsedContent.description || event.description,
       date: event.createdAt || Date.now(),
       eventDate: parsedContent.eventDate || '',
+      ownerAddress: event.author || '',
       talks: rawTalks.map((talk: any) => {
         const parsedContent = parseTalkContent(talk.question);
         return {
@@ -95,6 +99,7 @@ export const fetchEvents = async (): Promise<Event[]> => {
           description: parsedContent.description,
           votes: talk.upvotes || 0,
           createdAt: talk.timestamp || new Date().toISOString(),
+          walletAddress: talk.author || '',
         };
       }),
     });
@@ -121,6 +126,7 @@ export const fetchEventById = async (eventId: string): Promise<Event | null> => 
     description: parsedContent.description || rawEvent.description,
     date: rawEvent.timestamp,
     eventDate: parsedContent.eventDate || '',
+    ownerAddress: rawEvent.author || '',
     talks: rawTalks.map((talk: any) => {
       const parsedContent = parseTalkContent(talk.question);
       return {
@@ -130,6 +136,7 @@ export const fetchEventById = async (eventId: string): Promise<Event | null> => 
         description: parsedContent.description || talk.content,
         votes: talk.upvotes || 0,
         createdAt: talk.createdAt || new Date().toISOString(),
+        walletAddress: talk.author || '',
       };
     }),
   };
