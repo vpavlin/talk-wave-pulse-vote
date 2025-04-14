@@ -25,9 +25,25 @@ const Index = () => {
     refetchInterval: 10000, // Refresh data every 10 seconds
   });
 
-  const handleCreateEvent = async (eventData: { title: string; description: string; date: string }) => {
+  const handleCreateEvent = async (eventData: { 
+    title: string; 
+    description: string; 
+    date: string;
+    website?: string;
+    location?: string;
+    contact?: string;
+    bannerImage?: string;
+  }) => {
     try {
-      const eventId = await createEvent(eventData.title, eventData.description, eventData.date);
+      const eventId = await createEvent(
+        eventData.title, 
+        eventData.description, 
+        eventData.date,
+        eventData.website,
+        eventData.location,
+        eventData.contact,
+        eventData.bannerImage
+      );
       
       if (eventId) {
         toast({
@@ -46,6 +62,7 @@ const Index = () => {
         });
       }
     } catch (error) {
+      console.error("Error creating event:", error);
       toast({
         title: "Error",
         description: "An unexpected error occurred",

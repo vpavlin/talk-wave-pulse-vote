@@ -2,13 +2,12 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Form, FormField, FormItem, FormLabel, FormControl, FormDescription } from "@/components/ui/form";
+import { Form, FormField, FormItem, FormLabel, FormControl, FormDescription, FormMessage } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
+import { Input } from "@/components/ui/input";
 
 interface CreateEventDialogProps {
   open: boolean;
@@ -52,16 +51,17 @@ const CreateEventDialog = ({ open, onOpenChange, onSubmit }: CreateEventDialogPr
 
   const handleSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsSubmitting(true);
+    console.log("Form submitted with values:", values);
     
     try {
       await onSubmit({
         title: values.title,
         description: values.description,
         date: values.date,
-        website: values.website,
-        location: values.location,
-        contact: values.contact,
-        bannerImage: values.bannerImage
+        website: values.website || "",
+        location: values.location || "",
+        contact: values.contact || "",
+        bannerImage: values.bannerImage || ""
       });
       form.reset();
     } catch (error) {
@@ -97,6 +97,7 @@ const CreateEventDialog = ({ open, onOpenChange, onSubmit }: CreateEventDialogPr
                         {...field}
                       />
                     </FormControl>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -114,6 +115,7 @@ const CreateEventDialog = ({ open, onOpenChange, onSubmit }: CreateEventDialogPr
                         {...field}
                       />
                     </FormControl>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -131,6 +133,7 @@ const CreateEventDialog = ({ open, onOpenChange, onSubmit }: CreateEventDialogPr
                         {...field}
                       />
                     </FormControl>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -151,6 +154,7 @@ const CreateEventDialog = ({ open, onOpenChange, onSubmit }: CreateEventDialogPr
                     <FormDescription className="dark:text-gray-400">
                       Event website or registration link
                     </FormDescription>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -168,6 +172,7 @@ const CreateEventDialog = ({ open, onOpenChange, onSubmit }: CreateEventDialogPr
                         {...field}
                       />
                     </FormControl>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -185,6 +190,7 @@ const CreateEventDialog = ({ open, onOpenChange, onSubmit }: CreateEventDialogPr
                         {...field}
                       />
                     </FormControl>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -205,6 +211,7 @@ const CreateEventDialog = ({ open, onOpenChange, onSubmit }: CreateEventDialogPr
                     <FormDescription className="dark:text-gray-400">
                       URL to an image that will be displayed as the event banner
                     </FormDescription>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
