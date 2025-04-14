@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,6 +7,7 @@ import { format } from "date-fns";
 import { Link } from "react-router-dom";
 import { Event } from "@/services/eventService";
 import { useWallet } from "@/contexts/WalletContext";
+import { getQakulib } from "@/utils/qakulib";
 
 interface EventListProps {
   events: Event[];
@@ -15,31 +15,37 @@ interface EventListProps {
 
 const EventList = ({ events }: EventListProps) => {
   const [filter, setFilter] = useState("all");
-  const { walletAddress } = useWallet();
+  const { connected } = useWallet();
+  const [qakulibAddress, setQakulibAddress] = useState<string | null>(null);
+  
+  useState(() => {
+    const fetchQakulibAddress = async () => {
+      const qakulib = await getQakulib();
+      const address = qakulib.identity?.address || '';
+      setQakulibAddress(address);
+    };
+    
+    if (connected) {
+      fetchQakulibAddress();
+    }
+  });
   
   const filteredEvents = events.filter(event => {
     if (filter === "all") return true;
     if (filter === "upcoming") {
-      // Use eventDate if available, otherwise fallback to creation date
       const eventDate = event.eventDate 
         ? new Date(event.eventDate) 
         : new Date(event.date);
       return eventDate >= new Date();
     }
-    if (filter === "created" && walletAddress) {
-      // Check if current user is the creator of the event
-      return event.isCreator || event.ownerAddress === walletAddress;
+    if (filter === "created") {
+      return event.isCreator;
     }
-    if (filter === "submitted" && walletAddress) {
-      // Check if current user has submitted any talks for this event
-      return event.talks.some(talk => talk.walletAddress === walletAddress);
+    if (filter === "submitted") {
+      return event.talks.some(talk => talk.isAuthor);
     }
-    if (filter === "voted" && walletAddress) {
-      // Check if current user has voted on any talks in this event
-      return event.talks.some(talk => 
-        talk.upvotedByMe || 
-        (talk.voterAddresses && talk.voterAddresses.includes(walletAddress))
-      );
+    if (filter === "voted") {
+      return event.talks.some(talk => talk.upvotedByMe);
     }
     return false;
   });
@@ -49,10 +55,8 @@ const EventList = ({ events }: EventListProps) => {
     return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
   };
 
-  // Function to extract the first line of text
   const getFirstLine = (text: string) => {
     const firstLine = text.split('\n')[0].trim();
-    // If first line is too long, truncate it
     if (firstLine.length > 120) {
       return firstLine.substring(0, 120) + '...';
     }
@@ -85,7 +89,7 @@ const EventList = ({ events }: EventListProps) => {
             onClick={() => setFilter("created")}
             className={filter === "created" ? "bg-accent hover:bg-accent/90" : ""}
             aria-pressed={filter === "created"}
-            disabled={!walletAddress}
+            disabled={!connected}
           >
             <User className="mr-1 h-4 w-4" />
             Created
@@ -95,7 +99,7 @@ const EventList = ({ events }: EventListProps) => {
             onClick={() => setFilter("submitted")}
             className={filter === "submitted" ? "bg-accent hover:bg-accent/90" : ""}
             aria-pressed={filter === "submitted"}
-            disabled={!walletAddress}
+            disabled={!connected}
           >
             <MessageSquarePlus className="mr-1 h-4 w-4" />
             Submitted
@@ -105,7 +109,7 @@ const EventList = ({ events }: EventListProps) => {
             onClick={() => setFilter("voted")}
             className={filter === "voted" ? "bg-accent hover:bg-accent/90" : ""}
             aria-pressed={filter === "voted"}
-            disabled={!walletAddress}
+            disabled={!connected}
           >
             <Vote className="mr-1 h-4 w-4" />
             Voted
@@ -116,7 +120,7 @@ const EventList = ({ events }: EventListProps) => {
       {filteredEvents.length === 0 ? (
         <Card className="glass-card">
           <CardContent className="pt-6 text-center">
-            {!walletAddress && (filter === "created" || filter === "submitted" || filter === "voted") ? (
+            {!connected && (filter === "created" || filter === "submitted" || filter === "voted") ? (
               <p className="text-lg text-gray-500 dark:text-gray-400">Connect your wallet to see your events.</p>
             ) : (
               <p className="text-lg text-gray-500 dark:text-gray-400">

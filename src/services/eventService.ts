@@ -98,9 +98,7 @@ export const fetchEvents = async (): Promise<Event[]> => {
     console.log(`Fetching talks for event ${event.id} on main page`);
     const rawTalks = await getTalks(event.id);
     
-    const qakulib = await getQakulib();
-    const currentUserAddress = qakulib.identity?.address || '';
-    
+    // Add the event to the populated events array with all necessary information
     populatedEvents.push({
       id: event.id,
       title: event.title,
@@ -112,7 +110,7 @@ export const fetchEvents = async (): Promise<Event[]> => {
       location: parsedContent.location || '',
       contact: parsedContent.contact || '',
       bannerImage: parsedContent.bannerImage || '',
-      isCreator: event.isCreator || event.owner === currentUserAddress,
+      isCreator: event.isCreator || false,
       talks: rawTalks.map((talk: any) => {
         const parsedContent = parseTalkContent(talk.question);
         
@@ -126,7 +124,7 @@ export const fetchEvents = async (): Promise<Event[]> => {
           walletAddress: talk.signer || '',
           voterAddresses: talk.voterAddresses || talk.upvoters || [],
           upvotedByMe: talk.upvotedByMe || false,
-          isAuthor: talk.isAuthor || talk.signer === currentUserAddress
+          isAuthor: talk.isAuthor || false
         };
       }),
     });
@@ -145,9 +143,6 @@ export const fetchEventById = async (eventId: string): Promise<Event | null> => 
   
   const parsedContent = parseEventContent(rawEvent.description || '');
   
-  const qakulib = await getQakulib();
-  const currentUserAddress = qakulib.identity?.address || '';
-  
   return {
     id: rawEvent.id,
     title: rawEvent.title,
@@ -159,7 +154,7 @@ export const fetchEventById = async (eventId: string): Promise<Event | null> => 
     location: parsedContent.location || '',
     contact: parsedContent.contact || '',
     bannerImage: parsedContent.bannerImage || '',
-    isCreator: rawEvent.isCreator || rawEvent.owner === currentUserAddress,
+    isCreator: rawEvent.isCreator || false,
     talks: rawTalks.map((talk: any) => {
       const parsedContent = parseTalkContent(talk.question);
       
@@ -173,7 +168,7 @@ export const fetchEventById = async (eventId: string): Promise<Event | null> => 
         walletAddress: talk.signer || '',
         voterAddresses: talk.voterAddresses || talk.upvoters || [],
         upvotedByMe: talk.upvotedByMe || false,
-        isAuthor: talk.isAuthor || talk.signer === currentUserAddress
+        isAuthor: talk.isAuthor || false
       };
     }),
   };
