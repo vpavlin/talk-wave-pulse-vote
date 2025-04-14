@@ -20,6 +20,7 @@ export interface Talk {
   walletAddress?: string; // Author's wallet address
   voterAddresses?: string[]; // Array of wallet addresses that voted for this talk
   upvotedByMe?: boolean; // Flag indicating if the current user voted for this talk
+  isAuthor?: boolean; // Flag indicating if the current user is the author
 }
 
 export interface Event {
@@ -111,7 +112,7 @@ export const fetchEvents = async (): Promise<Event[]> => {
       location: parsedContent.location || '',
       contact: parsedContent.contact || '',
       bannerImage: parsedContent.bannerImage || '',
-      isCreator: event.owner === currentUserAddress,
+      isCreator: event.isCreator || event.owner === currentUserAddress,
       talks: rawTalks.map((talk: any) => {
         const parsedContent = parseTalkContent(talk.question);
         
@@ -125,6 +126,7 @@ export const fetchEvents = async (): Promise<Event[]> => {
           walletAddress: talk.signer || '',
           voterAddresses: talk.voterAddresses || talk.upvoters || [],
           upvotedByMe: talk.upvotedByMe || false,
+          isAuthor: talk.isAuthor || talk.signer === currentUserAddress
         };
       }),
     });
@@ -157,7 +159,7 @@ export const fetchEventById = async (eventId: string): Promise<Event | null> => 
     location: parsedContent.location || '',
     contact: parsedContent.contact || '',
     bannerImage: parsedContent.bannerImage || '',
-    isCreator: rawEvent.owner === currentUserAddress,
+    isCreator: rawEvent.isCreator || rawEvent.owner === currentUserAddress,
     talks: rawTalks.map((talk: any) => {
       const parsedContent = parseTalkContent(talk.question);
       
@@ -171,6 +173,7 @@ export const fetchEventById = async (eventId: string): Promise<Event | null> => 
         walletAddress: talk.signer || '',
         voterAddresses: talk.voterAddresses || talk.upvoters || [],
         upvotedByMe: talk.upvotedByMe || false,
+        isAuthor: talk.isAuthor || talk.signer === currentUserAddress
       };
     }),
   };

@@ -1,4 +1,3 @@
-
 // Using the locally installed qakulib package
 import {ControlMessage, EnhancedQuestionMessage, Qaku} from "qakulib";
 import { wakuPeerExchangeDiscovery } from "@waku/discovery";
@@ -142,9 +141,22 @@ export const getEvents = async (): Promise<any[]> => {
     
     const eventsList = qakulib.qas.values();
     const events = [];
+    
+    // Get current user address for comparison
+    const currentUserAddress = qakulib.identity?.address || '';
+    
     for (const event of eventsList) {
-      events.push(event.controlState);
+      // Create extended control state with additional properties
+      const extendedEvent = {...event.controlState} as ExtendedControlMessage;
+      
+      // Check if the current user is the creator of this event
+      if (extendedEvent.owner === currentUserAddress) {
+        extendedEvent.isCreator = true;
+      }
+      
+      events.push(extendedEvent);
     }
+    
     console.log(`Found ${events.length} events`);
     return events;
   } catch (error) {
