@@ -26,22 +26,19 @@ const TalkCard = ({ talk, onVote }: TalkCardProps) => {
   };
 
   return (
-    <Card className="border-gray-300 dark:border-gray-700 hover:border-black dark:hover:border-white transition-all">
+    <Card className="overflow-hidden transition-all duration-300 hover:shadow-lg border-purple-200 dark:border-purple-900 bg-white dark:bg-gray-800 card-hover">
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
-          <CardTitle className="text-2xl font-bold text-black dark:text-white">
+          <CardTitle className="text-2xl font-bold text-purple-900 dark:text-purple-300">
             {talk.title}
           </CardTitle>
-          <Badge 
-            variant="outline" 
-            className="bg-gray-200 dark:bg-gray-800 text-black dark:text-white border-gray-300 dark:border-gray-700"
-          >
+          <Badge variant="outline" className="text-base px-3 py-1 bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/60 dark:text-purple-200 dark:border-purple-800">
             {talk.votes} {talk.votes === 1 ? 'vote' : 'votes'}
           </Badge>
         </div>
-        <CardDescription className="flex items-center mt-2 text-base text-gray-700 dark:text-gray-300">
-          <Avatar className="h-8 w-8 mr-2 border-2 border-gray-300 dark:border-gray-700">
-            <AvatarFallback className="bg-gray-200 text-black font-semibold dark:bg-gray-800 dark:text-white">
+        <CardDescription className="flex items-center mt-2 text-base dark:text-gray-300">
+          <Avatar className="h-8 w-8 mr-2 border-2 border-purple-200 dark:border-purple-800">
+            <AvatarFallback className="bg-purple-200 text-purple-700 font-semibold dark:bg-purple-900 dark:text-purple-200">
               {getInitials(talk.speaker)}
             </AvatarFallback>
           </Avatar>
@@ -53,15 +50,15 @@ const TalkCard = ({ talk, onVote }: TalkCardProps) => {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <p className="text-gray-800 dark:text-gray-200 text-base leading-relaxed">
+        <p className="text-gray-700 dark:text-gray-300 text-base leading-relaxed">
           {talk.description}
         </p>
       </CardContent>
-      <CardFooter className="border-t border-gray-200 dark:border-gray-800 pt-3 pb-3">
+      <CardFooter className="border-t border-purple-100 dark:border-purple-900/50 pt-3 pb-3">
         <Button 
           variant="outline" 
           size="lg" 
-          className="ml-auto text-black border-black hover:bg-gray-100 dark:text-white dark:border-white dark:hover:bg-gray-900 focus-ring"
+          className="ml-auto text-purple-600 border-purple-200 hover:bg-purple-50 hover:text-purple-700 dark:text-purple-300 dark:border-purple-800 dark:hover:bg-purple-900/40 focus-ring"
           onClick={onVote}
           aria-label={`Upvote ${talk.title} by ${talk.speaker}`}
         >
@@ -74,4 +71,3 @@ const TalkCard = ({ talk, onVote }: TalkCardProps) => {
 };
 
 export default TalkCard;
-
