@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -24,7 +23,8 @@ import {
   Share,
   Twitter,
   Copy,
-  CheckCircle
+  CheckCircle,
+  Hash
 } from "lucide-react";
 import SubmitTalkDialog from "@/components/SubmitTalkDialog";
 import TalkCard from "@/components/TalkCard";
@@ -96,7 +96,6 @@ const EventDetail = () => {
           description: "Event link has been copied to clipboard",
         });
         
-        // Reset copied state after 2 seconds
         setTimeout(() => setCopied(false), 2000);
       })
       .catch(() => {
@@ -114,6 +113,14 @@ const EventDetail = () => {
     const title = encodeURIComponent(`Check out "${event.title}" on Lightning Talk Wave`);
     const url = encodeURIComponent(window.location.href);
     window.open(`https://twitter.com/intent/tweet?text=${title}&url=${url}`, '_blank');
+  };
+
+  const handleShareFarcaster = () => {
+    if (!event) return;
+    
+    const title = encodeURIComponent(`Check out "${event.title}" on Lightning Talk Wave`);
+    const url = encodeURIComponent(window.location.href);
+    window.open(`https://warpcast.com/~/compose?text=${title}&embeds[]=${url}`, '_blank');
   };
 
   const handleVote = async (talkId: string) => {
@@ -257,6 +264,16 @@ const EventDetail = () => {
               >
                 <Twitter className="h-5 w-5" />
               </Button>
+              
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handleShareFarcaster}
+                className="bg-violet-600/30 border-violet-500/50 hover:bg-violet-600/50 text-violet-100 focus-ring"
+                aria-label="Share on Farcaster"
+              >
+                <Hash className="h-5 w-5" />
+              </Button>
             </div>
             <ThemeToggle />
           </div>
@@ -351,7 +368,21 @@ const EventDetail = () => {
               <Button 
                 variant="outline" 
                 className="text-lg px-6 py-6 h-auto border-purple-300 dark:border-purple-700 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/40 focus-ring"
-                onClick={handleCopyLink}
+                onClick={() => {
+                  const shareData = {
+                    title: event.title,
+                    text: `Check out "${event.title}" on Lightning Talk Wave`,
+                    url: window.location.href
+                  };
+                  
+                  if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+                    navigator.share(shareData).catch(() => {
+                      handleCopyLink();
+                    });
+                  } else {
+                    handleCopyLink();
+                  }
+                }}
                 aria-label="Share event"
               >
                 <Share className="mr-2 h-6 w-6" />
