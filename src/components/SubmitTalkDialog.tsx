@@ -5,9 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { AlertCircle } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useWallet } from "@/contexts/WalletContext";
 
 interface SubmitTalkDialogProps {
   open: boolean;
@@ -20,16 +17,9 @@ const SubmitTalkDialog = ({ open, onOpenChange, onSubmit }: SubmitTalkDialogProp
   const [speaker, setSpeaker] = useState("");
   const [description, setDescription] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { connected, connect } = useWallet();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!connected) {
-      connect();
-      return;
-    }
-    
     setIsSubmitting(true);
     
     try {
@@ -58,15 +48,6 @@ const SubmitTalkDialog = ({ open, onOpenChange, onSubmit }: SubmitTalkDialogProp
               Share your knowledge with the community! Lightning talks are 5-10 minute presentations.
             </DialogDescription>
           </DialogHeader>
-          
-          {!connected && (
-            <Alert className="my-4 bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-200 dark:border-amber-800/50">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                You'll need to connect your identity to submit a talk.
-              </AlertDescription>
-            </Alert>
-          )}
           
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
@@ -119,7 +100,7 @@ const SubmitTalkDialog = ({ open, onOpenChange, onSubmit }: SubmitTalkDialogProp
               disabled={isSubmitting}
               className="bg-purple-600 hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-800"
             >
-              {!connected ? "Connect Identity" : isSubmitting ? "Submitting..." : "Submit Talk"}
+              {isSubmitting ? "Submitting..." : "Submit Talk"}
             </Button>
           </DialogFooter>
         </form>

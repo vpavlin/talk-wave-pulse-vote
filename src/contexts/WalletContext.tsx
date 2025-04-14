@@ -7,16 +7,12 @@ interface WalletContextType {
   walletAddress: string | null;
   connecting: boolean;
   connected: boolean;
-  connect: () => Promise<void>;
-  disconnect: () => Promise<void>;
 }
 
 const WalletContext = createContext<WalletContextType>({
   walletAddress: null,
   connecting: false,
   connected: false,
-  connect: async () => {},
-  disconnect: async () => {},
 });
 
 export const useWallet = () => useContext(WalletContext);
@@ -28,76 +24,30 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const { toast } = useToast();
 
   useEffect(() => {
-    const checkQakulibIdentity = async () => {
+    const initializeQakulib = async () => {
       try {
+        setConnecting(true);
         const qakulib = await getQakulib();
+        
         if (qakulib.identity?.address) {
-          setWalletAddress(qakulib.identity.address);
+          const address = qakulib.identity.address;
+          setWalletAddress(typeof address === 'function' ? address() : address);
           setConnected(true);
         }
       } catch (error) {
-        console.error("Error checking qakulib identity:", error);
+        console.error("Error initializing qakulib:", error);
+        toast({
+          title: "Connection Error",
+          description: "Could not connect to qakulib identity",
+          variant: "destructive",
+        });
+      } finally {
+        setConnecting(false);
       }
     };
     
-    checkQakulibIdentity();
-  }, []);
-
-  const connect = async (): Promise<void> => {
-    try {
-      setConnecting(true);
-      
-      const qakulib = await getQakulib();
-      
-      if (qakulib.identity?.address) {
-        setWalletAddress(qakulib.identity.address);
-        setConnected(true);
-      } else {
-        // Instead of qakulib.refresh(), we need to re-initialize
-        await getQakulib();
-        
-        if (qakulib.identity?.address) {
-          setWalletAddress(qakulib.identity.address);
-          setConnected(true);
-          
-          const address = qakulib.identity.address();
-          toast({
-            title: "Connected",
-            description: `Connected with ID ${address.substring(0, 6)}...${address.substring(address.length - 4)}`,
-          });
-        } else {
-          throw new Error("Failed to get qakulib identity");
-        }
-      }
-    } catch (error) {
-      console.error("Connection error:", error);
-      toast({
-        title: "Connection Failed",
-        description: "Could not connect to qakulib identity",
-        variant: "destructive",
-      });
-    } finally {
-      setConnecting(false);
-    }
-  };
-
-  const disconnect = async () => {
-    try {
-      setWalletAddress(null);
-      setConnected(false);
-      
-      toast({
-        title: "Disconnected",
-        description: "Your connection has been reset",
-      });
-    } catch (error) {
-      toast({
-        title: "Disconnection Failed",
-        description: "Could not disconnect",
-        variant: "destructive",
-      });
-    }
-  };
+    initializeQakulib();
+  }, [toast]);
 
   return (
     <WalletContext.Provider
@@ -105,8 +55,6 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         walletAddress,
         connecting,
         connected,
-        connect,
-        disconnect,
       }}
     >
       {children}

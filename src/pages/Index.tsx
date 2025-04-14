@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import EventList from "@/components/EventList";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Calendar, AlertCircle } from "lucide-react";
+import { PlusCircle } from "lucide-react";
 import CreateEventDialog from "@/components/CreateEventDialog";
 import WalletConnectButton from "@/components/WalletConnectButton";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -89,7 +89,6 @@ const Index = () => {
           </h1>
           <p className="text-xl text-gray-300 mb-8 leading-relaxed">
             Submit and vote on lightning talks for upcoming tech conferences and events.
-            Connect your identity to get started.
           </p>
           
           <div className="flex flex-wrap justify-center gap-4">
@@ -106,13 +105,6 @@ const Index = () => {
             
             <WalletConnectButton />
           </div>
-          
-          {!connected && (
-            <p className="mt-4 text-amber-600 flex items-center justify-center gap-1">
-              <AlertCircle className="h-5 w-5" />
-              Connect your identity to create events or submit talks
-            </p>
-          )}
         </div>
         
         {isLoading ? (
@@ -122,7 +114,6 @@ const Index = () => {
           </div>
         ) : isError ? (
           <div className="text-center py-12 bg-red-50 dark:bg-red-900/20 rounded-lg">
-            <AlertCircle className="mx-auto h-12 w-12 text-red-500 mb-4" />
             <p className="text-xl font-medium text-red-600 dark:text-red-400">
               Failed to load events. Please try again later.
             </p>
