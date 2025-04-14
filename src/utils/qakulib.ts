@@ -143,7 +143,7 @@ export const getEvents = async (): Promise<any[]> => {
     const eventsList = qakulib.qas.values();
     const events = [];
     
-    // Get current user address for comparison
+    // Get current user address from qakulib identity
     const currentUserAddress = qakulib.identity?.address || '';
     
     for (const event of eventsList) {
@@ -183,7 +183,7 @@ export const getEventById = async (eventId: string): Promise<ExtendedControlMess
       return null;
     }
     
-    // Add identity check for creator
+    // Add identity check for creator using qakulib identity
     const currentUserAddress = qakulib.identity?.address || '';
     // We need to cast to ExtendedControlMessage to add our custom property
     const extendedControlState = {...event.controlState} as ExtendedControlMessage;
@@ -220,7 +220,7 @@ export const getTalks = async (eventId: string): Promise<ExtendedTalk[]> => {
     const talksList = event.questions.values();
     const talks = [];
     
-    // Get current user address as a string
+    // Get current user address from qakulib identity
     const currentUserAddress = qakulib.identity?.address || '';
     
     for (const talk of talksList) {
@@ -303,7 +303,7 @@ export const voteTalk = async (eventId: string, talkId: string): Promise<boolean
     // Cast vote for the talk
     await qakulib.upvote(eventId, talkId);
     
-    // Get the current user's wallet address
+    // Get the current user's wallet address from qakulib identity
     const currentUserAddress = qakulib.identity?.address || '';
     
     // If we have a wallet address, update our local state to track this vote

@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { useWallet } from "@/contexts/WalletContext";
-import { Loader2, LogOut, Wallet } from "lucide-react";
+import { Loader2, LogOut, UserCircle } from "lucide-react";
 
 const WalletConnectButton = () => {
   const { walletAddress, connecting, connected, connect, disconnect } = useWallet();
@@ -26,8 +26,8 @@ const WalletConnectButton = () => {
             </>
           ) : (
             <>
-              <Wallet className="mr-2 h-5 w-5" />
-              Connect Wallet
+              <UserCircle className="mr-2 h-5 w-5" />
+              Connect Identity
             </>
           )}
         </Button>

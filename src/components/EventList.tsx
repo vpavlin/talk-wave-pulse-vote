@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,17 +19,22 @@ const EventList = ({ events }: EventListProps) => {
   const { connected } = useWallet();
   const [qakulibAddress, setQakulibAddress] = useState<string | null>(null);
   
-  useState(() => {
+  useEffect(() => {
     const fetchQakulibAddress = async () => {
-      const qakulib = await getQakulib();
-      const address = qakulib.identity?.address || '';
-      setQakulibAddress(address);
+      try {
+        const qakulib = await getQakulib();
+        if (qakulib.identity?.address) {
+          setQakulibAddress(qakulib.identity.address);
+        }
+      } catch (error) {
+        console.error("Error fetching qakulib address:", error);
+      }
     };
     
     if (connected) {
       fetchQakulibAddress();
     }
-  });
+  }, [connected]);
   
   const filteredEvents = events.filter(event => {
     if (filter === "all") return true;
@@ -39,13 +45,13 @@ const EventList = ({ events }: EventListProps) => {
       return eventDate >= new Date();
     }
     if (filter === "created") {
-      return event.isCreator;
+      return event.isCreator || false;
     }
     if (filter === "submitted") {
-      return event.talks.some(talk => talk.isAuthor);
+      return event.talks.some(talk => talk.isAuthor || false);
     }
     if (filter === "voted") {
-      return event.talks.some(talk => talk.upvotedByMe);
+      return event.talks.some(talk => talk.upvotedByMe || false);
     }
     return false;
   });

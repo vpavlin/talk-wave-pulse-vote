@@ -17,7 +17,7 @@ const Index = () => {
   const { connected, walletAddress } = useWallet();
   const queryClient = useQueryClient();
   
-  // Refresh events data when wallet state changes
+  // Refresh events data when identity state changes
   useEffect(() => {
     queryClient.invalidateQueries({ queryKey: ['events'] });
   }, [walletAddress, connected, queryClient]);
@@ -89,7 +89,7 @@ const Index = () => {
           </h1>
           <p className="text-xl text-gray-300 mb-8 leading-relaxed">
             Submit and vote on lightning talks for upcoming tech conferences and events.
-            Connect your web3 wallet to get started.
+            Connect your identity to get started.
           </p>
           
           <div className="flex flex-wrap justify-center gap-4">
@@ -110,7 +110,7 @@ const Index = () => {
           {!connected && (
             <p className="mt-4 text-amber-600 flex items-center justify-center gap-1">
               <AlertCircle className="h-5 w-5" />
-              Connect your wallet to create events or submit talks
+              Connect your identity to create events or submit talks
             </p>
           )}
         </div>

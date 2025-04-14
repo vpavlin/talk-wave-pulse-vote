@@ -1,15 +1,6 @@
-
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-
-// Simulated wallet interface
-interface Wallet {
-  address: string;
-  connected: boolean;
-}
-
-// Local storage key for persisting wallet connection
-const WALLET_STORAGE_KEY = "lightning-talk-wallet";
+import { getQakulib } from "@/utils/qakulib";
 
 interface WalletContextType {
   walletAddress: string | null;
@@ -29,38 +20,6 @@ const WalletContext = createContext<WalletContextType>({
 
 export const useWallet = () => useContext(WalletContext);
 
-// Helper function to generate a random Ethereum-style address
-const generateRandomAddress = (): string => {
-  const chars = "0123456789abcdef";
-  let address = "0x";
-  for (let i = 0; i < 40; i++) {
-    address += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return address;
-};
-
-// Helper function to check if wallet is stored in localStorage
-const getSavedWallet = (): Wallet | null => {
-  const savedWallet = localStorage.getItem(WALLET_STORAGE_KEY);
-  if (savedWallet) {
-    try {
-      return JSON.parse(savedWallet);
-    } catch (e) {
-      console.error("Error parsing saved wallet:", e);
-    }
-  }
-  return null;
-};
-
-// Helper function to save wallet to localStorage
-const saveWallet = (wallet: Wallet | null): void => {
-  if (wallet) {
-    localStorage.setItem(WALLET_STORAGE_KEY, JSON.stringify(wallet));
-  } else {
-    localStorage.removeItem(WALLET_STORAGE_KEY);
-  }
-};
-
 export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [connecting, setConnecting] = useState(false);
@@ -68,40 +27,50 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check if wallet is already connected on app mount
-    const savedWallet = getSavedWallet();
-    if (savedWallet?.connected) {
-      setWalletAddress(savedWallet.address);
-      setConnected(true);
-    }
+    const checkQakulibIdentity = async () => {
+      try {
+        const qakulib = await getQakulib();
+        if (qakulib.identity?.address) {
+          setWalletAddress(qakulib.identity.address);
+          setConnected(true);
+        }
+      } catch (error) {
+        console.error("Error checking qakulib identity:", error);
+      }
+    };
+    
+    checkQakulibIdentity();
   }, []);
 
   const connect = async (): Promise<void> => {
     try {
       setConnecting(true);
       
-      // Simulate connection delay
-      await new Promise(resolve => setTimeout(resolve, 800));
+      const qakulib = await getQakulib();
       
-      // Generate a random wallet address
-      const address = generateRandomAddress();
-      
-      // Save to state and localStorage
-      setWalletAddress(address);
-      setConnected(true);
-      saveWallet({ address, connected: true });
-      
-      toast({
-        title: "Wallet Connected",
-        description: `Connected to ${address.substring(0, 6)}...${address.substring(address.length - 4)}`,
-      });
-      
-      // Don't return the address, just return void
+      if (qakulib.identity?.address) {
+        setWalletAddress(qakulib.identity.address);
+        setConnected(true);
+      } else {
+        await qakulib.refresh();
+        
+        if (qakulib.identity?.address) {
+          setWalletAddress(qakulib.identity.address);
+          setConnected(true);
+          
+          toast({
+            title: "Connected",
+            description: `Connected with ID ${qakulib.identity.address.substring(0, 6)}...${qakulib.identity.address.substring(qakulib.identity.address.length - 4)}`,
+          });
+        } else {
+          throw new Error("Failed to get qakulib identity");
+        }
+      }
     } catch (error) {
       console.error("Connection error:", error);
       toast({
         title: "Connection Failed",
-        description: "Could not connect to wallet",
+        description: "Could not connect to qakulib identity",
         variant: "destructive",
       });
     } finally {
@@ -111,22 +80,17 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const disconnect = async () => {
     try {
-      // Simulate disconnection delay
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
-      // Clear state and localStorage
       setWalletAddress(null);
       setConnected(false);
-      saveWallet(null);
       
       toast({
-        title: "Wallet Disconnected",
-        description: "Your wallet has been disconnected",
+        title: "Disconnected",
+        description: "Your connection has been reset",
       });
     } catch (error) {
       toast({
         title: "Disconnection Failed",
-        description: "Could not disconnect wallet",
+        description: "Could not disconnect",
         variant: "destructive",
       });
     }

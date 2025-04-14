@@ -63,7 +63,7 @@ const SubmitTalkDialog = ({ open, onOpenChange, onSubmit }: SubmitTalkDialogProp
             <Alert className="my-4 bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-200 dark:border-amber-800/50">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                You'll need to connect your wallet to submit a talk.
+                You'll need to connect your identity to submit a talk.
               </AlertDescription>
             </Alert>
           )}
@@ -119,7 +119,7 @@ const SubmitTalkDialog = ({ open, onOpenChange, onSubmit }: SubmitTalkDialogProp
               disabled={isSubmitting}
               className="bg-purple-600 hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-800"
             >
-              {!connected ? "Connect Wallet" : isSubmitting ? "Submitting..." : "Submit Talk"}
+              {!connected ? "Connect Identity" : isSubmitting ? "Submitting..." : "Submit Talk"}
             </Button>
           </DialogFooter>
         </form>
