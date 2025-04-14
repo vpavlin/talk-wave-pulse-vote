@@ -18,7 +18,10 @@ const EventList = ({ events }: EventListProps) => {
   const filteredEvents = events.filter(event => {
     if (filter === "all") return true;
     if (filter === "upcoming") {
-      const eventDate = new Date(event.date);
+      // Use eventDate if available, otherwise fallback to creation date
+      const eventDate = event.eventDate 
+        ? new Date(event.eventDate) 
+        : new Date(event.date);
       return eventDate >= new Date();
     }
     return false;
@@ -68,7 +71,9 @@ const EventList = ({ events }: EventListProps) => {
                     </CardTitle>
                     <Badge className="date-badge">
                       <Calendar className="h-4 w-4" />
-                      {format(new Date(event.date), "MMM d, yyyy")}
+                      {event.eventDate 
+                        ? format(new Date(event.eventDate), "MMM d, yyyy")
+                        : format(new Date(event.date), "MMM d, yyyy")}
                     </Badge>
                   </div>
                   <CardDescription className="mt-1 text-base dark:text-gray-300">
