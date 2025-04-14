@@ -69,17 +69,24 @@ export const fetchEvents = async (): Promise<Event[]> => {
   console.log("Fetching events through service layer");
   const rawEvents = await getEvents();
   
-  // Transform the raw data into our app format
-  return rawEvents.map((event: any) => {
+  // Create an array to hold the fully populated events
+  const populatedEvents = [];
+  
+  // Transform the raw data into our app format and fetch detailed talks for each event
+  for (const event of rawEvents) {
     const parsedContent = parseEventContent(event.description || '');
     
-    return {
+    // Fetch detailed talks for this event
+    console.log(`Fetching talks for event ${event.id} on main page`);
+    const rawTalks = await getTalks(event.id);
+    
+    populatedEvents.push({
       id: event.id,
       title: event.title,
       description: parsedContent.description || event.description,
       date: event.createdAt || Date.now(),
       eventDate: parsedContent.eventDate || '',
-      talks: (event.questions || []).map((talk: EnhancedQuestionMessage) => {
+      talks: rawTalks.map((talk: any) => {
         const parsedContent = parseTalkContent(talk.question);
         return {
           id: talk.hash,
@@ -90,8 +97,10 @@ export const fetchEvents = async (): Promise<Event[]> => {
           createdAt: talk.timestamp || new Date().toISOString(),
         };
       }),
-    };
-  });
+    });
+  }
+  
+  return populatedEvents;
 };
 
 export const fetchEventById = async (eventId: string): Promise<Event | null> => {
