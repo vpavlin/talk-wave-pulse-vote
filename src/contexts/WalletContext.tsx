@@ -60,7 +60,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           setWalletAddress(qakulib.identity.address);
           setConnected(true);
           
-          const address = qakulib.identity.address;
+          const address = qakulib.identity.address();
           toast({
             title: "Connected",
             description: `Connected with ID ${address.substring(0, 6)}...${address.substring(address.length - 4)}`,

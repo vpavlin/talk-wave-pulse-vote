@@ -1,4 +1,3 @@
-
 // Using the locally installed qakulib package
 import {ControlMessage, EnhancedQuestionMessage, Qaku} from "qakulib";
 import { wakuPeerExchangeDiscovery } from "@waku/discovery";
@@ -143,7 +142,7 @@ export const getEvents = async (): Promise<any[]> => {
     const eventsList = qakulib.qas.values();
     const events = [];
     
-    // Get current user address from qakulib identity
+    // Get current user address for comparison
     const currentUserAddress = qakulib.identity?.address || '';
     
     for (const event of eventsList) {
@@ -166,7 +165,7 @@ export const getEvents = async (): Promise<any[]> => {
   }
 };
 
-export const getEventById = async (eventId: string): Promise<ExtendedControlMessage | null> => {
+export const getEventById = async (eventId: string): Promise<ControlMessage | null> => {
   try {
     console.log(`Fetching event with ID ${eventId}`);
     const qakulib = await getQakulib();
@@ -183,10 +182,10 @@ export const getEventById = async (eventId: string): Promise<ExtendedControlMess
       return null;
     }
     
-    // Add identity check for creator using qakulib identity
+    // Add identity check for creator
     const currentUserAddress = qakulib.identity?.address || '';
     // We need to cast to ExtendedControlMessage to add our custom property
-    const extendedControlState = {...event.controlState} as ExtendedControlMessage;
+    const extendedControlState = event.controlState as ExtendedControlMessage;
     
     if (extendedControlState.owner === currentUserAddress) {
       extendedControlState.isCreator = true;
@@ -200,7 +199,7 @@ export const getEventById = async (eventId: string): Promise<ExtendedControlMess
   }
 };
 
-export const getTalks = async (eventId: string): Promise<ExtendedTalk[]> => {
+export const getTalks = async (eventId: string): Promise<EnhancedQuestionMessage[]> => {
   try {
     console.log(`Fetching talks for event ${eventId}`);
     const qakulib = await getQakulib();
@@ -220,8 +219,8 @@ export const getTalks = async (eventId: string): Promise<ExtendedTalk[]> => {
     const talksList = event.questions.values();
     const talks = [];
     
-    // Get current user address from qakulib identity
-    const currentUserAddress = qakulib.identity?.address || '';
+    // Get current user address as a string
+    const currentUserAddress = qakulib.identity?.address() || '';
     
     for (const talk of talksList) {
       // Create an extended talk with our custom properties
@@ -303,8 +302,8 @@ export const voteTalk = async (eventId: string, talkId: string): Promise<boolean
     // Cast vote for the talk
     await qakulib.upvote(eventId, talkId);
     
-    // Get the current user's wallet address from qakulib identity
-    const currentUserAddress = qakulib.identity?.address || '';
+    // Get the current user's wallet address
+    const currentUserAddress = qakulib.identity?.address() || '';
     
     // If we have a wallet address, update our local state to track this vote
     if (currentUserAddress) {

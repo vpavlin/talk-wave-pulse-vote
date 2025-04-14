@@ -154,7 +154,6 @@ export const fetchEventById = async (eventId: string): Promise<Event | null> => 
     location: parsedContent.location || '',
     contact: parsedContent.contact || '',
     bannerImage: parsedContent.bannerImage || '',
-    isCreator: rawEvent.isCreator || false,
     talks: rawTalks.map((talk: any) => {
       const parsedContent = parseTalkContent(talk.question);
       
