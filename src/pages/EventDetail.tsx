@@ -364,30 +364,6 @@ const EventDetail = () => {
                 <MessageSquarePlus className="mr-2 h-6 w-6" />
                 Submit a Lightning Talk
               </Button>
-              
-              <Button 
-                variant="outline" 
-                className="text-lg px-6 py-6 h-auto border-purple-300 dark:border-purple-700 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/40 focus-ring"
-                onClick={() => {
-                  const shareData = {
-                    title: event.title,
-                    text: `Check out "${event.title}" on Lightning Talk Wave`,
-                    url: window.location.href
-                  };
-                  
-                  if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
-                    navigator.share(shareData).catch(() => {
-                      handleCopyLink();
-                    });
-                  } else {
-                    handleCopyLink();
-                  }
-                }}
-                aria-label="Share event"
-              >
-                <Share className="mr-2 h-6 w-6" />
-                Share Event
-              </Button>
             </div>
             
             {!connected && (
