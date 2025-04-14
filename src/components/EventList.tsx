@@ -27,15 +27,19 @@ const EventList = ({ events }: EventListProps) => {
       return eventDate >= new Date();
     }
     if (filter === "created" && walletAddress) {
-      return event.ownerAddress === walletAddress;
+      // Check if current user is the creator of the event
+      return event.isCreator || event.ownerAddress === walletAddress;
     }
     if (filter === "submitted" && walletAddress) {
+      // Check if current user has submitted any talks for this event
       return event.talks.some(talk => talk.walletAddress === walletAddress);
     }
     if (filter === "voted" && walletAddress) {
-      // If the event has any talks the user has voted on
-      // This assumes there's a way to track which talks a user voted on
-      return event.talks.some(talk => talk.voterAddresses?.includes(walletAddress));
+      // Check if current user has voted on any talks in this event
+      return event.talks.some(talk => 
+        talk.upvotedByMe || 
+        (talk.voterAddresses && talk.voterAddresses.includes(walletAddress))
+      );
     }
     return false;
   });

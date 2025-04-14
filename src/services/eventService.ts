@@ -17,6 +17,7 @@ export interface Talk {
   createdAt: string;
   walletAddress?: string; // Author's wallet address
   voterAddresses?: string[]; // Array of wallet addresses that voted for this talk
+  upvotedByMe?: boolean; // Flag indicating if the current user voted for this talk
 }
 
 export interface Event {
@@ -32,6 +33,7 @@ export interface Event {
   location?: string;
   contact?: string;
   bannerImage?: string; // URL to banner image
+  isCreator?: boolean; // Flag indicating if the current user is the creator
 }
 
 const parseTalkContent = (content: string): { title: string; description: string; speaker: string } => {
@@ -104,17 +106,9 @@ export const fetchEvents = async (): Promise<Event[]> => {
       location: parsedContent.location || '',
       contact: parsedContent.contact || '',
       bannerImage: parsedContent.bannerImage || '',
+      isCreator: event.owner === (await getQakulib()).identity?.address,
       talks: rawTalks.map((talk: any) => {
         const parsedContent = parseTalkContent(talk.question);
-        
-        // Handle voter addresses safely with fallbacks
-        let voterAddresses: string[] = [];
-        if (talk.voterAddresses && Array.isArray(talk.voterAddresses)) {
-          voterAddresses = talk.voterAddresses;
-        } else if (talk.upvoters && Array.isArray(talk.upvoters)) {
-          // Fallback to upvoters if voterAddresses doesn't exist
-          voterAddresses = talk.upvoters;
-        }
         
         return {
           id: talk.hash,
@@ -124,7 +118,8 @@ export const fetchEvents = async (): Promise<Event[]> => {
           votes: talk.upvotes || 0,
           createdAt: talk.timestamp || new Date().toISOString(),
           walletAddress: talk.signer || '',
-          voterAddresses: voterAddresses,
+          voterAddresses: talk.voterAddresses || talk.upvoters || [],
+          upvotedByMe: talk.upvotedByMe || false,
         };
       }),
     });
@@ -154,14 +149,9 @@ export const fetchEventById = async (eventId: string): Promise<Event | null> => 
     location: parsedContent.location || '',
     contact: parsedContent.contact || '',
     bannerImage: parsedContent.bannerImage || '',
+    isCreator: rawEvent.owner === (await getQakulib()).identity?.address,
     talks: rawTalks.map((talk: any) => {
       const parsedContent = parseTalkContent(talk.question);
-      
-      // Handle voter addresses safely with fallbacks
-      let voterAddresses: string[] = [];
-      if (talk.voters && Array.isArray(talk.voters)) {
-        voterAddresses = talk.voters;
-      }
       
       return {
         id: talk.hash,
@@ -171,7 +161,8 @@ export const fetchEventById = async (eventId: string): Promise<Event | null> => 
         votes: talk.upvotes || 0,
         createdAt: talk.createdAt || new Date().toISOString(),
         walletAddress: talk.signer || '',
-        voterAddresses: voterAddresses,
+        voterAddresses: talk.voterAddresses || talk.upvoters || [],
+        upvotedByMe: talk.upvotedByMe || false,
       };
     }),
   };

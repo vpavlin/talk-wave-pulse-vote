@@ -1,4 +1,3 @@
-
 // Using the locally installed qakulib package
 import {ControlMessage, EnhancedQuestionMessage, Qaku} from "qakulib";
 import { wakuPeerExchangeDiscovery } from "@waku/discovery";
@@ -203,14 +202,13 @@ export const getTalks = async (eventId: string): Promise<EnhancedQuestionMessage
         extendedTalk.voterAddresses = [...extendedTalk.upvoters];
       }
       
-      // Add current user if they have voted
+      // Check if the current user has upvoted this talk
       const currentUserAddress = qakulib.identity?.address;
-      if (currentUserAddress && 
-          extendedTalk.upvoters && 
-          Array.isArray(extendedTalk.upvoters) && 
-          extendedTalk.upvoters.includes(currentUserAddress) && 
-          !extendedTalk.voterAddresses.includes(currentUserAddress)) {
-        extendedTalk.voterAddresses.push(currentUserAddress);
+      if (currentUserAddress && extendedTalk.upvotedByMe) {
+        // Make sure the current user is in the voterAddresses array
+        if (!extendedTalk.voterAddresses.includes(currentUserAddress)) {
+          extendedTalk.voterAddresses.push(currentUserAddress);
+        }
       }
       
       talks.push(extendedTalk);
