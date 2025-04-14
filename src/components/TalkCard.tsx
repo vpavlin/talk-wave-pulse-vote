@@ -3,10 +3,11 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { ThumbsUp, Clock, Wallet } from "lucide-react";
+import { ThumbsUp, Clock, Wallet, ChevronDown, ChevronUp } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import ReactMarkdown from "react-markdown";
 import { Talk } from "@/services/eventService";
+import { useState } from "react";
 
 interface TalkCardProps {
   talk: Talk;
@@ -15,6 +16,8 @@ interface TalkCardProps {
 }
 
 const TalkCard = ({ talk, onVote, showFullDescription = false }: TalkCardProps) => {
+  const [isExpanded, setIsExpanded] = useState(showFullDescription);
+  
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -42,9 +45,11 @@ const TalkCard = ({ talk, onVote, showFullDescription = false }: TalkCardProps) 
     return firstLine;
   };
 
-  const description = showFullDescription 
-    ? talk.description 
-    : getFirstLine(talk.description);
+  // Get appropriate description based on expanded state
+  const description = isExpanded ? talk.description : getFirstLine(talk.description);
+  
+  // Check if there's more content to show
+  const hasMoreContent = talk.description.length > getFirstLine(talk.description).length;
 
   return (
     <Card className="overflow-hidden transition-all duration-300 hover:shadow-lg border-gray-700 bg-gray-800 card-hover">
@@ -78,12 +83,29 @@ const TalkCard = ({ talk, onVote, showFullDescription = false }: TalkCardProps) 
       </CardHeader>
       <CardContent>
         <div className="text-gray-300 text-base leading-relaxed prose dark:prose-invert prose-p:my-2 max-w-none">
-          {showFullDescription ? (
+          {isExpanded ? (
             <ReactMarkdown>{description}</ReactMarkdown>
           ) : (
             <p>{description}</p>
           )}
         </div>
+        
+        {hasMoreContent && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="mt-2 text-gray-400 hover:text-gray-200 p-0 h-auto"
+            aria-expanded={isExpanded}
+            aria-label={isExpanded ? "Show less" : "Show more"}
+          >
+            {isExpanded ? (
+              <>Show less <ChevronUp className="ml-1 h-4 w-4" /></>
+            ) : (
+              <>Show more <ChevronDown className="ml-1 h-4 w-4" /></>
+            )}
+          </Button>
+        )}
       </CardContent>
       <CardFooter className="border-t border-gray-700/50 pt-3 pb-3">
         <Button 
