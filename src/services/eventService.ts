@@ -27,6 +27,11 @@ export interface Event {
   eventDate: string; // actual event date
   talks: Talk[];
   ownerAddress?: string; // Event owner's wallet address
+  // Added new optional metadata fields
+  website?: string;
+  location?: string;
+  contact?: string;
+  bannerImage?: string; // URL to banner image
 }
 
 // Helper function to parse question content with better error handling
@@ -42,26 +47,40 @@ const parseTalkContent = (content: string): { title: string; description: string
 };
 
 // Helper function to parse event description for structured data
-const parseEventContent = (description: string): { description: string; eventDate?: string } => {
+const parseEventContent = (description: string): { 
+  description: string; 
+  eventDate?: string;
+  website?: string;
+  location?: string;
+  contact?: string;
+  bannerImage?: string;
+} => {
   try {
     // Try to parse as JSON first
     if (description.startsWith('{') && description.endsWith('}')) {
       return JSON.parse(description);
     }
     
-    // Legacy format: look for Event Date in description
+    // Legacy format: look for structured data in description
     const dateMatch = description.match(/Event Date: (.+?)(?:\n|$)/);
-    if (dateMatch && dateMatch[1]) {
-      // Extract the pure description without the date line
-      const pureDescription = description.replace(/Event Date: .+?(?:\n|$)/, '').trim();
-      return {
-        description: pureDescription,
-        eventDate: dateMatch[1]
-      };
-    }
+    const websiteMatch = description.match(/Website: (.+?)(?:\n|$)/);
+    const locationMatch = description.match(/Location: (.+?)(?:\n|$)/);
+    const contactMatch = description.match(/Contact: (.+?)(?:\n|$)/);
+    const bannerMatch = description.match(/Banner: (.+?)(?:\n|$)/);
     
-    // No structured data found
-    return { description };
+    // Extract the pure description without the metadata lines
+    let pureDescription = description;
+    const metadataRegex = /(Event Date|Website|Location|Contact|Banner): .+?(?:\n|$)/g;
+    pureDescription = pureDescription.replace(metadataRegex, '').trim();
+    
+    return {
+      description: pureDescription,
+      eventDate: dateMatch ? dateMatch[1] : undefined,
+      website: websiteMatch ? websiteMatch[1] : undefined,
+      location: locationMatch ? locationMatch[1] : undefined,
+      contact: contactMatch ? contactMatch[1] : undefined,
+      bannerImage: bannerMatch ? bannerMatch[1] : undefined,
+    };
   } catch (e) {
     console.error("Failed to parse event content:", e);
     return { description };
@@ -90,6 +109,10 @@ export const fetchEvents = async (): Promise<Event[]> => {
       date: event.createdAt || Date.now(),
       eventDate: parsedContent.eventDate || '',
       ownerAddress: event.owner || '', // Changed: Use owner property for events
+      website: parsedContent.website || '',
+      location: parsedContent.location || '',
+      contact: parsedContent.contact || '',
+      bannerImage: parsedContent.bannerImage || '',
       talks: rawTalks.map((talk: any) => {
         const parsedContent = parseTalkContent(talk.question);
         return {
@@ -127,6 +150,10 @@ export const fetchEventById = async (eventId: string): Promise<Event | null> => 
     date: rawEvent.timestamp,
     eventDate: parsedContent.eventDate || '',
     ownerAddress: rawEvent.owner || '', // Changed: Use owner property for events
+    website: parsedContent.website || '',
+    location: parsedContent.location || '',
+    contact: parsedContent.contact || '',
+    bannerImage: parsedContent.bannerImage || '',
     talks: rawTalks.map((talk: any) => {
       const parsedContent = parseTalkContent(talk.question);
       return {
@@ -145,14 +172,22 @@ export const fetchEventById = async (eventId: string): Promise<Event | null> => 
 export const createEvent = async (
   title: string, 
   description: string, 
-  date: string
+  date: string,
+  website?: string,
+  location?: string,
+  contact?: string,
+  bannerImage?: string
 ): Promise<string | null> => {
   console.log(`Creating new event: ${title}`);
   
   // Create structured event data
   const eventData = JSON.stringify({
     description,
-    eventDate: date
+    eventDate: date,
+    website,
+    location,
+    contact,
+    bannerImage
   });
   
   return await publishEvent(title, eventData, true);

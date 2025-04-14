@@ -15,7 +15,11 @@ import {
   Clock, 
   TrendingUp, 
   AlertCircle,
-  Wallet
+  Wallet,
+  Link as LinkIcon,
+  MapPin,
+  Phone,
+  Image
 } from "lucide-react";
 import SubmitTalkDialog from "@/components/SubmitTalkDialog";
 import TalkCard from "@/components/TalkCard";
@@ -170,6 +174,17 @@ const EventDetail = () => {
     );
   }
 
+  const eventBanner = event.bannerImage ? (
+    <div className="w-full h-48 md:h-64 mb-6 rounded-lg overflow-hidden">
+      <img 
+        src={event.bannerImage} 
+        alt={`${event.title} banner`} 
+        className="w-full h-full object-cover"
+        onError={(e) => (e.currentTarget.style.display = 'none')}
+      />
+    </div>
+  ) : null;
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-purple-950 to-indigo-950 transition-colors">
       <div className="container mx-auto px-4 py-8">
@@ -188,6 +203,8 @@ const EventDetail = () => {
           <ThemeToggle />
         </div>
         
+        {eventBanner}
+        
         <Card className="mb-8 border-purple-100 dark:border-purple-900 bg-white/90 dark:bg-gray-800/90 backdrop-blur glass-card">
           <CardHeader className="pb-3">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -198,15 +215,63 @@ const EventDetail = () => {
                 <CardDescription className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed">
                   {event.description}
                 </CardDescription>
-                {event.ownerAddress && (
-                  <div className="mt-2 flex items-center text-gray-600 dark:text-gray-400 text-sm">
-                    <Wallet className="h-4 w-4 mr-1" />
-                    <span>Created by: {formatWalletAddress(event.ownerAddress)}</span>
-                  </div>
-                )}
+                
+                <div className="mt-4 space-y-2">
+                  {event.ownerAddress && (
+                    <div className="flex items-center text-gray-600 dark:text-gray-400 text-sm">
+                      <Wallet className="h-4 w-4 mr-2 flex-shrink-0" />
+                      <span>Created by: {formatWalletAddress(event.ownerAddress)}</span>
+                    </div>
+                  )}
+                  
+                  {event.location && (
+                    <div className="flex items-center text-gray-600 dark:text-gray-400 text-sm">
+                      <MapPin className="h-4 w-4 mr-2 flex-shrink-0" />
+                      <span>{event.location}</span>
+                    </div>
+                  )}
+                  
+                  {event.website && (
+                    <div className="flex items-center text-gray-600 dark:text-gray-400 text-sm">
+                      <LinkIcon className="h-4 w-4 mr-2 flex-shrink-0" />
+                      <a 
+                        href={event.website.startsWith('http') ? event.website : `https://${event.website}`} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-purple-600 dark:text-purple-400 hover:underline"
+                      >
+                        {event.website}
+                      </a>
+                    </div>
+                  )}
+                  
+                  {event.contact && (
+                    <div className="flex items-center text-gray-600 dark:text-gray-400 text-sm">
+                      <Phone className="h-4 w-4 mr-2 flex-shrink-0" />
+                      {event.contact.includes('@') ? (
+                        <a 
+                          href={`mailto:${event.contact}`} 
+                          className="text-purple-600 dark:text-purple-400 hover:underline"
+                        >
+                          {event.contact}
+                        </a>
+                      ) : event.contact.match(/^\+?[\d\s-()]{7,}$/) ? (
+                        <a 
+                          href={`tel:${event.contact.replace(/\s+/g, '')}`} 
+                          className="text-purple-600 dark:text-purple-400 hover:underline"
+                        >
+                          {event.contact}
+                        </a>
+                      ) : (
+                        <span>{event.contact}</span>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
-              <Badge className="date-badge text-lg">
-                <Calendar className="h-5 w-5" />
+              
+              <Badge className="date-badge text-lg self-start">
+                <Calendar className="h-5 w-5 mr-1" />
                 {event.eventDate ? format(new Date(event.eventDate), "MMMM d, yyyy") : "Date TBD"}
               </Badge>
             </div>
