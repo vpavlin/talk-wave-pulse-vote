@@ -25,7 +25,7 @@ const App = () => (
     <ThemeProvider>
       <TooltipProvider>
         <WalletProvider>
-          <div className="min-h-screen transition-colors duration-200 bg-white dark:bg-gray-900">
+          <div className="min-h-screen bg-gray-900">
             <Toaster />
             <Sonner />
             <BrowserRouter>
