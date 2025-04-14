@@ -89,7 +89,7 @@ export const fetchEvents = async (): Promise<Event[]> => {
       description: parsedContent.description || event.description,
       date: event.createdAt || Date.now(),
       eventDate: parsedContent.eventDate || '',
-      ownerAddress: event.author || '',
+      ownerAddress: event.creator || '', // Use creator property instead of author
       talks: rawTalks.map((talk: any) => {
         const parsedContent = parseTalkContent(talk.question);
         return {
@@ -126,7 +126,7 @@ export const fetchEventById = async (eventId: string): Promise<Event | null> => 
     description: parsedContent.description || rawEvent.description,
     date: rawEvent.timestamp,
     eventDate: parsedContent.eventDate || '',
-    ownerAddress: (rawEvent as any).author || '', // Fix: Use type assertion since author might not be in the type definition
+    ownerAddress: rawEvent.creator || '', // Changed: Use creator property instead of author
     talks: rawTalks.map((talk: any) => {
       const parsedContent = parseTalkContent(talk.question);
       return {
