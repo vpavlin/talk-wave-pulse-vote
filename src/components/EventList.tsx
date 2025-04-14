@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,7 +7,6 @@ import { format } from "date-fns";
 import { Link } from "react-router-dom";
 import { Event } from "@/services/eventService";
 import { useWallet } from "@/contexts/WalletContext";
-import { getQakulib } from "@/utils/qakulib";
 
 interface EventListProps {
   events: Event[];
@@ -16,25 +14,7 @@ interface EventListProps {
 
 const EventList = ({ events }: EventListProps) => {
   const [filter, setFilter] = useState("all");
-  const { connected } = useWallet();
-  const [qakulibAddress, setQakulibAddress] = useState<string | null>(null);
-  
-  useEffect(() => {
-    const fetchQakulibAddress = async () => {
-      try {
-        const qakulib = await getQakulib();
-        if (qakulib.identity?.address) {
-          setQakulibAddress(qakulib.identity.address);
-        }
-      } catch (error) {
-        console.error("Error fetching qakulib address:", error);
-      }
-    };
-    
-    if (connected) {
-      fetchQakulibAddress();
-    }
-  }, [connected]);
+  const { connected, walletAddress } = useWallet();
   
   const filteredEvents = events.filter(event => {
     if (filter === "all") return true;

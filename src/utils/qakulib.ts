@@ -30,30 +30,35 @@ let eventListeners: any[] = [];
 
 export const getQakulib = async ():Promise<Qaku> => {
   if (!qakulibInstance) {
-    console.log("Initializing Qakulib instance");
-    const node:IWaku = await createLightNode({            
-      networkConfig:networkConfig,
-      defaultBootstrap: false,
-      bootstrapPeers: bootstrapNodes,
-      numPeersToUse: 3,
-      libp2p: {
-        peerDiscovery: [
-          wakuPeerExchangeDiscovery(derivePubsubTopicsFromNetworkConfig(networkConfig))
-        ]
-      }, });
-    await node.start();
-    
-    // Wait for connection to at least one peer
-    await node.waitForPeers([Protocols.Store, Protocols.Filter, Protocols.LightPush]);
-    
-    qakulibInstance = new Qaku(node as LightNode);
-    await qakulibInstance.init();
+    try {
+      console.log("Initializing Qakulib instance");
+      const node:IWaku = await createLightNode({            
+        networkConfig:networkConfig,
+        defaultBootstrap: false,
+        bootstrapPeers: bootstrapNodes,
+        numPeersToUse: 3,
+        libp2p: {
+          peerDiscovery: [
+            wakuPeerExchangeDiscovery(derivePubsubTopicsFromNetworkConfig(networkConfig))
+          ]
+        }, });
+      await node.start();
+      
+      // Wait for connection to at least one peer
+      await node.waitForPeers([Protocols.Store, Protocols.Filter, Protocols.LightPush]);
+      
+      qakulibInstance = new Qaku(node as LightNode);
+      await qakulibInstance.init();
 
-    // Load history and initialize all QA events we've interacted with
-    await loadHistoryAndInitializeQAs(qakulibInstance);
+      // Load history and initialize all QA events we've interacted with
+      await loadHistoryAndInitializeQAs(qakulibInstance);
 
-    // Set up event listeners for qakulib events
-    setupEventListeners();
+      // Set up event listeners for qakulib events
+      setupEventListeners();
+    } catch (error) {
+      console.error("Error initializing Qakulib:", error);
+      throw error;
+    }
   }
   return qakulibInstance;
 };
@@ -142,8 +147,11 @@ export const getEvents = async (): Promise<any[]> => {
     const eventsList = qakulib.qas.values();
     const events = [];
     
-    // Get current user address for comparison
-    const currentUserAddress = qakulib.identity?.address ? qakulib.identity.address() : '';
+    // Get current user address for comparison - handle safely
+    const currentUserAddress = qakulib.identity && 
+                              qakulib.identity.address && 
+                              typeof qakulib.identity.address === 'function' ? 
+                              qakulib.identity.address() : '';
     
     for (const event of eventsList) {
       // Create extended control state with additional properties
@@ -182,8 +190,11 @@ export const getEventById = async (eventId: string): Promise<ControlMessage | nu
       return null;
     }
     
-    // Add identity check for creator
-    const currentUserAddress = qakulib.identity?.address ? qakulib.identity.address() : '';
+    // Add identity check for creator - handle safely
+    const currentUserAddress = qakulib.identity && 
+                              qakulib.identity.address && 
+                              typeof qakulib.identity.address === 'function' ? 
+                              qakulib.identity.address() : '';
     
     // We need to cast to ExtendedControlMessage to add our custom property
     const extendedControlState = event.controlState as ExtendedControlMessage;
@@ -220,8 +231,11 @@ export const getTalks = async (eventId: string): Promise<EnhancedQuestionMessage
     const talksList = event.questions.values();
     const talks = [];
     
-    // Get current user address as a string
-    const currentUserAddress = qakulib.identity?.address ? qakulib.identity.address() : '';
+    // Get current user address safely
+    const currentUserAddress = qakulib.identity && 
+                              qakulib.identity.address && 
+                              typeof qakulib.identity.address === 'function' ? 
+                              qakulib.identity.address() : '';
     
     for (const talk of talksList) {
       // Create an extended talk with our custom properties

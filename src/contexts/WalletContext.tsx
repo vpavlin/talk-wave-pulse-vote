@@ -7,14 +7,14 @@ interface WalletContextType {
   walletAddress: string | null;
   connecting: boolean;
   connected: boolean;
-  connect: () => Promise<void>; // Added connect method to the interface
+  connect: () => Promise<void>;
 }
 
 const WalletContext = createContext<WalletContextType>({
   walletAddress: null,
   connecting: false,
   connected: false,
-  connect: async () => {}, // Added empty implementation for default context
+  connect: async () => {},
 });
 
 export const useWallet = () => useContext(WalletContext);
@@ -31,11 +31,23 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setConnecting(true);
       const qakulib = await getQakulib();
       
-      if (qakulib.identity?.address) {
-        // Call the address function to get the actual address string
-        const addressValue = qakulib.identity.address();
-        setWalletAddress(addressValue);
-        setConnected(true);
+      // Safely check if identity and address exist and address is a function
+      if (qakulib.identity && qakulib.identity.address && typeof qakulib.identity.address === 'function') {
+        try {
+          // Call the address function to get the actual address string
+          const addressValue = qakulib.identity.address();
+          setWalletAddress(addressValue);
+          setConnected(true);
+        } catch (error) {
+          console.error("Error calling qakulib identity address function:", error);
+          toast({
+            title: "Address Error",
+            description: "Could not get wallet address",
+            variant: "destructive",
+          });
+        }
+      } else {
+        console.log("Qakulib identity or address function not available yet");
       }
     } catch (error) {
       console.error("Error connecting to qakulib identity:", error);
