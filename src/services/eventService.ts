@@ -126,7 +126,7 @@ export const fetchEventById = async (eventId: string): Promise<Event | null> => 
     description: parsedContent.description || rawEvent.description,
     date: rawEvent.timestamp,
     eventDate: parsedContent.eventDate || '',
-    ownerAddress: rawEvent.author || '',
+    ownerAddress: rawEvent.author !== undefined ? rawEvent.author : '', // Fix: Check if author exists on rawEvent
     talks: rawTalks.map((talk: any) => {
       const parsedContent = parseTalkContent(talk.question);
       return {
