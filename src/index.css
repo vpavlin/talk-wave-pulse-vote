@@ -5,44 +5,44 @@
 
 @layer base {
   :root {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
+    --background: 260 40% 6%;
+    --foreground: 260 10% 98%;
 
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
+    --card: 260 40% 7%;
+    --card-foreground: 260 10% 98%;
 
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 260 40% 6%;
+    --popover-foreground: 260 10% 98%;
 
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 10% 3.9%;
+    --primary: 260 75% 60%;
+    --primary-foreground: 260 10% 98%;
 
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 260 30% 25%;
+    --secondary-foreground: 260 10% 98%;
 
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
+    --muted: 260 30% 15%;
+    --muted-foreground: 260 20% 70%;
 
-    --accent: 240 4% 25%;
-    --accent-foreground: 0 0% 98%;
+    --accent: 260 30% 40%;
+    --accent-foreground: 260 10% 98%;
 
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive-foreground: 260 10% 98%;
 
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
+    --border: 260 30% 20%;
+    --input: 260 30% 20%;
+    --ring: 260 30% 50%;
 
     --radius: 0.75rem;
     
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 240 5% 64.9%;
+    --sidebar-background: 260 30% 10%;
+    --sidebar-foreground: 260 10% 95.9%;
+    --sidebar-primary: 260 60% 70%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 240 5% 64.9%;
+    --sidebar-accent: 260 30% 25%;
+    --sidebar-accent-foreground: 260 10% 95.9%;
+    --sidebar-border: 260 30% 20%;
+    --sidebar-ring: 260 50% 70%;
   }
 }
 
@@ -76,8 +76,8 @@
 /* Custom glass morphism effect for cards */
 .glass-card {
   @apply backdrop-blur-sm border rounded-xl shadow-lg;
-  @apply border-gray-800/50;
-  @apply bg-slate-900/80;
+  @apply border-purple-800/50;
+  @apply bg-purple-900/80;
 }
 
 /* Custom animations */
@@ -101,7 +101,7 @@
 
 /* Gradient text */
 .gradient-text {
-  @apply bg-clip-text text-transparent bg-gradient-to-r from-gray-200 to-white;
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-purple-200 to-indigo-300;
 }
 
 /* Enhanced focus styles for better accessibility */
@@ -116,7 +116,7 @@
 
 /* Card and button enhancements */
 .card-hover {
-  @apply transition-all duration-200 hover:shadow-md hover:border-accent/50;
+  @apply transition-all duration-200 hover:shadow-md hover:border-purple-500/50;
 }
 
 .button-hover {
@@ -126,7 +126,7 @@
 /* Date badge for better visibility */
 .date-badge {
   @apply text-lg px-3 py-1.5 rounded-full font-medium inline-flex items-center gap-1.5;
-  @apply bg-accent/20 text-accent-foreground;
+  @apply bg-purple-800/30 text-purple-300;
 }
 
 /* Better avatar styling */

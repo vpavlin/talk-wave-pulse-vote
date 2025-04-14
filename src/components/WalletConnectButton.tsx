@@ -15,7 +15,7 @@ const WalletConnectButton = () => {
       {!connected ? (
         <Button 
           size="lg"
-          className="text-lg px-6 py-6 h-auto"
+          className="text-lg px-6 py-6 h-auto bg-purple-600 hover:bg-purple-700 text-white"
           onClick={connect}
           disabled={connecting}
         >
@@ -34,7 +34,7 @@ const WalletConnectButton = () => {
       ) : (
         <Button 
           size="lg"
-          className="text-lg px-6 py-6 h-auto"
+          className="text-lg px-6 py-6 h-auto bg-purple-600 hover:bg-purple-700 text-white"
           onClick={disconnect}
         >
           <span className="mr-2">{formatAddress(walletAddress || '')}</span>
