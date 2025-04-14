@@ -52,7 +52,7 @@ const TalkCard = ({ talk, onVote, showFullDescription = false }: TalkCardProps) 
   const hasMoreContent = talk.description.length > getFirstLine(talk.description).length;
 
   return (
-    <Card className="overflow-hidden transition-all duration-300 hover:shadow-lg border-gray-700 bg-gray-800 card-hover">
+    <Card className="overflow-hidden transition-all duration-300 hover:shadow-lg border-gray-700 bg-gray-800 card-hover h-full flex flex-col">
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
           <CardTitle className="text-2xl font-bold text-gray-100">
@@ -81,7 +81,7 @@ const TalkCard = ({ talk, onVote, showFullDescription = false }: TalkCardProps) 
           </div>
         )}
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex-grow">
         <div className="text-gray-300 text-base leading-relaxed prose dark:prose-invert prose-p:my-2 max-w-none">
           {isExpanded ? (
             <ReactMarkdown>{description}</ReactMarkdown>
@@ -107,7 +107,7 @@ const TalkCard = ({ talk, onVote, showFullDescription = false }: TalkCardProps) 
           </Button>
         )}
       </CardContent>
-      <CardFooter className="border-t border-gray-700/50 pt-3 pb-3">
+      <CardFooter className="border-t border-gray-700/50 pt-3 pb-3 mt-auto">
         <Button 
           variant="outline" 
           size="lg" 
