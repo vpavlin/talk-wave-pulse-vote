@@ -14,31 +14,31 @@ const WalletConnectButton = () => {
     <>
       {!connected ? (
         <Button 
-          variant="outline" 
-          className="border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
+          size="lg"
+          className="text-lg px-6 py-6 h-auto"
           onClick={connect}
           disabled={connecting}
         >
           {connecting ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
               Connecting...
             </>
           ) : (
             <>
-              <Wallet className="mr-2 h-4 w-4" />
+              <Wallet className="mr-2 h-5 w-5" />
               Connect Wallet
             </>
           )}
         </Button>
       ) : (
         <Button 
-          variant="outline" 
-          className="border-gray-600 text-gray-300 hover:bg-gray-700 hover:text-white"
+          size="lg"
+          className="text-lg px-6 py-6 h-auto"
           onClick={disconnect}
         >
           <span className="mr-2">{formatAddress(walletAddress || '')}</span>
-          <LogOut className="h-4 w-4" />
+          <LogOut className="h-5 w-5" />
         </Button>
       )}
     </>

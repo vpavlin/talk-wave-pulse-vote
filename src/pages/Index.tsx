@@ -55,30 +55,30 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-purple-50 dark:from-gray-900 dark:to-indigo-950 transition-colors">
+    <div className="min-h-screen bg-gradient-to-b from-black to-gray-900 transition-colors">
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-end mb-4">
           <ThemeToggle />
         </div>
         
         <div className="mb-12 text-center max-w-4xl mx-auto">
-          <h1 className="text-4xl md:text-5xl font-bold mb-6 gradient-text">
+          <h1 className="text-4xl md:text-5xl font-bold mb-6 text-white">
             Lightning Talk Wave
           </h1>
-          <p className="text-xl text-gray-700 dark:text-gray-300 mb-8 leading-relaxed">
+          <p className="text-xl text-gray-300 mb-8 leading-relaxed">
             Submit and vote on lightning talks for upcoming tech conferences and events.
             Connect your web3 wallet to get started.
           </p>
           
           <div className="flex flex-wrap justify-center gap-4">
             <Button 
-              className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 dark:from-purple-600 dark:to-indigo-600 dark:hover:from-purple-700 dark:hover:to-indigo-700 text-lg px-6 py-6 h-auto focus-ring button-hover"
+              size="lg"
+              className="text-lg px-6 py-6 h-auto"
               onClick={() => setIsCreateEventOpen(true)}
               disabled={!connected}
-              size="lg"
               aria-label="Create a new event"
             >
-              <PlusCircle className="mr-2 h-6 w-6" />
+              <PlusCircle className="mr-2 h-5 w-5" />
               Create Event
             </Button>
             
@@ -86,7 +86,7 @@ const Index = () => {
           </div>
           
           {!connected && (
-            <p className="mt-4 text-amber-600 dark:text-amber-400 flex items-center justify-center gap-1">
+            <p className="mt-4 text-amber-600 flex items-center justify-center gap-1">
               <AlertCircle className="h-5 w-5" />
               Connect your wallet to create events or submit talks
             </p>
