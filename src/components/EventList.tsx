@@ -1,8 +1,9 @@
+
 import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, ArrowRight, MessageSquare, Wallet, User, MessageSquarePlus, Vote, PresentationIcon, Lock, ChevronDown, ChevronUp, BellRing } from "lucide-react";
+import { Calendar, ArrowRight, MessageSquare, Wallet, User, MessageSquarePlus, Vote, PresentationIcon, Lock, ChevronDown, ChevronUp, BellRing, BellOff } from "lucide-react";
 import { format, isValid } from "date-fns";
 import { Link } from "react-router-dom";
 import { Event } from "@/services/eventService";
@@ -23,6 +24,7 @@ const EventList = ({ events }: EventListProps) => {
   
   const filteredActiveEvents = activeEvents.filter(event => {
     if (filter === "all") return true;
+    if (filter === "all-but-announced") return !(event.announced || false);
     if (filter === "upcoming") {
       const eventDate = event.eventDate 
         ? new Date(event.eventDate) 
@@ -46,6 +48,7 @@ const EventList = ({ events }: EventListProps) => {
   
   const filteredClosedEvents = closedEvents.filter(event => {
     if (filter === "all") return true;
+    if (filter === "all-but-announced") return !(event.announced || false);
     if (filter === "upcoming") return false;
     if (filter === "created") {
       return event.isCreator || false;
@@ -188,6 +191,15 @@ const EventList = ({ events }: EventListProps) => {
             aria-pressed={filter === "all"}
           >
             All Events
+          </Button>
+          <Button 
+            variant={filter === "all-but-announced" ? "default" : "outline"}
+            onClick={() => setFilter("all-but-announced")}
+            className={filter === "all-but-announced" ? "bg-accent hover:bg-accent/90" : ""}
+            aria-pressed={filter === "all-but-announced"}
+          >
+            <BellOff className="mr-1 h-4 w-4" />
+            All But Announced
           </Button>
           <Button 
             variant={filter === "upcoming" ? "default" : "outline"}
