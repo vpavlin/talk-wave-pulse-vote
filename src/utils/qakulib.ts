@@ -187,9 +187,10 @@ export const getEvents = async (): Promise<any[]> => {
       extendedEvent.contact = (event.controlState as any).contact;
       extendedEvent.bannerImage = (event.controlState as any).bannerImage;
       
-      // Log the event data for debugging
-      // Need to access the correct property for event ID
-      console.log("Event data:", event.id || event.qaId || event.controlState.id, extendedEvent);
+      // Log the event data for debugging - use a safe approach to access event ID
+      // Use toString() to safely get an identifier regardless of the actual property name
+      const eventIdentifier = event.toString();
+      console.log("Event data:", eventIdentifier, extendedEvent);
       
       events.push(extendedEvent);
     }
