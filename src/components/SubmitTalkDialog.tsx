@@ -9,14 +9,15 @@ import { Textarea } from "@/components/ui/textarea";
 interface SubmitTalkDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (talkData: { title: string; speaker: string; description: string }) => void;
-  initialData?: { title: string; description: string } | null;
+  onSubmit: (talkData: { title: string; speaker: string; description: string; bio?: string }) => void;
+  initialData?: { title: string; description: string; speaker?: string; bio?: string } | null;
 }
 
 const SubmitTalkDialog = ({ open, onOpenChange, onSubmit, initialData }: SubmitTalkDialogProps) => {
   const [title, setTitle] = useState("");
   const [speaker, setSpeaker] = useState("");
   const [description, setDescription] = useState("");
+  const [bio, setBio] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Update form fields when initialData changes or when dialog opens
@@ -24,6 +25,8 @@ const SubmitTalkDialog = ({ open, onOpenChange, onSubmit, initialData }: SubmitT
     if (open && initialData) {
       setTitle(initialData.title || "");
       setDescription(initialData.description || "");
+      setSpeaker(initialData.speaker || "");
+      setBio(initialData.bio || "");
     }
   }, [initialData, open]);
 
@@ -32,7 +35,7 @@ const SubmitTalkDialog = ({ open, onOpenChange, onSubmit, initialData }: SubmitT
     setIsSubmitting(true);
     
     try {
-      await onSubmit({ title, speaker, description });
+      await onSubmit({ title, speaker, description, bio });
     } catch (error) {
       console.error("Error submitting talk:", error);
     } finally {
@@ -45,6 +48,7 @@ const SubmitTalkDialog = ({ open, onOpenChange, onSubmit, initialData }: SubmitT
     setTitle("");
     setSpeaker("");
     setDescription("");
+    setBio("");
   };
 
   return (
@@ -84,7 +88,22 @@ const SubmitTalkDialog = ({ open, onOpenChange, onSubmit, initialData }: SubmitT
             </div>
             
             <div className="grid gap-2">
-              <Label htmlFor="description" className="dark:text-gray-200">Description</Label>
+              <Label htmlFor="bio" className="dark:text-gray-200">Speaker Bio</Label>
+              <Textarea
+                id="bio"
+                placeholder="Brief professional bio (max 150 characters)"
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                maxLength={150}
+                className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 text-right">
+                {bio.length}/150
+              </p>
+            </div>
+            
+            <div className="grid gap-2">
+              <Label htmlFor="description" className="dark:text-gray-200">Talk Description</Label>
               <Textarea
                 id="description"
                 placeholder="Brief description of your lightning talk (max 200 characters)"

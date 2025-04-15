@@ -1,4 +1,3 @@
-
 import {
   getEvents,
   getEventById,
@@ -13,12 +12,14 @@ export interface Talk {
   title: string;
   speaker: string;
   description: string;
+  bio?: string; // Added speaker's bio
   votes: number;
   createdAt: string;
   walletAddress?: string; // Author's wallet address
   voterAddresses?: string[]; // Array of wallet addresses that voted for this talk
   upvotedByMe?: boolean; // Flag indicating if the current user voted for this talk
   isAuthor?: boolean; // Flag indicating if the current user is the author
+  eventTitle?: string; // Event title for context
 }
 
 export interface Event {
@@ -37,7 +38,7 @@ export interface Event {
   isCreator?: boolean; // Flag indicating if the current user is the creator
 }
 
-const parseTalkContent = (content: string): { title: string; description: string; speaker: string } => {
+const parseTalkContent = (content: string): { title: string; description: string; speaker: string; bio?: string } => {
   try {
     const contentString = typeof content === 'string' ? content : JSON.stringify(content);
     return JSON.parse(contentString);
@@ -117,6 +118,7 @@ export const fetchEvents = async (): Promise<Event[]> => {
           title: parsedContent.title || "Untitled Talk",
           speaker: parsedContent.speaker || "Anonymous",
           description: parsedContent.description,
+          bio: parsedContent.bio || '',
           votes: talk.upvotes || 0,
           createdAt: talk.timestamp || new Date().toISOString(),
           walletAddress: talk.signer || '',
@@ -161,6 +163,7 @@ export const fetchEventById = async (eventId: string): Promise<Event | null> => 
         title: parsedContent.title || talk.title || "Untitled Talk",
         speaker: parsedContent.speaker || talk.author || "Anonymous",
         description: parsedContent.description || talk.content,
+        bio: parsedContent.bio || '',
         votes: talk.upvotes || 0,
         createdAt: talk.createdAt || new Date().toISOString(),
         walletAddress: talk.signer || '',
@@ -200,10 +203,11 @@ export const createTalk = async (
   eventId: string, 
   title: string, 
   description: string, 
-  speaker: string
+  speaker: string,
+  bio?: string
 ): Promise<string | null> => {
   console.log(`Creating new talk: ${title} by ${speaker}`);
-  return await submitTalk(eventId, title, description, speaker);
+  return await submitTalk(eventId, title, description, speaker, bio);
 };
 
 export const upvoteTalk = async (eventId: string, talkId: string): Promise<boolean> => {

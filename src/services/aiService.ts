@@ -3,6 +3,7 @@ import axios from 'axios';
 import { fetchEvents } from './eventService';
 
 const STORAGE_KEY = 'akash_api_key';
+const USER_INFO_KEY = 'user_profile_info';
 
 // Create an axios client for the Akash API
 export const createAkashClient = (apiKey: string) => {
@@ -28,6 +29,23 @@ export const getApiKey = (): string | null => {
 // Check if the API key exists
 export const hasApiKey = (): boolean => {
   return !!getApiKey();
+};
+
+// Save user profile information to localStorage
+export const saveUserInfo = (name: string, bio: string): void => {
+  localStorage.setItem(USER_INFO_KEY, JSON.stringify({ name, bio }));
+};
+
+// Get user profile information from localStorage
+export const getUserInfo = (): { name: string, bio: string } => {
+  const defaultInfo = { name: '', bio: '' };
+  try {
+    const savedInfo = localStorage.getItem(USER_INFO_KEY);
+    return savedInfo ? JSON.parse(savedInfo) : defaultInfo;
+  } catch (error) {
+    console.error('Error parsing user info from localStorage:', error);
+    return defaultInfo;
+  }
 };
 
 // Generate a talk suggestion based on existing talks and event details

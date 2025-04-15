@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchEvents } from "@/services/eventService";
 import { useWallet } from "@/contexts/WalletContext";
 import { useToast } from "@/hooks/use-toast";
+import { getUserInfo } from "@/services/aiService";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -13,12 +14,13 @@ import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import AiTalkSuggestion from "@/components/AiTalkSuggestion";
 import SubmitTalkDialog from "@/components/SubmitTalkDialog";
+import UserProfileCard from "@/components/UserProfileCard";
 
 const MyTalks = () => {
   const { walletAddress, connected, connect } = useWallet();
   const { toast } = useToast();
   const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
-  const [talkData, setTalkData] = useState({ title: "", speaker: "", description: "" });
+  const [talkData, setTalkData] = useState({ title: "", speaker: "", description: "", bio: "" });
 
   // Fetch all events (we'll filter for the user's talks from these)
   const { data: events, isLoading, error } = useQuery({
@@ -32,6 +34,16 @@ const MyTalks = () => {
       connect();
     }
   }, [connected, connect]);
+
+  // Get user info when component mounts
+  useEffect(() => {
+    const userInfo = getUserInfo();
+    setTalkData(prevData => ({
+      ...prevData,
+      speaker: userInfo.name,
+      bio: userInfo.bio
+    }));
+  }, []);
 
   // Extract all talks submitted by the current user
   const myTalks = React.useMemo(() => {
@@ -90,10 +102,12 @@ const MyTalks = () => {
 
   // Handle using an AI suggestion
   const handleUseSuggestion = (suggestion) => {
+    const userInfo = getUserInfo();
     setTalkData({
       title: suggestion.title,
-      speaker: "", // User would need to fill this in
-      description: suggestion.description
+      speaker: userInfo.name,
+      description: suggestion.description,
+      bio: userInfo.bio
     });
     setSubmitDialogOpen(true);
   };
@@ -144,6 +158,9 @@ const MyTalks = () => {
         </Link>
         <h1 className="text-3xl font-bold text-white">My Talks</h1>
       </div>
+      
+      {/* User Profile Card */}
+      <UserProfileCard />
       
       {/* Stats cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -255,6 +272,7 @@ const MyTalks = () => {
         open={submitDialogOpen}
         onOpenChange={setSubmitDialogOpen}
         onSubmit={handleSubmitTalk}
+        initialData={talkData}
       />
     </div>
   );

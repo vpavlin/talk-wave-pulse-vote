@@ -1,3 +1,4 @@
+
 // Using the locally installed qakulib package
 import {ControlMessage, EnhancedQuestionMessage, Qaku} from "qakulib";
 import { wakuPeerExchangeDiscovery } from "@waku/discovery";
@@ -291,10 +292,11 @@ export const submitTalk = async (
   eventId: string, 
   title: string, 
   description: string,
-  speaker: string
+  speaker: string,
+  bio?: string
 ): Promise<string | null> => {
   try {
-    console.log(`Submitting talk "${title}" for event ${eventId}`);
+    console.log(`Submitting talk "${title}" by ${speaker}`);
     const qakulib = await getQakulib();
     
     // Make sure the QA is initialized
@@ -304,7 +306,7 @@ export const submitTalk = async (
     }
     
     // Format talk data for submission
-    const talkData = JSON.stringify({title, description, speaker});
+    const talkData = JSON.stringify({title, description, speaker, bio});
     
     // Submit the new question (talk)
     const talkId = await qakulib.newQuestion(eventId, talkData);
