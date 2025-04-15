@@ -63,7 +63,7 @@ const TalkCard = ({ talk, onVote, renderActions }: TalkCardProps) => {
   }, [talk, walletAddress]);
 
   return (
-    <Card className="overflow-hidden border-purple-800/30 dark:border-purple-700/30 bg-white/90 dark:bg-gray-800/70 backdrop-blur hover:shadow-lg transition-shadow talk-card">
+    <Card className="overflow-hidden border-purple-800/30 dark:border-purple-700/30 bg-white/90 dark:bg-gray-800/70 backdrop-blur hover:shadow-lg transition-shadow talk-card flex flex-col h-full">
       <CardHeader className="pb-2 relative">
         {talk.answer && (
           <Badge className="absolute top-2 right-2 bg-green-600 text-white flex items-center gap-1 p-1">
@@ -89,7 +89,7 @@ const TalkCard = ({ talk, onVote, renderActions }: TalkCardProps) => {
           )}
         </div>
       </CardHeader>
-      <CardContent className="py-2">
+      <CardContent className="py-2 flex-grow">
         <div className="prose dark:prose-invert prose-sm max-w-none">
           <ReactMarkdown>{talk.description}</ReactMarkdown>
         </div>
@@ -114,15 +114,19 @@ const TalkCard = ({ talk, onVote, renderActions }: TalkCardProps) => {
           </div>
         )}
       </CardContent>
-      <CardFooter className="flex justify-between items-center pt-3 pb-3 gap-2">
-        <div className="flex items-center gap-1">
+      <CardFooter className="flex justify-between items-center pt-4 pb-4 gap-2 mt-auto">
+        <div className="flex items-center">
           <ThumbsUp className={`h-5 w-5 ${hasVoted ? 'text-purple-600 dark:text-purple-400 fill-purple-600 dark:fill-purple-400' : 'text-gray-500 dark:text-gray-400'}`} />
           <span className="font-medium ml-1 text-purple-600 dark:text-purple-400">{talk.votes}</span>
-          <span className="text-gray-500 dark:text-gray-400 text-sm">votes</span>
+          <span className="text-gray-500 dark:text-gray-400 text-sm ml-1">votes</span>
         </div>
         
         <div className="flex items-center gap-2">
-          {renderActions}
+          {renderActions && (
+            <div className="min-w-[90px] flex items-center justify-center">
+              {renderActions}
+            </div>
+          )}
           
           <Button 
             variant="outline" 
