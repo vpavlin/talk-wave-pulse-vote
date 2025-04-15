@@ -101,15 +101,26 @@ export const generateTalkSuggestion = async (talks: any[], eventDetails?: any): 
     ${eventDetails.eventDate ? `Date: ${eventDetails.eventDate}` : ''}
     
     Based on the event details and existing submissions, suggest a new original lightning talk (5-10 minutes) 
-    that would be perfect for this specific event. Include a title and a brief description. 
-    Make sure the description is at least 100 and at most 200 characters!
+    that would be perfect for this specific event.
+    
+    IMPORTANT: Follow this exact format in your response:
+    Title: [A clear, concise title without any special characters or formatting]
+    Description: [A concise description between 100-200 characters]
+    
+    Make sure your title is plain text without any markdown, hashtags, quotes, or formatting.
+    The title should be short (5-10 words) and the description should be between 100-200 characters.
     `;
   } else {
     prompt += `
     Based on these submissions, suggest a new original lightning talk (5-10 minutes) 
-    that would complement these topics but cover something missing. 
-    Include a title and a brief description. 
-    Make sure the description is at least 100 and at most 200 characters!
+    that would complement these topics but cover something missing.
+    
+    IMPORTANT: Follow this exact format in your response:
+    Title: [A clear, concise title without any special characters or formatting]
+    Description: [A concise description between 100-200 characters]
+    
+    Make sure your title is plain text without any markdown, hashtags, quotes, or formatting.
+    The title should be short (5-10 words) and the description should be between 100-200 characters.
     `;
   }
   
