@@ -1,3 +1,4 @@
+
 import { 
   getEvents as fetchEventsFromQakulib, 
   getEventById as fetchEventByIdFromQakulib,
@@ -49,34 +50,44 @@ export const fetchEvents = async (): Promise<Event[]> => {
   
   console.log("Raw events:", rawEvents);
   
-  return rawEvents.map(event => ({
-    id: event.id,
-    title: event.title || 'Untitled Event',
-    description: parseEventDescription(event.description),
-    ownerAddress: event.ownerAddress || event.owner,
-    isCreator: event.isCreator || false,
-    eventDate: event.eventDate ? String(event.eventDate) : undefined,
-    date: event.timestamp || event.updated,
-    location: event.location,
-    website: event.website,
-    contact: event.contact,
-    bannerImage: event.bannerImage,
-    enabled: event.enabled,
-    talks: (event.talks || []).map(talk => ({
-      id: talk.hash,
-      title: extractTalkData(talk.question || '').title || 'Unknown Talk',
-      description: extractTalkData(talk.question || '').description || '',
-      speaker: extractTalkData(talk.question || '').speaker || 'Anonymous',
-      bio: extractTalkData(talk.question || '').bio,
-      votes: talk.upvotes || 0,
-      voterAddresses: talk.voterAddresses || [],
-      walletAddress: talk.signer,
-      isAuthor: talk.isAuthor || false,
-      upvotedByMe: talk.upvotedByMe || false,
-      createdAt: talk.timestamp || new Date(),
-      answer: talk.answer // Include answer in the talk data
-    }))
-  }));
+  // Process each event and include talks
+  const processedEvents = [];
+  
+  for (const event of rawEvents) {
+    // Fetch talks for this event
+    const eventTalks = await fetchTalksFromQakulib(event.id);
+    
+    processedEvents.push({
+      id: event.id,
+      title: event.title || 'Untitled Event',
+      description: parseEventDescription(event.description),
+      ownerAddress: event.ownerAddress || event.owner,
+      isCreator: event.isCreator || false,
+      eventDate: event.eventDate ? String(event.eventDate) : undefined,
+      date: event.timestamp || event.updated,
+      location: event.location,
+      website: event.website,
+      contact: event.contact,
+      bannerImage: event.bannerImage,
+      enabled: event.enabled,
+      talks: (eventTalks || []).map(talk => ({
+        id: talk.hash,
+        title: extractTalkData(talk.question || '').title || 'Unknown Talk',
+        description: extractTalkData(talk.question || '').description || '',
+        speaker: extractTalkData(talk.question || '').speaker || 'Anonymous',
+        bio: extractTalkData(talk.question || '').bio,
+        votes: talk.upvotes || 0,
+        voterAddresses: talk.voterAddresses || [],
+        walletAddress: talk.signer,
+        isAuthor: talk.isAuthor || false,
+        upvotedByMe: talk.upvotedByMe || false,
+        createdAt: talk.timestamp || new Date(),
+        answer: talk.answer // Include answer in the talk data
+      }))
+    });
+  }
+  
+  return processedEvents;
 };
 
 // Helper function to parse event description
