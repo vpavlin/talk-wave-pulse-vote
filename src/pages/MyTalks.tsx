@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchEvents } from "@/services/eventService";
@@ -9,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { PresentationIcon, ThumbsUp, MessageSquare, Calendar, ArrowRight, ArrowLeft, BrainCircuit } from "lucide-react";
+import { PresentationIcon, ThumbsUp, MessageSquare, Calendar, ArrowRight, ArrowLeft, BrainCircuit, Lock, Unlock } from "lucide-react";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import AiTalkSuggestion from "@/components/AiTalkSuggestion";
@@ -96,7 +95,8 @@ const MyTalks = () => {
             ...talk,
             eventId: event.id,
             eventTitle: event.title,
-            eventDate: event.eventDate || format(new Date(event.date), "MMM d, yyyy")
+            eventDate: event.eventDate || format(new Date(event.date), "MMM d, yyyy"),
+            eventEnabled: event.enabled
           });
         });
       }
@@ -109,7 +109,8 @@ const MyTalks = () => {
         console.log(`Talk ${i+1}:`, {
           title: talk.title,
           isAuthor: talk.isAuthor,
-          walletAddress: talk.walletAddress
+          walletAddress: talk.walletAddress,
+          eventEnabled: talk.eventEnabled
         });
       });
     }
@@ -269,6 +270,7 @@ const MyTalks = () => {
                   <TableHead className="text-purple-200">Talk Title</TableHead>
                   <TableHead className="text-purple-200">Event</TableHead>
                   <TableHead className="text-purple-200">Date</TableHead>
+                  <TableHead className="text-purple-200 text-center">Status</TableHead>
                   <TableHead className="text-purple-200 text-center">Votes</TableHead>
                   <TableHead className="text-purple-200 text-right">Actions</TableHead>
                 </TableRow>
@@ -279,6 +281,17 @@ const MyTalks = () => {
                     <TableCell className="font-medium text-white">{talk.title}</TableCell>
                     <TableCell className="text-gray-300">{talk.eventTitle}</TableCell>
                     <TableCell className="text-gray-300">{talk.eventDate}</TableCell>
+                    <TableCell className="text-center">
+                      {talk.eventEnabled !== false ? (
+                        <Badge className="bg-green-800/60 hover:bg-green-800 text-white flex items-center justify-center w-20 mx-auto">
+                          <Unlock className="h-3 w-3 mr-1" /> Open
+                        </Badge>
+                      ) : (
+                        <Badge className="bg-red-800/60 hover:bg-red-800 text-white flex items-center justify-center w-20 mx-auto">
+                          <Lock className="h-3 w-3 mr-1" /> Closed
+                        </Badge>
+                      )}
+                    </TableCell>
                     <TableCell className="text-center">
                       <Badge className="bg-purple-800/60 hover:bg-purple-800 text-white">
                         {talk.votes} votes
