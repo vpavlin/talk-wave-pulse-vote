@@ -89,7 +89,7 @@ const EventList = ({ events }: EventListProps) => {
   const isAnnouncedEvent = (event: Event) => {
     // Events fetched directly from the blockchain typically have a qaId property
     // while events from the announcement channel don't
-    return !event.talks || event.talks.length === 0;
+    return event.announed
   };
 
   const renderEventCard = (event: Event) => {

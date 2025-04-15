@@ -44,6 +44,7 @@ export interface Event {
   bannerImage?: string;
   talks: Talk[];
   enabled?: boolean;
+  announed?: boolean;
 }
 
 export const fetchEvents = async (): Promise<Event[]> => {
@@ -51,12 +52,16 @@ export const fetchEvents = async (): Promise<Event[]> => {
     console.log("Fetching all events");
     
     const rawEvents = await fetchEventsFromQakulib();
+
+    const processedAnnounced = announcedEvents.filter(
+      announcedEvent => !rawEvents.some(event => event.id === announcedEvent.id)
+    )
+
+    processedAnnounced.forEach(e => e.announced = true)
     
     const combinedEvents = [
       ...rawEvents,
-      ...announcedEvents.filter(
-        announcedEvent => !rawEvents.some(event => event.id === announcedEvent.id)
-      )
+      ...processedAnnounced
     ];
     
     console.log("Combined events:", combinedEvents);
@@ -81,6 +86,7 @@ export const fetchEvents = async (): Promise<Event[]> => {
         contact: event.contact,
         bannerImage: event.bannerImage,
         enabled: event.enabled !== false,
+        announced: event.announced,
         talks: (eventTalks || []).map(talk => ({
           id: talk.hash,
           title: extractTalkData(talk.question || '').title || 'Unknown Talk',
@@ -203,6 +209,7 @@ export const createEvent = async (
     const eventId = await publishEventToQakulib(title, descriptionWithMetadata, true);
     
     // Only announce the event if the announce flag is true
+    console.log
     if (announce) {
       console.log("Announcing event to global channel");
       
