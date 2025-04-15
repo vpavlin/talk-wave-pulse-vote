@@ -39,12 +39,16 @@ export const generateTalkSuggestion = async (talks: any[], eventDetails?: any): 
   
   const client = createAkashClient(apiKey);
   
-  // Limit to the latest 10 talks
-  const latestTalks = talks.slice(0, 10);
+  // Sort talks by creation date (newest first) and limit to latest 10 talks
+  const latestTalks = [...talks].sort((a, b) => {
+    const dateA = new Date(a.createdAt || 0).getTime();
+    const dateB = new Date(b.createdAt || 0).getTime();
+    return dateB - dateA;
+  }).slice(0, 10);
   
   // Create a prompt that describes the talks and asks for a suggestion
   let prompt = `
-    Here are some recent conference talk submissions:
+    Here are some recent conference talk submissions across various events:
     ${latestTalks.map((talk, index) => `
     Talk ${index + 1}:
     Title: ${talk.title}
