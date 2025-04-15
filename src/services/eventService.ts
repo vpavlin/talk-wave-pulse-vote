@@ -67,7 +67,7 @@ export const fetchEventById = async (eventId: string): Promise<Event> => {
       isAuthor: talk.isAuthor || false,
       upvotedByMe: talk.upvotedByMe || false,
       walletAddress: talk.signer || '',
-      createdAt: talk.timestamp || new Date().toISOString()
+      createdAt: typeof talk.timestamp === 'string' ? talk.timestamp : new Date().toISOString()
     })) : [];
     
     // Ensure the date property exists and construct Event object
@@ -75,7 +75,7 @@ export const fetchEventById = async (eventId: string): Promise<Event> => {
       id: event.id || eventId,
       title: event.title || '',
       description: event.description || '',
-      date: event.timestamp || new Date().toISOString(),
+      date: typeof event.timestamp === 'string' ? event.timestamp : new Date().toISOString(),
       eventDate: event.eventDate,
       location: event.location,
       website: event.website,
