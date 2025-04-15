@@ -1,4 +1,3 @@
-
 // Using the locally installed qakulib package
 import {ControlMessage, EnhancedQuestionMessage, Qaku} from "qakulib";
 import { wakuPeerExchangeDiscovery } from "@waku/discovery";
@@ -93,12 +92,8 @@ const loadHistoryAndInitializeQAs = async (qakulib: Qaku) => {
     
     // Initialize each QA event from history to ensure proper subscription
     for (const qaEvent of knownQAs) {
-      // Extract the QA ID from the history entry
-      const qaId = typeof qaEvent === 'string' ? qaEvent : (
-        qaEvent.id || 
-        (qaEvent as any).qaId || 
-        qaEvent.toString()
-      );
+      // Extract the QA ID from the history entry using toString() method
+      const qaId = typeof qaEvent === 'string' ? qaEvent : qaEvent.toString();
       
       console.log(`Initializing QA event from history: ${qaId}`);
       try {
@@ -113,7 +108,7 @@ const loadHistoryAndInitializeQAs = async (qakulib: Qaku) => {
   }
 };
 
-// Set up event listeners for Qakulib instance
+// Setup event listeners
 const setupEventListeners = () => {
   if (!qakulibInstance) return;
 
@@ -321,10 +316,17 @@ export const getTalks = async (eventId: string): Promise<ExtendedTalk[]> => {
       }
       
       // Check if the current user is the author - compare with signer address
-      if (extendedTalk.signer === currentUserAddress) {
+      if (currentUserAddress && extendedTalk.signer === currentUserAddress) {
         extendedTalk.isAuthor = true;
-        console.log(`Found user's talk: ${extendedTalk.question}, signer: ${extendedTalk.signer}`);
+        console.log(`Found user's talk: ${extendedTalk.question}, signer: ${extendedTalk.signer}, current user: ${currentUserAddress}`);
+      } else {
+        console.log(`Talk by other user: ${extendedTalk.question}, signer: ${extendedTalk.signer}, current user: ${currentUserAddress}`);
       }
+      
+      // Add debug logging
+      console.log(`Talk details: id=${talk.id || 'no-id'}, title=${extendedTalk.question || 'no-title'}, author status:`, 
+                 extendedTalk.isAuthor ? 'YES' : 'NO',
+                 'signer:', extendedTalk.signer);
       
       talks.push(extendedTalk);
     }

@@ -59,9 +59,7 @@ export const fetchEvents = async () => {
   }
 };
 
-/**
- * Parse potentially JSON-encoded data
- */
+// Helper functions for field parsing
 function parseJsonField(field: any): string {
   if (!field) return '';
   
@@ -162,18 +160,35 @@ export const fetchEventById = async (eventId: string): Promise<Event> => {
     }
     
     // Convert qakulib ExtendedTalk objects to our Talk interface
-    const formattedTalks: Talk[] = Array.isArray(talks) ? talks.map(talk => ({
-      id: talk.question || '',
-      title: extractTitle(talk),
-      speaker: extractSpeaker(talk),
-      description: extractDescription(talk),
-      bio: extractBio(talk),
-      votes: talk.upvotes || 0,
-      isAuthor: talk.isAuthor || false,
-      upvotedByMe: talk.upvotedByMe || false,
-      walletAddress: talk.signer || '',
-      createdAt: ensureValidDateString(talk.timestamp)
-    })) : [];
+    const formattedTalks: Talk[] = Array.isArray(talks) ? talks.map(talk => {
+      // Extract properties with detailed console logging
+      const talkTitle = extractTitle(talk);
+      const talkSpeaker = extractSpeaker(talk);
+      const talkDesc = extractDescription(talk);
+      const talkBio = extractBio(talk);
+      
+      console.log("Extracted talk data:", {
+        id: talk.id || talk.question || '',
+        title: talkTitle,
+        speaker: talkSpeaker,
+        bioExists: !!talkBio,
+        isAuthor: talk.isAuthor || false,
+        walletAddress: talk.signer || ''
+      });
+      
+      return {
+        id: talk.id || talk.question || '',
+        title: talkTitle,
+        speaker: talkSpeaker,
+        description: talkDesc,
+        bio: talkBio,
+        votes: talk.upvotes || 0,
+        isAuthor: talk.isAuthor || false,
+        upvotedByMe: talk.upvotedByMe || false,
+        walletAddress: talk.signer || '',
+        createdAt: ensureValidDateString(talk.timestamp)
+      };
+    }) : [];
     
     // Make sure we capture all the event metadata
     console.log("Raw event data:", event);
@@ -199,20 +214,25 @@ export const fetchEventById = async (eventId: string): Promise<Event> => {
   }
 };
 
-// Helper functions to extract talk data from the JSON structure
+// Helper functions to extract talk data from the JSON structure with improved logging
 function extractTitle(talk: any): string {
   try {
     if (talk.title) return talk.title;
+    
     if (talk.question && typeof talk.question === 'string') {
       try {
         const parsed = JSON.parse(talk.question);
-        return parsed.title || '';
+        const title = parsed.title || '';
+        console.log("Extracted title from JSON:", title);
+        return title;
       } catch (e) {
+        console.log("Using question as title:", talk.question);
         return talk.question;
       }
     }
     return '';
   } catch (e) {
+    console.error("Error extracting title:", e);
     return '';
   }
 }
@@ -220,16 +240,20 @@ function extractTitle(talk: any): string {
 function extractSpeaker(talk: any): string {
   try {
     if (talk.speaker) return talk.speaker;
+    
     if (talk.question && typeof talk.question === 'string') {
       try {
         const parsed = JSON.parse(talk.question);
-        return parsed.speaker || '';
+        const speaker = parsed.speaker || '';
+        console.log("Extracted speaker from JSON:", speaker);
+        return speaker;
       } catch (e) {
         return '';
       }
     }
     return '';
   } catch (e) {
+    console.error("Error extracting speaker:", e);
     return '';
   }
 }
@@ -237,33 +261,45 @@ function extractSpeaker(talk: any): string {
 function extractDescription(talk: any): string {
   try {
     if (talk.description) return talk.description;
+    
     if (talk.question && typeof talk.question === 'string') {
       try {
         const parsed = JSON.parse(talk.question);
-        return parsed.description || '';
+        const description = parsed.description || '';
+        console.log("Extracted description from JSON:", description.substring(0, 50) + "...");
+        return description;
       } catch (e) {
         return '';
       }
     }
     return '';
   } catch (e) {
+    console.error("Error extracting description:", e);
     return '';
   }
 }
 
 function extractBio(talk: any): string | undefined {
   try {
-    if (talk.bio) return talk.bio;
+    if (talk.bio) {
+      console.log("Using talk.bio directly:", talk.bio.substring(0, 50) + "...");
+      return talk.bio;
+    }
+    
     if (talk.question && typeof talk.question === 'string') {
       try {
         const parsed = JSON.parse(talk.question);
-        return parsed.bio;
+        if (parsed.bio) {
+          console.log("Extracted bio from JSON:", parsed.bio.substring(0, 50) + "...");
+          return parsed.bio;
+        }
       } catch (e) {
         return undefined;
       }
     }
     return undefined;
   } catch (e) {
+    console.error("Error extracting bio:", e);
     return undefined;
   }
 }

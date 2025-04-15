@@ -47,9 +47,15 @@ const MyTalks = () => {
 
   // Extract all talks submitted by the current user
   const myTalks = React.useMemo(() => {
-    if (!events || !walletAddress) return [];
+    if (!events || !walletAddress) {
+      console.log("No events or wallet address yet");
+      return [];
+    }
 
     const userTalks = [];
+    
+    console.log("Wallet address:", walletAddress);
+    console.log("Total events:", events.length);
     
     for (const event of events) {
       // Make sure talks array exists
@@ -58,20 +64,33 @@ const MyTalks = () => {
         continue;
       }
       
+      console.log(`Event ${event.id} has ${event.talks.length} talks`);
+      
       // Filter talks where the wallet address matches or isAuthor is true
       const filteredTalks = event.talks.filter(talk => {
-        const isUserTalk = 
-          talk.isAuthor === true || 
-          (talk.walletAddress && walletAddress && talk.walletAddress.toLowerCase() === walletAddress.toLowerCase());
-        
-        if (isUserTalk) {
-          console.log("Found user talk:", talk.title, "isAuthor:", talk.isAuthor, "walletAddress match:", talk.walletAddress === walletAddress);
+        // Check for author flag
+        if (talk.isAuthor === true) {
+          console.log("Found user talk by isAuthor flag:", talk.title);
+          return true;
         }
         
-        return isUserTalk;
+        // Check wallet addresses - case insensitive comparison
+        if (talk.walletAddress && walletAddress && 
+            talk.walletAddress.toLowerCase() === walletAddress.toLowerCase()) {
+          console.log("Found user talk by wallet match:", talk.title);
+          return true;
+        }
+        
+        // Additional debug for each talk we're checking
+        console.log("Talk not matching:", talk.title, 
+                   "isAuthor:", talk.isAuthor, 
+                   "Talk wallet:", talk.walletAddress);
+        
+        return false;
       });
       
       if (filteredTalks.length > 0) {
+        console.log(`Found ${filteredTalks.length} user talks in event ${event.id}`);
         filteredTalks.forEach(talk => {
           userTalks.push({
             ...talk,
@@ -83,7 +102,7 @@ const MyTalks = () => {
       }
     }
     
-    console.log("Found user talks:", userTalks.length, "User wallet:", walletAddress);
+    console.log("Total found user talks:", userTalks.length, "User wallet:", walletAddress);
     // Log the first few talks for debugging
     if (userTalks.length > 0) {
       userTalks.slice(0, 3).forEach((talk, i) => {
