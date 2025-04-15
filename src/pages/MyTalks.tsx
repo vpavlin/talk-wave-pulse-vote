@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchEvents } from "@/services/eventService";
 import { useWallet } from "@/contexts/WalletContext";
@@ -22,26 +22,16 @@ const MyTalks = () => {
     queryFn: fetchEvents,
   });
 
-  // Connect wallet if not connected
-  const handleConnectWallet = async () => {
-    try {
-      await connect();
-      toast({
-        title: "Wallet Connected",
-        description: "Your wallet has been connected successfully",
-      });
-    } catch (error) {
-      toast({
-        title: "Connection Failed",
-        description: "Could not connect to wallet",
-        variant: "destructive",
-      });
+  // Auto-connect on component mount if not already connected
+  useEffect(() => {
+    if (!connected) {
+      connect();
     }
-  };
+  }, [connected, connect]);
 
   // Extract all talks submitted by the current user
   const myTalks = React.useMemo(() => {
-    if (!events || !connected || !walletAddress) return [];
+    if (!events || !walletAddress) return [];
 
     const userTalks = [];
     
@@ -77,33 +67,12 @@ const MyTalks = () => {
     }
     
     return userTalks;
-  }, [events, connected, walletAddress]);
+  }, [events, walletAddress]);
 
   // Calculate statistics
   const totalSubmissions = myTalks.length;
   const totalVotes = myTalks.reduce((sum, talk) => sum + talk.votes, 0);
   const eventsParticipated = new Set(myTalks.map(talk => talk.eventId)).size;
-
-  if (!connected) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex flex-col items-center justify-center text-center space-y-6 my-12">
-          <PresentationIcon className="h-24 w-24 text-purple-400 opacity-80" />
-          <h1 className="text-3xl font-bold text-white">My Talks</h1>
-          <p className="text-xl text-gray-300 max-w-md">
-            Connect your wallet to see talks you've submitted to various events.
-          </p>
-          <Button 
-            onClick={handleConnectWallet} 
-            className="mt-4 bg-purple-600 hover:bg-purple-700"
-            size="lg"
-          >
-            Connect Wallet
-          </Button>
-        </div>
-      </div>
-    );
-  }
 
   if (isLoading) {
     return (
@@ -175,7 +144,7 @@ const MyTalks = () => {
         <Card className="bg-gray-800/50 border-gray-700">
           <CardContent className="text-center py-12">
             <MessageSquare className="h-16 w-16 mx-auto text-gray-500 mb-4" />
-            <p className="text-xl text-gray-300">You haven't submitted any talks yet.</p>
+            <p className="text-xl text-gray-300">You don't have any submitted talks yet.</p>
             <p className="text-gray-400 mt-2">
               Find an interesting event and share your knowledge with the community!
             </p>
