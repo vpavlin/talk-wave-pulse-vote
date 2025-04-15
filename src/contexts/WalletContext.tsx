@@ -32,7 +32,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const qakulib = await getQakulib();
       
       // Safely check if identity and address exist and address is a function
-      if (qakulib.identity && qakulib.identity.address && typeof qakulib.identity.address === 'function') {
+      if (qakulib && qakulib.identity && qakulib.identity.address && typeof qakulib.identity.address === 'function') {
         try {
           // Call the address function to get the actual address string
           const addressValue = qakulib.identity.address();
@@ -64,7 +64,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   useEffect(() => {
     // Initialize wallet on component mount
     connect();
-  }, [toast]);
+  }, []);
 
   return (
     <WalletContext.Provider

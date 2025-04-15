@@ -1,8 +1,9 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, ArrowRight, MessageSquare, Wallet, User, MessageSquarePlus, Vote } from "lucide-react";
+import { Calendar, ArrowRight, MessageSquare, Wallet, User, MessageSquarePlus, Vote, PresentationIcon } from "lucide-react";
 import { format } from "date-fns";
 import { Link } from "react-router-dom";
 import { Event } from "@/services/eventService";
@@ -100,6 +101,15 @@ const EventList = ({ events }: EventListProps) => {
             <Vote className="mr-1 h-4 w-4" />
             Voted
           </Button>
+          
+          {connected && (
+            <Link to="/my-talks">
+              <Button variant="outline" className="ml-1 border-purple-500 text-purple-400 hover:bg-purple-950 hover:text-purple-200">
+                <PresentationIcon className="mr-1 h-4 w-4" />
+                My Talks
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
       

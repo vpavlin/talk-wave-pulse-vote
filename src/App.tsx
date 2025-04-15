@@ -8,6 +8,7 @@ import { WalletProvider } from "./contexts/WalletContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Index from "./pages/Index";
 import EventDetail from "./pages/EventDetail";
+import MyTalks from "./pages/MyTalks";
 import NotFound from "./pages/NotFound";
 
 // Create a client for React Query
@@ -32,6 +33,7 @@ const App = () => (
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/event/:eventId" element={<EventDetail />} />
+                <Route path="/my-talks" element={<MyTalks />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
