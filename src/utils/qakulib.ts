@@ -51,6 +51,9 @@ export const announcedEvents: ExtendedControlMessage[] = []
 // Define the common content topic for event announcements
 const ANNOUNCE_CONTENT_TOPIC = "/lightningtalkwave/1/announce/json";
 
+// Define the localStorage key for hidden events
+const HIDDEN_EVENTS_KEY = "lightning-talk-hidden-events";
+
 const bootstrapNodes: string[] = [
   "/dns4/waku-test.bloxy.one/tcp/8095/wss/p2p/16Uiu2HAmSZbDB7CusdRhgkD81VssRjQV5ZH13FbzCGcdnbbh6VwZ",
   "/dns4/node-01.do-ams3.waku.sandbox.status.im/tcp/8000/wss/p2p/16Uiu2HAmNaeL4p3WEYzC9mgXBmBWSgWjPHRvatZTXnp8Jgv3iKsb",
@@ -167,7 +170,21 @@ export const announceEvent = async (event: ExtendedControlMessage) => {
   }
 };
 
-// Load history and initialize QA events from history
+// Helper function to check if an event is hidden by the user
+const isEventHidden = (eventId: string): boolean => {
+  try {
+    const hiddenEventsJSON = localStorage.getItem(HIDDEN_EVENTS_KEY);
+    if (!hiddenEventsJSON) return false;
+    
+    const hiddenEvents = JSON.parse(hiddenEventsJSON);
+    return Array.isArray(hiddenEvents) && hiddenEvents.includes(eventId);
+  } catch (error) {
+    console.error("Error checking if event is hidden:", error);
+    return false;
+  }
+};
+
+// Load history and initialize QA events from history, skipping hidden events
 const loadHistoryAndInitializeQAs = async (qakulib: Qaku) => {
   try {
     console.log("Loading QA events from history");
@@ -179,11 +196,14 @@ const loadHistoryAndInitializeQAs = async (qakulib: Qaku) => {
     
     // Initialize each QA event from history to ensure proper subscription
     for (const qaEvent of knownQAs) {
-      console.log(qaEvent)
-      // Extract the QA ID from the history entry using toString() method
-      const qaId = qaEvent.id
-
-      console.log(qaId)
+      // Extract the QA ID from the history entry
+      const qaId = qaEvent.id;
+      
+      // Skip initialization if the event is hidden by the user
+      if (isEventHidden(qaId)) {
+        console.log(`Skipping initialization for hidden event: ${qaId}`);
+        continue;
+      }
       
       console.log(`Initializing QA event from history: ${qaId}`);
       try {

@@ -46,11 +46,27 @@ export interface Event {
   announced?: boolean;
 }
 
+const HIDDEN_EVENTS_KEY = "lightning-talk-hidden-events";
+
+const getHiddenEventIds = (): string[] => {
+  try {
+    const hiddenEventsJSON = localStorage.getItem(HIDDEN_EVENTS_KEY);
+    if (!hiddenEventsJSON) return [];
+    
+    const hiddenEvents = JSON.parse(hiddenEventsJSON);
+    return Array.isArray(hiddenEvents) ? hiddenEvents : [];
+  } catch (error) {
+    console.error("Error retrieving hidden events:", error);
+    return [];
+  }
+};
+
 export const fetchEvents = async (): Promise<Event[]> => {
   try {
     console.log("Fetching all events");
     
     const rawEvents = await fetchEventsFromQakulib();
+    const hiddenEventIds = getHiddenEventIds();
 
     const processedAnnounced = announcedEvents.filter(
       announcedEvent => !rawEvents.some(event => event.id === announcedEvent.id)
@@ -68,7 +84,9 @@ export const fetchEvents = async (): Promise<Event[]> => {
     const processedEvents = [];
     
     for (const event of combinedEvents) {
-      const eventTalks = rawEvents.some(e => e.id === event.id) 
+      const isHidden = hiddenEventIds.includes(event.id);
+      
+      const eventTalks = (rawEvents.some(e => e.id === event.id) && !isHidden) 
         ? await fetchTalksFromQakulib(event.id) 
         : [];
       
@@ -127,6 +145,22 @@ export const parseEventDescription = (description: string | undefined): string =
 };
 
 export const fetchEventById = async (eventId: string): Promise<Event | null> => {
+  const hiddenEventIds = getHiddenEventIds();
+  const isHidden = hiddenEventIds.includes(eventId);
+  
+  if (isHidden) {
+    console.log(`Fetching hidden event ${eventId} without full initialization`);
+    const events = await fetchEvents();
+    const hiddenEvent = events.find(event => event.id === eventId);
+    
+    if (hiddenEvent) {
+      return {
+        ...hiddenEvent,
+        talks: [] // Don't load talks for hidden events
+      };
+    }
+  }
+  
   const event = await fetchEventByIdFromQakulib(eventId);
   
   if (!event) {
@@ -204,15 +238,10 @@ export const createEvent = async (
       bannerImage
     });
     
-    // Always create the event on the blockchain
     const eventId = await publishEventToQakulib(title, descriptionWithMetadata, true);
     
-    // Only announce the event if the announce flag is true
-    console.log
     if (announce) {
       console.log("Announcing event to global channel");
-      
-      // Announce the event using its ID
       await announceEvent(eventId);
     } else {
       console.log("Skipping event announcement as per user preference");
@@ -270,7 +299,6 @@ export const acceptTalk = async (eventId: string, talkId: string, feedback?: str
 
 export const announceEvent = async (eventId: string): Promise<boolean> => {
   try {
-    // First, fetch the event details to create the announcement
     const event = await fetchEventByIdFromQakulib(eventId);
     
     if (!event) {
@@ -278,7 +306,6 @@ export const announceEvent = async (eventId: string): Promise<boolean> => {
       return false;
     }
     
-    // Create event data for announcement
     const eventData = {
       id: eventId,
       title: event.title || "Untitled Event",
@@ -291,7 +318,6 @@ export const announceEvent = async (eventId: string): Promise<boolean> => {
       timestamp: Date.now()
     };
     
-    // Announce the event by passing the eventData object
     const success = await announceEventToQakulib(eventData);
     return success;
   } catch (error) {
