@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -464,6 +464,20 @@ const EventDetail = () => {
     );
   };
 
+  const renderWebsiteLink = (website: string) => {
+    const formattedUrl = website.startsWith('http') ? website : `https://${website}`;
+    return (
+      <a 
+        href={formattedUrl} 
+        target="_blank" 
+        rel="noopener noreferrer"
+        className="text-purple-600 dark:text-purple-400 hover:underline break-all"
+      >
+        {website}
+      </a>
+    );
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-indigo-50 to-purple-50 dark:from-gray-900 dark:to-indigo-950">
@@ -610,14 +624,7 @@ const EventDetail = () => {
                   {event?.website && (
                     <div className="flex items-center text-gray-600 dark:text-gray-400 text-sm">
                       <LinkIcon className="h-4 w-4 mr-2 flex-shrink-0" />
-                      <a 
-                        href={event.website.startsWith('http') ? event.website : `https://${event.website}`} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-purple-600 dark:text-purple-400 hover:underline"
-                      >
-                        {event.website}
-                      </a>
+                      {renderWebsiteLink(event.website)}
                     </div>
                   )}
                   
