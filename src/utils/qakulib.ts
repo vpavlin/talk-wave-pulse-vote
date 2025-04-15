@@ -207,7 +207,7 @@ const loadHistoryAndInitializeQAs = async (qakulib: Qaku) => {
       }
       
       // Skip initialization if the event is closed
-      if (qaEvent.enabled === false) {
+      if (qaEvent.isActive === false) {
         console.log(`Skipping initialization for closed event: ${qaId}`);
         continue;
       }
@@ -368,11 +368,9 @@ export const getEvents = async (): Promise<ExtendedControlMessage[]> => {
         id: historyEvent.id,
         title: historyEvent.title,
         description: historyEvent.description,
-        owner: historyEvent.owner,
-        timestamp: historyEvent.timestamp,
-        updated: historyEvent.updated,
-        enabled: historyEvent.enabled,
-        questionsCount: historyEvent.questionsCount || 0 // Include question count from history
+        timestamp: historyEvent.createdAt,
+        enabled: historyEvent.isActive,
+        questionsCount: historyEvent.questionsCnt || 0 // Include question count from history
       };
       
       // Check if the current user is the creator of this event
@@ -425,7 +423,7 @@ export const getEventById = async (eventId: string): Promise<ExtendedControlMess
     const historyEvents = qakulib.history.getAll ? qakulib.history.getAll() : [];
     const historyEvent = historyEvents.find(event => event.id === eventId);
     
-    if (historyEvent && (historyEvent.enabled === false || isHidden)) {
+    if (historyEvent && (historyEvent.isActive === false || isHidden)) {
       console.log(`Found closed or hidden event ${eventId} in history, using history data`);
       
       // Add identity check for creator - handle safely
@@ -439,11 +437,9 @@ export const getEventById = async (eventId: string): Promise<ExtendedControlMess
         id: eventId,
         title: historyEvent.title,
         description: historyEvent.description,
-        owner: historyEvent.owner,
-        timestamp: historyEvent.timestamp,
-        updated: historyEvent.updated,
-        enabled: historyEvent.enabled,
-        questionsCount: historyEvent.questionsCount || 0
+        timestamp: historyEvent.createdAt,
+        enabled: historyEvent.isActive,
+        questionsCount: historyEvent.questionsCnt || 0
       };
       
       if (extendedControlState.owner === currentUserAddress) {
