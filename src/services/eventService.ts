@@ -58,15 +58,15 @@ export const fetchEventById = async (eventId: string): Promise<Event> => {
     
     // Convert qakulib ExtendedTalk objects to our Talk interface
     const formattedTalks: Talk[] = Array.isArray(talks) ? talks.map(talk => ({
-      id: talk.id || talk.questionId || '',
-      title: talk.title || '',
-      speaker: talk.speaker || '',
-      description: talk.description || '',
-      bio: talk.bio,
+      id: talk.question || '',
+      title: extractTitle(talk),
+      speaker: extractSpeaker(talk),
+      description: extractDescription(talk),
+      bio: extractBio(talk),
       votes: talk.upvotes || 0,
       isAuthor: talk.isAuthor || false,
       upvotedByMe: talk.upvotedByMe || false,
-      walletAddress: talk.signer || talk.walletAddress,
+      walletAddress: talk.signer || '',
       createdAt: talk.timestamp || new Date().toISOString()
     })) : [];
     
@@ -75,13 +75,13 @@ export const fetchEventById = async (eventId: string): Promise<Event> => {
       id: event.id || eventId,
       title: event.title || '',
       description: event.description || '',
-      date: event.date || event.timestamp || event.created?.toString() || new Date().toISOString(),
+      date: event.timestamp || new Date().toISOString(),
       eventDate: event.eventDate,
       location: event.location,
       website: event.website,
       contact: event.contact,
       bannerImage: event.bannerImage,
-      ownerAddress: event.ownerAddress || event.owner,
+      ownerAddress: event.owner,
       isCreator: event.isCreator,
       talks: formattedTalks
     };
@@ -90,6 +90,59 @@ export const fetchEventById = async (eventId: string): Promise<Event> => {
     throw error;
   }
 };
+
+// Helper functions to extract talk data from the JSON structure
+function extractTitle(talk: any): string {
+  try {
+    if (talk.title) return talk.title;
+    if (talk.question && typeof talk.question === 'string') {
+      const parsed = JSON.parse(talk.question);
+      return parsed.title || '';
+    }
+    return '';
+  } catch (e) {
+    return '';
+  }
+}
+
+function extractSpeaker(talk: any): string {
+  try {
+    if (talk.speaker) return talk.speaker;
+    if (talk.question && typeof talk.question === 'string') {
+      const parsed = JSON.parse(talk.question);
+      return parsed.speaker || '';
+    }
+    return '';
+  } catch (e) {
+    return '';
+  }
+}
+
+function extractDescription(talk: any): string {
+  try {
+    if (talk.description) return talk.description;
+    if (talk.question && typeof talk.question === 'string') {
+      const parsed = JSON.parse(talk.question);
+      return parsed.description || '';
+    }
+    return '';
+  } catch (e) {
+    return '';
+  }
+}
+
+function extractBio(talk: any): string | undefined {
+  try {
+    if (talk.bio) return talk.bio;
+    if (talk.question && typeof talk.question === 'string') {
+      const parsed = JSON.parse(talk.question);
+      return parsed.bio;
+    }
+    return undefined;
+  } catch (e) {
+    return undefined;
+  }
+}
 
 /**
  * Upvote a talk
