@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -9,6 +10,7 @@ import WalletConnectButton from "@/components/WalletConnectButton";
 import ThemeToggle from "@/components/ThemeToggle";
 import { useWallet } from "@/contexts/WalletContext";
 import { fetchEvents, createEvent } from "@/services/eventService";
+import { getQakulib } from "@/utils/qakulib"; // Import getQakulib to access announced events
 
 const Index = () => {
   const [isCreateEventOpen, setIsCreateEventOpen] = useState(false);
@@ -20,6 +22,19 @@ const Index = () => {
   useEffect(() => {
     queryClient.invalidateQueries({ queryKey: ['events'] });
   }, [walletAddress, connected, queryClient]);
+  
+  // Initialize qakulib to make sure announced events are loaded
+  useEffect(() => {
+    const initQakulib = async () => {
+      try {
+        await getQakulib();
+      } catch (error) {
+        console.error("Error initializing Qakulib:", error);
+      }
+    };
+    
+    initQakulib();
+  }, []);
   
   // Use React Query for data fetching with improved polling for real-time updates
   const { data: events = [], isLoading, isError } = useQuery({
