@@ -3,11 +3,12 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { ThumbsUp, Clock, Wallet, ChevronDown, ChevronUp } from "lucide-react";
+import { ThumbsUp, Clock, Wallet, ChevronDown, ChevronUp, User } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import ReactMarkdown from "react-markdown";
 import { Talk } from "@/services/eventService";
 import { useState } from "react";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 
 interface TalkCardProps {
   talk: Talk;
@@ -75,12 +76,39 @@ const TalkCard = ({ talk, onVote, showFullDescription = false }: TalkCardProps) 
           </Badge>
         </div>
         <CardDescription className="flex items-center mt-2 text-base text-gray-300">
-          <Avatar className="h-8 w-8 mr-2 border-2 border-gray-700">
-            <AvatarFallback className="bg-gray-700 text-gray-200 font-semibold">
-              {getInitials(talk.speaker)}
-            </AvatarFallback>
-          </Avatar>
-          <span className="font-medium">{talk.speaker || "Anonymous"}</span>
+          <HoverCard>
+            <HoverCardTrigger asChild>
+              <div className="flex items-center cursor-pointer">
+                <Avatar className="h-8 w-8 mr-2 border-2 border-gray-700">
+                  <AvatarFallback className="bg-gray-700 text-gray-200 font-semibold">
+                    {getInitials(talk.speaker)}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="font-medium">{talk.speaker || "Anonymous"}</span>
+              </div>
+            </HoverCardTrigger>
+            {talk.bio && (
+              <HoverCardContent className="w-80 bg-gray-800 border-gray-700 text-gray-200">
+                <div className="flex justify-between space-x-4">
+                  <Avatar className="h-12 w-12 border-2 border-gray-700">
+                    <AvatarFallback className="bg-gray-700 text-gray-200 font-semibold text-lg">
+                      {getInitials(talk.speaker)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="space-y-1">
+                    <h4 className="text-md font-semibold text-gray-100">{talk.speaker}</h4>
+                    <div className="flex items-center pt-2">
+                      <User className="h-4 w-4 mr-1 text-gray-400" />
+                      <span className="text-xs text-gray-400">Speaker</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-3">
+                  <p className="text-sm text-gray-300">{talk.bio}</p>
+                </div>
+              </HoverCardContent>
+            )}
+          </HoverCard>
           <span className="flex items-center text-sm text-gray-400 ml-3">
             <Clock className="h-4 w-4 mr-1" />
             {getTimeAgo(talk.createdAt)}
