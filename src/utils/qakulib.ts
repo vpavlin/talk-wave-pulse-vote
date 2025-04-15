@@ -265,9 +265,6 @@ export const publishEvent = async (title:string, desc:string, moderation:boolean
     }
   }
   
-  // Announce the event
-  await announceEvent(eventData);
-  
   return eventId;
 }
 
