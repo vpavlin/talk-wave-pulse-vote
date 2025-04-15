@@ -44,6 +44,7 @@ export interface Event {
   talks: Talk[];
   enabled?: boolean;
   announced?: boolean;
+  questionsCount?: number;
 }
 
 const HIDDEN_EVENTS_KEY = "lightning-talk-hidden-events";
@@ -85,8 +86,9 @@ export const fetchEvents = async (): Promise<Event[]> => {
     
     for (const event of combinedEvents) {
       const isHidden = hiddenEventIds.includes(event.id);
+      const isClosed = event.enabled === false;
       
-      const eventTalks = (rawEvents.some(e => e.id === event.id) && !isHidden) 
+      const eventTalks = (!isHidden && !isClosed && rawEvents.some(e => e.id === event.id)) 
         ? await fetchTalksFromQakulib(event.id) 
         : [];
       
@@ -104,6 +106,7 @@ export const fetchEvents = async (): Promise<Event[]> => {
         bannerImage: event.bannerImage,
         enabled: event.enabled !== false,
         announced: event.announced,
+        questionsCount: event.questionsCount,
         talks: (eventTalks || []).map(talk => ({
           id: talk.hash,
           title: extractTalkData(talk.question || '').title || 'Unknown Talk',
@@ -148,19 +151,6 @@ export const fetchEventById = async (eventId: string): Promise<Event | null> => 
   const hiddenEventIds = getHiddenEventIds();
   const isHidden = hiddenEventIds.includes(eventId);
   
-  if (isHidden) {
-    console.log(`Fetching hidden event ${eventId} without full initialization`);
-    const events = await fetchEvents();
-    const hiddenEvent = events.find(event => event.id === eventId);
-    
-    if (hiddenEvent) {
-      return {
-        ...hiddenEvent,
-        talks: [] // Don't load talks for hidden events
-      };
-    }
-  }
-  
   const event = await fetchEventByIdFromQakulib(eventId);
   
   if (!event) {
@@ -185,7 +175,8 @@ export const fetchEventById = async (eventId: string): Promise<Event | null> => 
     bannerImage: event.bannerImage,
     enabled: event.enabled,
     announced: event.announced,
-    talks: (isClosed && !event.talks) ? [] : (event.talks || []).map(talk => ({
+    questionsCount: event.questionsCount,
+    talks: (event.talks || []).map(talk => ({
       id: talk.hash,
       title: extractTalkData(talk.question || '').title || 'Unknown Talk',
       description: extractTalkData(talk.question || '').description || '',

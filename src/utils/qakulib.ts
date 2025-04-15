@@ -39,6 +39,7 @@ interface ExtendedControlMessage {
   updated?: number;
   enabled?: boolean; // Add enabled property to track if event is open/closed
   announced?: boolean;
+  questionsCount?: number; // Add count of questions from history
 }
 
 // Initialize the Qakulib instance
@@ -206,7 +207,7 @@ const loadHistoryAndInitializeQAs = async (qakulib: Qaku) => {
       }
       
       // Skip initialization if the event is closed
-      if (!qaEvent.isActive) {
+      if (qaEvent.enabled === false) {
         console.log(`Skipping initialization for closed event: ${qaId}`);
         continue;
       }
@@ -300,20 +301,17 @@ export const getEvents = async (): Promise<ExtendedControlMessage[]> => {
     console.log("Fetching all events from qakulib");
     const qakulib = await getQakulib();
     
-    // Instead of calling refresh(), just work with the data we have
-    // The event listeners will take care of real-time updates
-    
-    const eventsList = qakulib.qas.values();
-    const events: ExtendedControlMessage[] = [];
-
-    
     // Get current user address for comparison - handle safely
     const currentUserAddress = qakulib.identity && 
                               qakulib.identity.address && 
                               typeof qakulib.identity.address === 'function' ? 
                               qakulib.identity.address() : '';
     
-    for (const event of eventsList) {
+    // Get active events from qakulib.qas (already initialized)
+    const activeEventsList = qakulib.qas.values();
+    const activeEvents: ExtendedControlMessage[] = [];
+    
+    for (const event of activeEventsList) {
       // Ensure we have an ID to use
       const eventId = event.controlState?.id || (event as any).id || '';
       
@@ -339,7 +337,6 @@ export const getEvents = async (): Promise<ExtendedControlMessage[]> => {
       if (typeof extendedEvent.description === 'string') {
         try {
           const descObj = JSON.parse(extendedEvent.description);
-          console.log(descObj)
           if (descObj && typeof descObj === 'object') {
             extendedEvent.eventDate = descObj.eventDate;
             extendedEvent.location = descObj.location;
@@ -352,14 +349,64 @@ export const getEvents = async (): Promise<ExtendedControlMessage[]> => {
         }
       }
       
-      // Log the event data for debugging - use a safe approach to access event ID
-      console.log("Event data:", extendedEvent.id, extendedEvent);
-      
-      events.push(extendedEvent);
+      activeEvents.push(extendedEvent);
     }
     
-    console.log(`Found ${events.length} events`);
-    return events;
+    // Now get all events from history, including closed ones
+    const historyEvents = qakulib.history.getAll ? qakulib.history.getAll() : [];
+    const closedEvents: ExtendedControlMessage[] = [];
+    
+    // Process history events to extract closed events
+    for (const historyEvent of historyEvents) {
+      // Skip if this event is already in the active events list
+      if (activeEvents.some(event => event.id === historyEvent.id)) {
+        continue;
+      }
+      
+      // Create extended control message from history entry
+      const extendedEvent: ExtendedControlMessage = {
+        id: historyEvent.id,
+        title: historyEvent.title,
+        description: historyEvent.description,
+        owner: historyEvent.owner,
+        timestamp: historyEvent.timestamp,
+        updated: historyEvent.updated,
+        enabled: historyEvent.enabled,
+        questionsCount: historyEvent.questionsCount || 0 // Include question count from history
+      };
+      
+      // Check if the current user is the creator of this event
+      if (extendedEvent.owner === currentUserAddress) {
+        extendedEvent.isCreator = true;
+      }
+      
+      // Set ownerAddress for consistency
+      extendedEvent.ownerAddress = extendedEvent.owner;
+      
+      // Try to parse description for metadata
+      if (typeof extendedEvent.description === 'string') {
+        try {
+          const descObj = JSON.parse(extendedEvent.description);
+          if (descObj && typeof descObj === 'object') {
+            extendedEvent.eventDate = descObj.eventDate;
+            extendedEvent.location = descObj.location;
+            extendedEvent.website = descObj.website;
+            extendedEvent.contact = descObj.contact;
+            extendedEvent.bannerImage = descObj.bannerImage;
+          }
+        } catch (e) {
+          // Not valid JSON, leave as is
+        }
+      }
+      
+      closedEvents.push(extendedEvent);
+    }
+    
+    // Combine active and closed events
+    const combinedEvents = [...activeEvents, ...closedEvents];
+    
+    console.log(`Found ${combinedEvents.length} events (${activeEvents.length} active, ${closedEvents.length} closed)`);
+    return combinedEvents;
   } catch (error) {
     console.error("Failed to fetch events:", error);
     return [];
@@ -371,8 +418,66 @@ export const getEventById = async (eventId: string): Promise<ExtendedControlMess
     console.log(`Fetching event with ID ${eventId}`);
     const qakulib = await getQakulib();
     
-    // Make sure the QA is initialized
-    if (!qakulib.qas.has(eventId)) {
+    // Check if the event is hidden by the user
+    const isHidden = isEventHidden(eventId);
+    
+    // First check if this is a closed event in history
+    const historyEvents = qakulib.history.getAll ? qakulib.history.getAll() : [];
+    const historyEvent = historyEvents.find(event => event.id === eventId);
+    
+    if (historyEvent && (historyEvent.enabled === false || isHidden)) {
+      console.log(`Found closed or hidden event ${eventId} in history, using history data`);
+      
+      // Add identity check for creator - handle safely
+      const currentUserAddress = qakulib.identity && 
+                                qakulib.identity.address && 
+                                typeof qakulib.identity.address === 'function' ? 
+                                qakulib.identity.address() : '';
+      
+      // Create an ExtendedControlMessage with required id property
+      const extendedControlState: ExtendedControlMessage = {
+        id: eventId,
+        title: historyEvent.title,
+        description: historyEvent.description,
+        owner: historyEvent.owner,
+        timestamp: historyEvent.timestamp,
+        updated: historyEvent.updated,
+        enabled: historyEvent.enabled,
+        questionsCount: historyEvent.questionsCount || 0
+      };
+      
+      if (extendedControlState.owner === currentUserAddress) {
+        extendedControlState.isCreator = true;
+      }
+      
+      // Set ownerAddress for consistency
+      extendedControlState.ownerAddress = extendedControlState.owner;
+      
+      // Parse the event description to extract embedded metadata
+      if (typeof extendedControlState.description === 'string') {
+        try {
+          const descObj = JSON.parse(extendedControlState.description);
+          if (descObj && typeof descObj === 'object') {
+            extendedControlState.eventDate = descObj.eventDate;
+            extendedControlState.location = descObj.location;
+            extendedControlState.website = descObj.website;
+            extendedControlState.contact = descObj.contact;
+            extendedControlState.bannerImage = descObj.bannerImage;
+          }
+        } catch (e) {
+          // Not valid JSON, leave as is
+        }
+      }
+      
+      // For closed or hidden events, we don't load talks
+      extendedControlState.talks = [];
+      
+      console.log(`Successfully retrieved closed/hidden event from history: ${extendedControlState.title}`);
+      return extendedControlState;
+    }
+    
+    // If it's not a closed event or it's not found in history, proceed with normal initialization
+    if (!qakulib.qas.has(eventId) && !isHidden) {
       console.log(`Event ${eventId} not initialized yet, initializing...`);
       await qakulib.initQA(eventId);
     }
@@ -423,13 +528,13 @@ export const getEventById = async (eventId: string): Promise<ExtendedControlMess
       }
     }
     
-    // Log the raw event data
-    console.log("Raw event control state:", event.controlState);
-    console.log("Extended event data:", extendedControlState);
-    
     // Get talks for this event and attach them to the extended control state
-    const talks = await getTalks(eventId);
-    extendedControlState.talks = talks;
+    if (!isHidden && extendedControlState.enabled !== false) {
+      const talks = await getTalks(eventId);
+      extendedControlState.talks = talks;
+    } else {
+      extendedControlState.talks = [];
+    }
     
     console.log(`Successfully retrieved event: ${extendedControlState.title}`);
     return extendedControlState;

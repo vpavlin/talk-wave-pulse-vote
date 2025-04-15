@@ -245,7 +245,7 @@ const EventList = ({ events, onAnnounceEvent }: EventListProps) => {
               announced ? "text-cyan-600 dark:text-cyan-400" : "text-purple-600 dark:text-purple-400"
             }`} />
             <p className="text-base font-medium text-gray-700 dark:text-gray-300">
-              {(event.talks && event.talks.length) || 0} {(event.talks && event.talks.length === 1) ? 'talk' : 'talks'} submitted
+              {getTalkCount(event)} {getTalkCount(event) === 1 ? 'talk' : 'talks'} submitted
             </p>
           </div>
           <div className="mt-auto pt-2 space-y-2">
@@ -322,6 +322,18 @@ const EventList = ({ events, onAnnounceEvent }: EventListProps) => {
         </CardContent>
       </Card>
     );
+  };
+
+  const getTalkCount = (event: Event): number => {
+    if (event.talks && event.talks.length > 0) {
+      return event.talks.length;
+    }
+    
+    if (typeof event.questionsCount === 'number') {
+      return event.questionsCount;
+    }
+    
+    return 0;
   };
 
   const hiddenEventsCount = events.filter(event => hiddenEventIds.includes(event.id)).length;
