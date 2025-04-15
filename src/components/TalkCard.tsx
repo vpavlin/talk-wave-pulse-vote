@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { ThumbsUp, Clock, Wallet, ChevronDown, ChevronUp, User } from "lucide-react";
+import { ThumbsUp, Clock, Wallet, ChevronDown, ChevronUp, User, Users } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import ReactMarkdown from "react-markdown";
 import { Talk } from "@/services/eventService";
@@ -64,9 +64,6 @@ const TalkCard = ({ talk, onVote, showFullDescription = false }: TalkCardProps) 
     ? talk.description.length > getFirstLine(talk.description).length
     : false;
 
-  // Debug output to check bio
-  console.log("Talk bio:", talk.bio, "Speaker:", talk.speaker);
-
   return (
     <Card className="overflow-hidden transition-all duration-300 hover:shadow-lg border-gray-700 bg-gray-800 card-hover h-full flex flex-col">
       <CardHeader className="pb-2">
@@ -90,27 +87,31 @@ const TalkCard = ({ talk, onVote, showFullDescription = false }: TalkCardProps) 
                 <span className="font-medium">{talk.speaker || "Anonymous"}</span>
               </div>
             </HoverCardTrigger>
-            {talk.bio && (
-              <HoverCardContent className="w-80 bg-gray-800 border-gray-700 text-gray-200">
-                <div className="flex justify-between space-x-4">
-                  <Avatar className="h-12 w-12 border-2 border-gray-700">
-                    <AvatarFallback className="bg-gray-700 text-gray-200 font-semibold text-lg">
-                      {getInitials(talk.speaker)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="space-y-1">
-                    <h4 className="text-md font-semibold text-gray-100">{talk.speaker}</h4>
-                    <div className="flex items-center pt-2">
-                      <User className="h-4 w-4 mr-1 text-gray-400" />
-                      <span className="text-xs text-gray-400">Speaker</span>
-                    </div>
+            <HoverCardContent className="w-80 bg-gray-800 border-gray-700 text-gray-200">
+              <div className="flex justify-between space-x-4">
+                <Avatar className="h-12 w-12 border-2 border-gray-700">
+                  <AvatarFallback className="bg-gray-700 text-gray-200 font-semibold text-lg">
+                    {getInitials(talk.speaker)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="space-y-1">
+                  <h4 className="text-md font-semibold text-gray-100">{talk.speaker || "Anonymous"}</h4>
+                  <div className="flex items-center pt-2">
+                    <Users className="h-4 w-4 mr-1 text-gray-400" />
+                    <span className="text-xs text-gray-400">Speaker</span>
                   </div>
                 </div>
-                <div className="mt-3">
-                  <p className="text-sm text-gray-300">{talk.bio}</p>
-                </div>
-              </HoverCardContent>
-            )}
+              </div>
+              <div className="mt-3">
+                {talk.bio ? (
+                  <div className="space-y-2">
+                    <p className="text-sm text-gray-300">{talk.bio}</p>
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-400 italic">No bio available</p>
+                )}
+              </div>
+            </HoverCardContent>
           </HoverCard>
           <span className="flex items-center text-sm text-gray-400 ml-3">
             <Clock className="h-4 w-4 mr-1" />

@@ -190,9 +190,12 @@ export const getEvents = async (): Promise<ExtendedControlMessage[]> => {
                               qakulib.identity.address() : '';
     
     for (const event of eventsList) {
+      // Ensure we have an ID to use
+      const eventId = event.controlState?.id || (event as any).id || '';
+      
       // Create extended control state with additional properties
       const extendedEvent: ExtendedControlMessage = {
-        id: event.controlState?.id || event.id || '', // Ensure id is always present and required
+        id: eventId, // Ensure id is always present and required
         title: event.controlState?.title,
         description: event.controlState?.description,
         owner: event.controlState?.owner,
