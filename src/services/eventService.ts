@@ -83,8 +83,8 @@ export const fetchEvents = async () => {
         ownerAddress: event.owner || event.ownerAddress,
         isCreator: event.isCreator,
         talks: formattedTalks,
-        timestamp: event.timestamp,
-        updated: event.updated,
+        timestamp: typeof event.timestamp === 'number' ? event.timestamp : 0,
+        updated: typeof event.updated === 'number' ? event.updated : 0,
         enabled: event.enabled
       } as Event;
     }));
