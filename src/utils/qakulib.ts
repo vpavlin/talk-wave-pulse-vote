@@ -154,8 +154,8 @@ const setupAnnouncementListener = async (node: IWaku) => {
       callback: null, 
       subscription,
       remove: () => {
-        if (subscription && subscription.unsubscribe) {
-          subscription.unsubscribe();
+        if (subscription && subscription.subscription.unsubscribe) {
+          subscription.subscription.unsubscribe([ANNOUNCE_CONTENT_TOPIC]);
         }
       }
     });
