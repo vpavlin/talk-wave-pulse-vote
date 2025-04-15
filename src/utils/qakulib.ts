@@ -4,6 +4,7 @@ import { wakuPeerExchangeDiscovery } from "@waku/discovery";
 import { derivePubsubTopicsFromNetworkConfig } from "@waku/utils"
 import { createLightNode, IWaku, LightNode, Protocols } from '@waku/sdk';
 import { createDecoder, createEncoder, DecodedMessage } from '@waku/sdk';
+import { Dispatcher, DispatchMetadata, Signer, Store } from "waku-dispatcher";
 
 // Define an extended interface for the talk without extending EnhancedQuestionMessage
 interface ExtendedTalk {
@@ -42,12 +43,11 @@ interface ExtendedControlMessage {
 // Initialize the Qakulib instance
 let qakulibInstance: any | null = null;
 
+let announceDispatcher: Dispatcher | null = null;
+const announcedEvents: ExtendedControlMessage[] = []
+
 // Define the common content topic for event announcements
 const ANNOUNCE_CONTENT_TOPIC = "/lightningtalkwave/1/announce/json";
-
-// Create encoder and decoder for the announcement content topic
-let announceEncoder: any = null;
-let announceDecoder: any = null;
 
 const bootstrapNodes: string[] = [
   "/dns4/waku-test.bloxy.one/tcp/8095/wss/p2p/16Uiu2HAmSZbDB7CusdRhgkD81VssRjQV5ZH13FbzCGcdnbbh6VwZ",
@@ -91,12 +91,8 @@ export const getQakulib = async ():Promise<Qaku> => {
       qakulibInstance = new Qaku(node as LightNode);
       await qakulibInstance.init();
 
-      // Setup encoder and decoder for event announcements
-      announceEncoder = createEncoder({ contentTopic: ANNOUNCE_CONTENT_TOPIC });
-      announceDecoder = createDecoder(ANNOUNCE_CONTENT_TOPIC);
-
       // Set up announcement message listener
-      setupAnnouncementListener(node);
+      await setupAnnouncement(node);
 
       // Load history and initialize all QA events we've interacted with
       await loadHistoryAndInitializeQAs(qakulibInstance);
@@ -115,99 +111,50 @@ export const getQakulib = async ():Promise<Qaku> => {
 };
 
 // Set up listener for event announcements
-const setupAnnouncementListener = async (node: IWaku) => {
+const setupAnnouncement = async (node: IWaku) => {
+  if (announceDispatcher) return
   try {
     console.log(`Setting up listener for announcement topic: ${ANNOUNCE_CONTENT_TOPIC}`);
 
-    // Subscribe to the Filter protocol
-    const subscription = await node.filter.subscribe(
-      [announceDecoder],
-      (message: DecodedMessage) => {
-        if (!message.payload) return;
-        
-        try {
-          const announcementData = JSON.parse(Buffer.from(message.payload).toString('utf-8'));
-          console.log('Received event announcement:', announcementData);
-          
-          // Notify all listeners about the announcement
-          announceEventListeners.forEach(listener => {
-            if (listener.callback && typeof listener.callback === 'function') {
-              listener.callback(announcementData);
-            }
-          });
-          
-          // If it's a new event, try to initialize it in Qakulib
-          if (announcementData.id && qakulibInstance) {
-            console.log(`Initializing announced event: ${announcementData.id}`);
-            qakulibInstance.initQA(announcementData.id).catch(err => {
-              console.error(`Failed to initialize announced event ${announcementData.id}:`, err);
-            });
-          }
-        } catch (error) {
-          console.error('Error processing announcement message:', error);
-        }
-      }
-    );
+    const disp = new Dispatcher(node as LightNode, ANNOUNCE_CONTENT_TOPIC, false, new Store("lightningtalk-announce"))
+    disp.on("NEW_EVENT", (payload:ExtendedControlMessage, signer:Signer, meta:DispatchMetadata) => {
+      if (announcedEvents.findIndex(e => e.id == payload.id) >= 0) throw new Error("Event already exists")
+      announcedEvents.push(payload)
+      
+    }, true)
+    await disp.start()
+    announceDispatcher = disp
+    try {
+      await node.waitForPeers([Protocols.Store]);
 
-    // Store the subscription for cleanup
-    announceEventListeners.push({ 
-      callback: null, 
-      subscription,
-      remove: () => {
-        if (subscription && subscription.subscription.unsubscribe) {
-          subscription.subscription.unsubscribe([ANNOUNCE_CONTENT_TOPIC]);
-        }
-      }
-    });
+      console.log("Dispatching local query")
+      await disp.dispatchLocalQuery() 
 
-    console.log('Announcement listener setup complete');
+      if (announcedEvents.length == 0) {
+          console.log("Dispatching general query")
+          await disp.dispatchQuery()
+      }
+    } catch (e) {
+        console.error("Failed to initialized announce protocol:", e)
+        throw e
+    }
+
   } catch (error) {
     console.error('Error setting up announcement listener:', error);
   }
 };
 
-// Function to subscribe to event announcements
-export const onEventAnnounce = (callback: (data: any) => void) => {
-  const listener = { callback, remove: () => {} };
-  announceEventListeners.push(listener);
-  
-  // Return an object with a remove method for cleanup
-  return {
-    remove: () => {
-      const index = announceEventListeners.findIndex(l => l === listener);
-      if (index !== -1) {
-        announceEventListeners.splice(index, 1);
-      }
-    }
-  };
-};
-
 // Function to announce an event to the common topic
 export const announceEvent = async (event: ExtendedControlMessage) => {
+  if (!announceDispatcher) throw new Error("Dispatcher not initialized")
   try {
     console.log(`Announcing event to common topic: ${ANNOUNCE_CONTENT_TOPIC}`);
-    const node = await getWakuNode();
+
+    const qakulib = await getQakulib()
     
-    if (!announceEncoder) {
-      announceEncoder = createEncoder({ contentTopic: ANNOUNCE_CONTENT_TOPIC });
-    }
     
-    // Create announcement payload with essential event details
-    const announcementData = {
-      id: event.id,
-      title: event.title,
-      description: typeof event.description === 'string' ? event.description.substring(0, 200) : '', // Trim for announcement
-      timestamp: Date.now(),
-      owner: event.owner,
-      eventDate: event.eventDate,
-      location: event.location
-    };
-    
-    // Convert to JSON and then to Buffer
-    const payload = Buffer.from(JSON.stringify(announcementData), 'utf-8');
-    
-    // Send the message using LightPush protocol
-    await node.lightPush.send(announceEncoder, { payload });
+    const result = announceDispatcher.emit("NEW_EVENT", event, qakulib.identity!.getWallet())
+    if (!result) throw new Error("Failed ot announce new event")
     
     console.log('Event announcement sent successfully');
     return true;
@@ -215,12 +162,6 @@ export const announceEvent = async (event: ExtendedControlMessage) => {
     console.error('Error announcing event:', error);
     return false;
   }
-};
-
-// Helper to get the Waku node
-const getWakuNode = async (): Promise<IWaku> => {
-  const qakulib = await getQakulib();
-  return qakulib.node;
 };
 
 // Load history and initialize QA events from history

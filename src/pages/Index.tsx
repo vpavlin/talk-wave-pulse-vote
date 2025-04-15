@@ -8,16 +8,13 @@ import CreateEventDialog from "@/components/CreateEventDialog";
 import WalletConnectButton from "@/components/WalletConnectButton";
 import ThemeToggle from "@/components/ThemeToggle";
 import { useWallet } from "@/contexts/WalletContext";
-import { fetchEvents, createEvent, useEventAnnouncements } from "@/services/eventService";
+import { fetchEvents, createEvent } from "@/services/eventService";
 
 const Index = () => {
   const [isCreateEventOpen, setIsCreateEventOpen] = useState(false);
   const { toast } = useToast();
   const { connected, walletAddress } = useWallet();
   const queryClient = useQueryClient();
-  
-  // Set up event announcement listener
-  useEventAnnouncements();
   
   // Refresh events data when identity state changes
   useEffect(() => {
