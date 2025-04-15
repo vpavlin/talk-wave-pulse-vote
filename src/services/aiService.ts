@@ -51,12 +51,16 @@ export const generateTalkSuggestion = async (talks: any[]): Promise<string> => {
     Description: ${talk.description || 'No description provided'}
     `).join('\n')}
     
-    Based on these submissions, suggest a new original lightning talk (5-10 minutes) that would complement these topics but cover something missing. Include a title and a brief description.
+    Based on these submissions, suggest a new original lightning talk (5-10 minutes) that would complement these topics but cover something missing. Include a title and a brief description. Make sure the description is at least 100 and at most 200 characters!
+
+    (note: ${Date.now()})
   `;
+
+  console.log(prompt)
   
   try {
     const response = await client.post('/chat/completions', {
-      model: "Meta-Llama-3-1-8B-Instruct-FP8",
+      model: "Meta-Llama-3-3-70B-Instruct",
       messages: [
         {
           role: "user",
