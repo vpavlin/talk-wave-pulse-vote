@@ -26,7 +26,7 @@ const EventList = ({ events }: EventListProps) => {
     if (filter === "upcoming") {
       const eventDate = event.eventDate 
         ? new Date(event.eventDate) 
-        : new Date(event.date);
+        : event.date ? new Date(event.date) : new Date();
       return eventDate >= new Date();
     }
     if (filter === "created") {
@@ -100,7 +100,7 @@ const EventList = ({ events }: EventListProps) => {
             </CardTitle>
             <Badge className="date-badge">
               <Calendar className="h-4 w-4" />
-              {safelyFormatDate(event.eventDate || event.date)}
+              {safelyFormatDate(event.eventDate || (event.date ? String(event.date) : undefined))}
             </Badge>
           </div>
           <CardDescription className="mt-1 text-base dark:text-gray-300">

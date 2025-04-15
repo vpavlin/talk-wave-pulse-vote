@@ -35,6 +35,7 @@ export interface Event {
   ownerAddress?: string;
   isCreator?: boolean;
   eventDate?: string;
+  date?: string | number | Date; // Add date property
   location?: string;
   website?: string;
   contact?: string;

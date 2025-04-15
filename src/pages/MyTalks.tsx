@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchEvents } from "@/services/eventService";
@@ -95,7 +96,7 @@ const MyTalks = () => {
             ...talk,
             eventId: event.id,
             eventTitle: event.title,
-            eventDate: event.eventDate || format(new Date(event.date), "MMM d, yyyy"),
+            eventDate: event.eventDate || (event.date ? format(new Date(event.date), "MMM d, yyyy") : "Unknown date"),
             eventEnabled: event.enabled
           });
         });
