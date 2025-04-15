@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -219,7 +220,7 @@ const EventList = ({ events }: EventListProps) => {
             <Link to="/my-talks">
               <Button 
                 variant="outline" 
-                className="border-2 border-orange-500 bg-orange-50 text-orange-600 hover:bg-orange-100 hover:text-orange-700 transition-colors duration-300 font-bold"
+                className="ml-1"
               >
                 <PresentationIcon className="mr-2 h-5 w-5" />
                 My Talks
