@@ -108,7 +108,7 @@ export const generateTalkSuggestion = async (talks: any[], eventDetails?: any): 
     Description: [A concise description between 100-200 characters]
     
     Make sure your title is plain text without any markdown, hashtags, quotes, or formatting.
-    The title should be short (5-10 words) and the description should be between 100-200 characters.
+    The title should be short (5-10 words) and the description should be between 100-180 characters.
     `;
   } else {
     prompt += `
@@ -124,13 +124,13 @@ export const generateTalkSuggestion = async (talks: any[], eventDetails?: any): 
     `;
   }
   
-  prompt += `\n(note: ${Date.now()})`;
+  prompt += `\n(note: ${Date.now() + Math.random()})`;
 
   console.log(prompt);
   
   try {
     const response = await client.post('/chat/completions', {
-      model: "Meta-Llama-3-3-70B-Instruct",
+      model: "Meta-Llama-4-Maverick-17B-128E-Instruct-FP8",
       messages: [
         {
           role: "user",
