@@ -646,8 +646,8 @@ const EventDetail = () => {
                 </div>
               </div>
               
-              <div className="flex flex-col gap-2 items-start md:items-end sticky top-4 self-start md:self-auto">
-                <Badge className="date-badge text-lg w-full justify-center">
+              <div className="flex flex-col gap-2 items-start md:items-center">
+                <Badge className="date-badge text-lg flex items-center">
                   <Calendar className="h-5 w-5 mr-1" />
                   {formatEventDate(event?.eventDate)}
                 </Badge>
@@ -659,7 +659,7 @@ const EventDetail = () => {
                     onClick={handleCloseEvent}
                     disabled={event.enabled === false}
                     aria-label={event?.enabled ? "Close event for submissions" : "Event already closed"}
-                    className="mt-2 w-full"
+                    className="mt-2"
                   >
                     <X className="mr-2 h-4 w-4" />
                     {event?.enabled ? "Close Event" : "Event Closed"}
