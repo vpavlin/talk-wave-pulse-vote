@@ -1,4 +1,3 @@
-
 import React, { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchEvents } from "@/services/eventService";
@@ -8,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { PresentationIcon, ThumbsUp, MessageSquare, Calendar, ArrowRight } from "lucide-react";
+import { PresentationIcon, ThumbsUp, MessageSquare, Calendar, ArrowRight, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
 
@@ -77,7 +76,14 @@ const MyTalks = () => {
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold text-white mb-6">My Talks</h1>
+        <div className="flex items-center mb-6">
+          <Link to="/" className="mr-4">
+            <Button variant="outline" size="icon">
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+          </Link>
+          <h1 className="text-3xl font-bold text-white">My Talks</h1>
+        </div>
         <div className="text-center py-10">
           <div className="animate-pulse text-purple-300">Loading your talks...</div>
         </div>
@@ -88,7 +94,14 @@ const MyTalks = () => {
   if (error) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold text-white mb-6">My Talks</h1>
+        <div className="flex items-center mb-6">
+          <Link to="/" className="mr-4">
+            <Button variant="outline" size="icon">
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+          </Link>
+          <h1 className="text-3xl font-bold text-white">My Talks</h1>
+        </div>
         <div className="bg-red-900/30 border border-red-700 rounded-lg p-4 text-red-200">
           <p>Failed to load your talks. Please try again later.</p>
         </div>
@@ -98,7 +111,14 @@ const MyTalks = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold text-white mb-6">My Talks</h1>
+      <div className="flex items-center mb-6">
+        <Link to="/" className="mr-4">
+          <Button variant="outline" size="icon">
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+        </Link>
+        <h1 className="text-3xl font-bold text-white">My Talks</h1>
+      </div>
       
       {/* Stats cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
