@@ -64,6 +64,9 @@ const TalkCard = ({ talk, onVote, showFullDescription = false }: TalkCardProps) 
     ? talk.description.length > getFirstLine(talk.description).length
     : false;
 
+  // Debug output to check bio
+  console.log("Talk bio:", talk.bio, "Speaker:", talk.speaker);
+
   return (
     <Card className="overflow-hidden transition-all duration-300 hover:shadow-lg border-gray-700 bg-gray-800 card-hover h-full flex flex-col">
       <CardHeader className="pb-2">

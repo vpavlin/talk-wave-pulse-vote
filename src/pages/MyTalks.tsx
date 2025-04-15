@@ -52,11 +52,24 @@ const MyTalks = () => {
     const userTalks = [];
     
     for (const event of events) {
+      // Make sure talks array exists
+      if (!event.talks || !Array.isArray(event.talks)) {
+        console.log("Event has no talks array:", event.id);
+        continue;
+      }
+      
       // Filter talks where the wallet address matches or isAuthor is true
-      const filteredTalks = event.talks.filter(talk => 
-        talk.isAuthor === true || 
-        (talk.walletAddress && walletAddress && talk.walletAddress === walletAddress)
-      );
+      const filteredTalks = event.talks.filter(talk => {
+        const isUserTalk = 
+          talk.isAuthor === true || 
+          (talk.walletAddress && walletAddress && talk.walletAddress.toLowerCase() === walletAddress.toLowerCase());
+        
+        if (isUserTalk) {
+          console.log("Found user talk:", talk.title, "isAuthor:", talk.isAuthor, "walletAddress match:", talk.walletAddress === walletAddress);
+        }
+        
+        return isUserTalk;
+      });
       
       if (filteredTalks.length > 0) {
         filteredTalks.forEach(talk => {
@@ -171,7 +184,7 @@ const MyTalks = () => {
           <CardContent>
             <div className="text-4xl font-bold text-white flex items-center">
               <PresentationIcon className="mr-3 h-8 w-8 text-purple-400" />
-              {totalSubmissions}
+              {myTalks.length}
             </div>
           </CardContent>
         </Card>
@@ -183,7 +196,7 @@ const MyTalks = () => {
           <CardContent>
             <div className="text-4xl font-bold text-white flex items-center">
               <ThumbsUp className="mr-3 h-8 w-8 text-purple-400" />
-              {totalVotes}
+              {myTalks.reduce((sum, talk) => sum + talk.votes, 0)}
             </div>
           </CardContent>
         </Card>
@@ -195,7 +208,7 @@ const MyTalks = () => {
           <CardContent>
             <div className="text-4xl font-bold text-white flex items-center">
               <Calendar className="mr-3 h-8 w-8 text-purple-400" />
-              {eventsParticipated}
+              {new Set(myTalks.map(talk => talk.eventId)).size}
             </div>
           </CardContent>
         </Card>

@@ -94,7 +94,11 @@ const loadHistoryAndInitializeQAs = async (qakulib: Qaku) => {
     // Initialize each QA event from history to ensure proper subscription
     for (const qaEvent of knownQAs) {
       // Extract the QA ID from the history entry
-      const qaId = typeof qaEvent === 'string' ? qaEvent : qaEvent.id || (qaEvent as any).qaId || qaEvent.toString();
+      const qaId = typeof qaEvent === 'string' ? qaEvent : (
+        qaEvent.id || 
+        (qaEvent as any).qaId || 
+        qaEvent.toString()
+      );
       
       console.log(`Initializing QA event from history: ${qaId}`);
       try {
@@ -236,12 +240,21 @@ export const getEventById = async (eventId: string): Promise<ExtendedControlMess
     // Set ownerAddress for consistency
     extendedControlState.ownerAddress = extendedControlState.owner;
     
-    // Explicitly preserve all metadata fields - safely access with optional chaining and casting
-    extendedControlState.eventDate = (event.controlState as any).eventDate;
-    extendedControlState.location = (event.controlState as any).location;
-    extendedControlState.website = (event.controlState as any).website;
-    extendedControlState.contact = (event.controlState as any).contact;
-    extendedControlState.bannerImage = (event.controlState as any).bannerImage;
+    // Parse the event description to extract embedded metadata
+    if (typeof extendedControlState.description === 'string') {
+      try {
+        const descObj = JSON.parse(extendedControlState.description);
+        if (descObj && typeof descObj === 'object') {
+          extendedControlState.eventDate = descObj.eventDate;
+          extendedControlState.location = descObj.location;
+          extendedControlState.website = descObj.website;
+          extendedControlState.contact = descObj.contact;
+          extendedControlState.bannerImage = descObj.bannerImage;
+        }
+      } catch (e) {
+        // Not valid JSON, leave as is
+      }
+    }
     
     // Log the raw event data
     console.log("Raw event control state:", event.controlState);
@@ -307,7 +320,7 @@ export const getTalks = async (eventId: string): Promise<ExtendedTalk[]> => {
         }
       }
       
-      // Check if the current user is the author
+      // Check if the current user is the author - compare with signer address
       if (extendedTalk.signer === currentUserAddress) {
         extendedTalk.isAuthor = true;
         console.log(`Found user's talk: ${extendedTalk.question}, signer: ${extendedTalk.signer}`);

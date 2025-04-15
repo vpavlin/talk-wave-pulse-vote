@@ -131,8 +131,35 @@ export const fetchEventById = async (eventId: string): Promise<Event> => {
     // Fetch talks for this event
     const talks = await qakulib.getTalks(eventId);
     
-    // Parse the event description if it's JSON
-    const parsedDescription = parseJsonField(event.description);
+    // Parse the event description to extract embedded metadata
+    let parsedDescription = '';
+    let eventDate = undefined;
+    let location = undefined;
+    let website = undefined;
+    let contact = undefined;
+    let bannerImage = undefined;
+    
+    // Try to extract metadata from description if it's a JSON string
+    if (typeof event.description === 'string') {
+      try {
+        const descObj = JSON.parse(event.description);
+        if (descObj && typeof descObj === 'object') {
+          parsedDescription = descObj.description || '';
+          eventDate = descObj.eventDate;
+          location = descObj.location;
+          website = descObj.website;
+          contact = descObj.contact;
+          bannerImage = descObj.bannerImage;
+        } else {
+          parsedDescription = event.description;
+        }
+      } catch (e) {
+        // Not valid JSON, use as is
+        parsedDescription = event.description;
+      }
+    } else {
+      parsedDescription = parseJsonField(event.description);
+    }
     
     // Convert qakulib ExtendedTalk objects to our Talk interface
     const formattedTalks: Talk[] = Array.isArray(talks) ? talks.map(talk => ({
@@ -151,17 +178,17 @@ export const fetchEventById = async (eventId: string): Promise<Event> => {
     // Make sure we capture all the event metadata
     console.log("Raw event data:", event);
     
-    // Ensure the date property exists and construct Event object
+    // Use the extracted metadata or fall back to event properties
     return {
       id: event.id || eventId,
       title: event.title || '',
       description: parsedDescription,
       date: ensureValidDateString(event.timestamp || new Date()),
-      eventDate: event.eventDate ? ensureValidDateString(event.eventDate) : undefined,
-      location: event.location,
-      website: event.website,
-      contact: event.contact,
-      bannerImage: event.bannerImage,
+      eventDate: eventDate || (event.eventDate && typeof event.eventDate !== 'object' ? event.eventDate : undefined),
+      location: location || (event.location && typeof event.location !== 'object' ? event.location : undefined),
+      website: website || (event.website && typeof event.website !== 'object' ? event.website : undefined),
+      contact: contact || (event.contact && typeof event.contact !== 'object' ? event.contact : undefined),
+      bannerImage: bannerImage || (event.bannerImage && typeof event.bannerImage !== 'object' ? event.bannerImage : undefined),
       ownerAddress: event.owner || event.ownerAddress,
       isCreator: event.isCreator,
       talks: formattedTalks
@@ -177,8 +204,12 @@ function extractTitle(talk: any): string {
   try {
     if (talk.title) return talk.title;
     if (talk.question && typeof talk.question === 'string') {
-      const parsed = JSON.parse(talk.question);
-      return parsed.title || '';
+      try {
+        const parsed = JSON.parse(talk.question);
+        return parsed.title || '';
+      } catch (e) {
+        return talk.question;
+      }
     }
     return '';
   } catch (e) {
@@ -190,8 +221,12 @@ function extractSpeaker(talk: any): string {
   try {
     if (talk.speaker) return talk.speaker;
     if (talk.question && typeof talk.question === 'string') {
-      const parsed = JSON.parse(talk.question);
-      return parsed.speaker || '';
+      try {
+        const parsed = JSON.parse(talk.question);
+        return parsed.speaker || '';
+      } catch (e) {
+        return '';
+      }
     }
     return '';
   } catch (e) {
@@ -203,8 +238,12 @@ function extractDescription(talk: any): string {
   try {
     if (talk.description) return talk.description;
     if (talk.question && typeof talk.question === 'string') {
-      const parsed = JSON.parse(talk.question);
-      return parsed.description || '';
+      try {
+        const parsed = JSON.parse(talk.question);
+        return parsed.description || '';
+      } catch (e) {
+        return '';
+      }
     }
     return '';
   } catch (e) {
@@ -216,8 +255,12 @@ function extractBio(talk: any): string | undefined {
   try {
     if (talk.bio) return talk.bio;
     if (talk.question && typeof talk.question === 'string') {
-      const parsed = JSON.parse(talk.question);
-      return parsed.bio;
+      try {
+        const parsed = JSON.parse(talk.question);
+        return parsed.bio;
+      } catch (e) {
+        return undefined;
+      }
     }
     return undefined;
   } catch (e) {
