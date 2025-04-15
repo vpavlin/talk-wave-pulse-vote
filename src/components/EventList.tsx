@@ -85,7 +85,7 @@ const EventList = ({ events }: EventListProps) => {
   };
 
   const renderEventCard = (event: Event) => (
-    <Card key={event.id} className="overflow-hidden transition-all duration-300 hover:shadow-xl border-gray-200 dark:border-gray-700 card-hover">
+    <Card key={event.id} className="overflow-hidden transition-all duration-300 hover:shadow-xl border-gray-200 dark:border-gray-700 card-hover flex flex-col h-full">
       <CardHeader className="bg-gradient-to-r from-purple-500/10 to-indigo-500/10 dark:from-purple-900/20 dark:to-indigo-900/20 pb-3">
         <div className="flex flex-col gap-3">
           <div className="flex flex-wrap md:flex-nowrap justify-between items-start gap-2">
@@ -114,19 +114,21 @@ const EventList = ({ events }: EventListProps) => {
           )}
         </div>
       </CardHeader>
-      <CardContent className="pt-4 bg-white dark:bg-gray-800">
+      <CardContent className="pt-4 bg-white dark:bg-gray-800 flex flex-col flex-grow">
         <div className="mb-3 flex gap-2 items-center">
           <MessageSquare className="h-5 w-5 text-purple-600 dark:text-purple-400" />
           <p className="text-base font-medium text-gray-700 dark:text-gray-300">
             {(event.talks && event.talks.length) || 0} {(event.talks && event.talks.length === 1) ? 'talk' : 'talks'} submitted
           </p>
         </div>
-        <Link to={`/event/${event.id}`} className="block">
-          <Button variant="outline" size="lg" className="w-full mt-2 border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-700 dark:text-purple-300 dark:hover:bg-purple-900/30 group text-lg focus-ring">
-            View Event
-            <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
-          </Button>
-        </Link>
+        <div className="mt-auto pt-2">
+          <Link to={`/event/${event.id}`} className="block">
+            <Button variant="outline" size="lg" className="w-full border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-700 dark:text-purple-300 dark:hover:bg-purple-900/30 group text-lg focus-ring">
+              View Event
+              <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+            </Button>
+          </Link>
+        </div>
       </CardContent>
     </Card>
   );
