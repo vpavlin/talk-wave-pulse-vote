@@ -184,7 +184,26 @@ const isEventHidden = (eventId: string): boolean => {
   }
 };
 
-// Load history and initialize QA events from history, skipping hidden events
+// Helper function to check if an event is closed
+const isEventClosed = async (qakulib: Qaku, qaId: string): Promise<boolean> => {
+  try {
+    // Try to get the event from the cache if possible to avoid network requests
+    if (qakulib.qas.has(qaId)) {
+      const event = qakulib.qas.get(qaId);
+      return event?.controlState?.enabled === false;
+    }
+    
+    // If not in cache, try to query it with minimal initialization
+    // This is a lightweight check without full initialization
+    const controlState = await qakulib.getQAControlMessage(qaId);
+    return controlState?.enabled === false;
+  } catch (error) {
+    console.error(`Error checking if event ${qaId} is closed:`, error);
+    return false; // Default to not closed in case of error
+  }
+};
+
+// Load history and initialize QA events from history, skipping hidden and closed events
 const loadHistoryAndInitializeQAs = async (qakulib: Qaku) => {
   try {
     console.log("Loading QA events from history");
@@ -202,6 +221,12 @@ const loadHistoryAndInitializeQAs = async (qakulib: Qaku) => {
       // Skip initialization if the event is hidden by the user
       if (isEventHidden(qaId)) {
         console.log(`Skipping initialization for hidden event: ${qaId}`);
+        continue;
+      }
+      
+      // Skip initialization if the event is closed
+      if (await isEventClosed(qakulib, qaId)) {
+        console.log(`Skipping initialization for closed event: ${qaId}`);
         continue;
       }
       

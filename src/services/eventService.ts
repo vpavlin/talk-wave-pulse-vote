@@ -169,6 +169,8 @@ export const fetchEventById = async (eventId: string): Promise<Event | null> => 
   
   console.log("Raw event:", event);
   
+  const isClosed = event.enabled === false;
+  
   return {
     id: event.id,
     title: event.title || 'Untitled Event',
@@ -182,7 +184,8 @@ export const fetchEventById = async (eventId: string): Promise<Event | null> => 
     contact: event.contact,
     bannerImage: event.bannerImage,
     enabled: event.enabled,
-    talks: (event.talks || []).map(talk => ({
+    announced: event.announced,
+    talks: (isClosed && !event.talks) ? [] : (event.talks || []).map(talk => ({
       id: talk.hash,
       title: extractTalkData(talk.question || '').title || 'Unknown Talk',
       description: extractTalkData(talk.question || '').description || '',
