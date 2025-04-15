@@ -29,8 +29,8 @@ export const hasApiKey = (): boolean => {
   return !!getApiKey();
 };
 
-// Generate a talk suggestion based on existing talks
-export const generateTalkSuggestion = async (talks: any[]): Promise<string> => {
+// Generate a talk suggestion based on existing talks and event details
+export const generateTalkSuggestion = async (talks: any[], eventDetails?: any): Promise<string> => {
   const apiKey = getApiKey();
   
   if (!apiKey) {
@@ -43,7 +43,7 @@ export const generateTalkSuggestion = async (talks: any[]): Promise<string> => {
   const latestTalks = talks.slice(0, 10);
   
   // Create a prompt that describes the talks and asks for a suggestion
-  const prompt = `
+  let prompt = `
     Here are some recent conference talk submissions:
     ${latestTalks.map((talk, index) => `
     Talk ${index + 1}:
@@ -51,13 +51,33 @@ export const generateTalkSuggestion = async (talks: any[]): Promise<string> => {
     Event: ${talk.eventTitle || 'Unknown Event'}
     Description: ${talk.description || 'No description provided'}
     `).join('\n')}
+    `;
     
-    Based on these submissions, suggest a new original lightning talk (5-10 minutes) that would complement these topics but cover something missing. Include a title and a brief description. Make sure the description is at least 100 and at most 200 characters!
+  // Add event details if provided
+  if (eventDetails) {
+    prompt += `
+    I'd like to submit a talk for this specific event:
+    Event Title: ${eventDetails.title}
+    Event Description: ${eventDetails.description || 'No description provided'}
+    ${eventDetails.location ? `Location: ${eventDetails.location}` : ''}
+    ${eventDetails.eventDate ? `Date: ${eventDetails.eventDate}` : ''}
+    
+    Based on the event details and existing submissions, suggest a new original lightning talk (5-10 minutes) 
+    that would be perfect for this specific event. Include a title and a brief description. 
+    Make sure the description is at least 100 and at most 200 characters!
+    `;
+  } else {
+    prompt += `
+    Based on these submissions, suggest a new original lightning talk (5-10 minutes) 
+    that would complement these topics but cover something missing. 
+    Include a title and a brief description. 
+    Make sure the description is at least 100 and at most 200 characters!
+    `;
+  }
+  
+  prompt += `\n(note: ${Date.now()})`;
 
-    (note: ${Date.now()})
-  `;
-
-  console.log(prompt)
+  console.log(prompt);
   
   try {
     const response = await client.post('/chat/completions', {

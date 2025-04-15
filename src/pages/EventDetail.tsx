@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -24,7 +25,8 @@ import {
   Twitter,
   Copy,
   CheckCircle,
-  Hash
+  Hash,
+  Sparkles
 } from "lucide-react";
 import SubmitTalkDialog from "@/components/SubmitTalkDialog";
 import TalkCard from "@/components/TalkCard";
@@ -32,12 +34,17 @@ import { format } from "date-fns";
 import { useWallet } from "@/contexts/WalletContext";
 import ThemeToggle from "@/components/ThemeToggle";
 import { fetchEventById, createTalk, upvoteTalk } from "@/services/eventService";
+import { generateTalkSuggestion, hasApiKey } from "@/services/aiService";
+import AkashApiKeyDialog from "@/components/AkashApiKeyDialog";
 
 const EventDetail = () => {
   const { eventId = "" } = useParams();
   const [sortOption, setSortOption] = useState("votes");
   const [isSubmitTalkOpen, setIsSubmitTalkOpen] = useState(false);
+  const [isApiKeyDialogOpen, setIsApiKeyDialogOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [isGeneratingSuggestion, setIsGeneratingSuggestion] = useState(false);
+  const [suggestionData, setSuggestionData] = useState<{ title: string; description: string } | null>(null);
   const { toast } = useToast();
   const { connected, connect } = useWallet();
   const queryClient = useQueryClient();
@@ -49,6 +56,88 @@ const EventDetail = () => {
     refetchInterval: 5000,
     enabled: !!eventId,
   });
+
+  const handleGenerateSuggestion = async () => {
+    if (!event) return;
+    
+    if (!hasApiKey()) {
+      setIsApiKeyDialogOpen(true);
+      return;
+    }
+    
+    setIsGeneratingSuggestion(true);
+    
+    try {
+      const suggestionText = await generateTalkSuggestion(event.talks, event);
+      
+      // Parse the suggestion to extract title and description
+      let title = "";
+      let description = "";
+      
+      // Common patterns in AI responses
+      const titleMatch = suggestionText.match(/(?:Title:|#)(.*?)(?:\n|$)/i);
+      if (titleMatch && titleMatch[1]) {
+        title = titleMatch[1].trim();
+      }
+      
+      const descriptionMatch = suggestionText.match(/(?:Description:)(.*?)(?:\n|$)/i);
+      if (descriptionMatch && descriptionMatch[1]) {
+        description = descriptionMatch[1].trim();
+      } else {
+        // If no clear description format, try to get content after the title
+        const lines = suggestionText.split('\n').filter(line => line.trim() !== '');
+        if (lines.length > 1) {
+          // Skip the title line and get the next non-empty line
+          for (let i = 0; i < lines.length; i++) {
+            if (lines[i].includes(title)) {
+              // Get the next line(s) as description
+              description = lines.slice(i + 1).join(' ').trim();
+              break;
+            }
+          }
+        }
+        
+        // If still no description, use everything after "Title:"
+        if (!description && title) {
+          description = suggestionText.substring(suggestionText.indexOf(title) + title.length).trim();
+        }
+      }
+      
+      // If we still don't have a good title/description
+      if (!title) {
+        const lines = suggestionText.split('\n').filter(line => line.trim() !== '');
+        title = lines[0] || "AI Generated Talk";
+      }
+      
+      if (!description) {
+        description = suggestionText.replace(title, '').trim();
+      }
+      
+      // Truncate description if it's too long
+      if (description.length > 200) {
+        description = description.substring(0, 197) + "...";
+      }
+      
+      setSuggestionData({ title, description });
+      
+      toast({
+        title: "Suggestion Generated",
+        description: "AI has created a talk suggestion based on event details",
+      });
+      
+      // Open the dialog with pre-filled data
+      setIsSubmitTalkOpen(true);
+    } catch (error) {
+      console.error('Error generating suggestion:', error);
+      toast({
+        title: "Generation Failed",
+        description: "Failed to generate a talk suggestion. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingSuggestion(false);
+    }
+  };
 
   const handleSubmitTalk = async (talkData: { title: string; speaker: string; description: string }) => {
     if (!event) return;
@@ -68,6 +157,7 @@ const EventDetail = () => {
         });
         
         setIsSubmitTalkOpen(false);
+        setSuggestionData(null);
         
         queryClient.invalidateQueries({ queryKey: ['event', eventId] });
       } else {
@@ -364,6 +454,17 @@ const EventDetail = () => {
                 <MessageSquarePlus className="mr-2 h-6 w-6" />
                 Submit a Lightning Talk
               </Button>
+              
+              <Button
+                onClick={handleGenerateSuggestion}
+                className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 dark:from-amber-600 dark:to-yellow-600 dark:hover:from-amber-700 dark:hover:to-yellow-700 text-lg px-6 py-6 h-auto focus-ring text-white"
+                disabled={isGeneratingSuggestion}
+                size="lg"
+                aria-label="Generate AI talk suggestion"
+              >
+                <Sparkles className="mr-2 h-6 w-6" />
+                {isGeneratingSuggestion ? "Generating..." : "Generate Talk Suggestion"}
+              </Button>
             </div>
             
             {!connected && (
@@ -473,6 +574,12 @@ const EventDetail = () => {
         open={isSubmitTalkOpen}
         onOpenChange={setIsSubmitTalkOpen}
         onSubmit={handleSubmitTalk}
+        initialData={suggestionData}
+      />
+      
+      <AkashApiKeyDialog
+        open={isApiKeyDialogOpen}
+        onOpenChange={setIsApiKeyDialogOpen}
       />
     </div>
   );

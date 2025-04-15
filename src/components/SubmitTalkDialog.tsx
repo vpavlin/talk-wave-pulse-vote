@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -10,13 +10,22 @@ interface SubmitTalkDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (talkData: { title: string; speaker: string; description: string }) => void;
+  initialData?: { title: string; description: string } | null;
 }
 
-const SubmitTalkDialog = ({ open, onOpenChange, onSubmit }: SubmitTalkDialogProps) => {
+const SubmitTalkDialog = ({ open, onOpenChange, onSubmit, initialData }: SubmitTalkDialogProps) => {
   const [title, setTitle] = useState("");
   const [speaker, setSpeaker] = useState("");
   const [description, setDescription] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Update form fields when initialData changes or when dialog opens
+  useEffect(() => {
+    if (open && initialData) {
+      setTitle(initialData.title || "");
+      setDescription(initialData.description || "");
+    }
+  }, [initialData, open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
