@@ -1,4 +1,3 @@
-
 import { 
   getEvents as fetchEventsFromQakulib, 
   getEventById as fetchEventByIdFromQakulib,
@@ -53,10 +52,11 @@ export const fetchEvents = async (): Promise<Event[]> => {
   return rawEvents.map(event => ({
     id: event.id,
     title: event.title || 'Untitled Event',
-    description: typeof event.description === 'string' ? event.description : 'No description',
+    description: parseEventDescription(event.description),
     ownerAddress: event.ownerAddress || event.owner,
     isCreator: event.isCreator || false,
     eventDate: event.eventDate ? String(event.eventDate) : undefined,
+    date: event.timestamp || event.updated,
     location: event.location,
     website: event.website,
     contact: event.contact,
@@ -79,6 +79,27 @@ export const fetchEvents = async (): Promise<Event[]> => {
   }));
 };
 
+// Helper function to parse event description
+export const parseEventDescription = (description: string | undefined): string => {
+  if (!description) return '';
+  
+  try {
+    // Try to parse it as JSON
+    const descObj = JSON.parse(description);
+    
+    // If it has a description property, return that
+    if (descObj && typeof descObj === 'object' && descObj.description) {
+      return descObj.description;
+    }
+    
+    // Otherwise return the original string
+    return description;
+  } catch (e) {
+    // If it's not valid JSON, just return the original string
+    return description;
+  }
+};
+
 // Function to fetch a single event by ID
 export const fetchEventById = async (eventId: string): Promise<Event | null> => {
   const event = await fetchEventByIdFromQakulib(eventId);
@@ -92,10 +113,11 @@ export const fetchEventById = async (eventId: string): Promise<Event | null> => 
   return {
     id: event.id,
     title: event.title || 'Untitled Event',
-    description: typeof event.description === 'string' ? event.description : 'No description',
+    description: parseEventDescription(event.description),
     ownerAddress: event.ownerAddress || event.owner,
     isCreator: event.isCreator || false,
     eventDate: event.eventDate ? String(event.eventDate) : undefined,
+    date: event.timestamp || event.updated,
     location: event.location,
     website: event.website,
     contact: event.contact,
@@ -151,7 +173,7 @@ export const createEvent = async (
   try {
     // Format the description as a JSON object to include metadata
     const descriptionWithMetadata = JSON.stringify({
-      text: description,
+      description,
       eventDate,
       location,
       website,

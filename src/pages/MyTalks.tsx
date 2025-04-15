@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchEvents } from "@/services/eventService";
@@ -81,11 +80,6 @@ const MyTalks = () => {
           return true;
         }
         
-        // Additional debug for each talk we're checking
-        console.log("Talk not matching:", talk.title, 
-                   "isAuthor:", talk.isAuthor, 
-                   "Talk wallet:", talk.walletAddress);
-        
         return false;
       });
       
@@ -114,6 +108,24 @@ const MyTalks = () => {
           eventEnabled: talk.eventEnabled
         });
       });
+    } else {
+      console.log("No talks found for user. Wallet address:", walletAddress);
+      // Dump all talks for debugging
+      if (events && events.length > 0) {
+        console.log("Dumping all talks to debug:");
+        events.forEach(event => {
+          if (event.talks && event.talks.length > 0) {
+            event.talks.forEach(talk => {
+              console.log("Talk details:", {
+                event: event.id,
+                title: talk.title,
+                isAuthor: talk.isAuthor,
+                walletAddress: talk.walletAddress
+              });
+            });
+          }
+        });
+      }
     }
     
     return userTalks;
