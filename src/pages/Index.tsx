@@ -52,6 +52,7 @@ const Index = () => {
     location?: string;
     contact?: string;
     bannerImage?: string;
+    announce?: boolean;
   }) => {
     try {
       const eventId = await createEvent(
@@ -61,13 +62,14 @@ const Index = () => {
         eventData.location,
         eventData.website,
         eventData.contact,
-        eventData.bannerImage
+        eventData.bannerImage,
+        eventData.announce
       );
       
       if (eventId) {
         toast({
           title: "Event Created",
-          description: `${eventData.title} has been created successfully`,
+          description: `${eventData.title} has been created successfully${eventData.announce ? ' and announced' : ''}`,
         });
         setIsCreateEventOpen(false);
         

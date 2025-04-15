@@ -1,3 +1,4 @@
+
 import { 
   getEvents as fetchEventsFromQakulib, 
   getEventById as fetchEventByIdFromQakulib,
@@ -7,7 +8,8 @@ import {
   voteTalk as voteTalkToQakulib,
   closeEvent as closeEventInQakulib,
   acceptTalk as acceptTalkInQakulib,
-  announcedEvents
+  announcedEvents,
+  announceEvent
 } from "@/utils/qakulib";
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -184,7 +186,8 @@ export const createEvent = async (
   location?: string,
   website?: string,
   contact?: string,
-  bannerImage?: string
+  bannerImage?: string,
+  announce: boolean = true
 ): Promise<string | null> => {
   try {
     const descriptionWithMetadata = JSON.stringify({
@@ -196,7 +199,32 @@ export const createEvent = async (
       bannerImage
     });
     
+    // Always create the event on the blockchain
     const eventId = await publishEventToQakulib(title, descriptionWithMetadata, true);
+    
+    // Only announce the event if the announce flag is true
+    if (announce) {
+      console.log("Announcing event to global channel");
+      
+      // Create event data for announcement
+      const eventData = {
+        id: eventId,
+        title: title,
+        description: descriptionWithMetadata,
+        eventDate: eventDate,
+        location: location,
+        website: website,
+        contact: contact,
+        bannerImage: bannerImage,
+        timestamp: Date.now()
+      };
+      
+      // Announce the event
+      await announceEvent(eventData);
+    } else {
+      console.log("Skipping event announcement as per user preference");
+    }
+    
     return eventId;
   } catch (error) {
     console.error("Error creating event:", error);

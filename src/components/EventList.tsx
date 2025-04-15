@@ -1,8 +1,9 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, ArrowRight, MessageSquare, Wallet, User, MessageSquarePlus, Vote, PresentationIcon, Lock, ChevronDown, ChevronUp } from "lucide-react";
+import { Calendar, ArrowRight, MessageSquare, Wallet, User, MessageSquarePlus, Vote, PresentationIcon, Lock, ChevronDown, ChevronUp, BellRing } from "lucide-react";
 import { format, isValid } from "date-fns";
 import { Link } from "react-router-dom";
 import { Event } from "@/services/eventService";
@@ -84,54 +85,94 @@ const EventList = ({ events }: EventListProps) => {
     }
   };
 
-  const renderEventCard = (event: Event) => (
-    <Card key={event.id} className="overflow-hidden transition-all duration-300 hover:shadow-xl border-gray-200 dark:border-gray-700 card-hover flex flex-col h-full">
-      <CardHeader className="bg-gradient-to-r from-purple-500/10 to-indigo-500/10 dark:from-purple-900/20 dark:to-indigo-900/20 pb-3">
-        <div className="flex flex-col gap-3">
-          <div className="flex flex-wrap md:flex-nowrap justify-between items-start gap-2">
-            <CardTitle className="text-2xl text-purple-800 dark:text-purple-300 font-bold">
-              {event.title}
-              {event.enabled === false && (
-                <Badge className="ml-2 bg-gray-600 text-white">
-                  <Lock className="h-3 w-3 mr-1" />
-                  Closed
-                </Badge>
-              )}
-            </CardTitle>
-            <Badge className="date-badge whitespace-nowrap flex-shrink-0">
-              <Calendar className="h-4 w-4 mr-1" />
-              {safelyFormatDate(event.eventDate || (event.date ? String(event.date) : undefined))}
-            </Badge>
-          </div>
-          <CardDescription className="mt-1 text-base dark:text-gray-300">
-            {getFirstLine(event.description)}
-          </CardDescription>
-          {event.ownerAddress && (
-            <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
-              <Wallet className="h-3 w-3 mr-1" />
-              <span>Created by: {formatWalletAddress(event.ownerAddress)}</span>
+  // Determine if an event is from the announcement channel
+  const isAnnouncedEvent = (event: Event) => {
+    // Events fetched directly from the blockchain typically have a qaId property
+    // while events from the announcement channel don't
+    return !event.talks || event.talks.length === 0;
+  };
+
+  const renderEventCard = (event: Event) => {
+    const announced = isAnnouncedEvent(event);
+    
+    return (
+      <Card 
+        key={event.id} 
+        className={`overflow-hidden transition-all duration-300 hover:shadow-xl border-gray-200 dark:border-gray-700 card-hover flex flex-col h-full ${
+          announced ? "border-l-4 border-l-cyan-500 dark:border-l-cyan-600" : ""
+        }`}
+      >
+        <CardHeader className={`pb-3 ${
+          announced 
+            ? "bg-gradient-to-r from-cyan-500/10 to-blue-500/10 dark:from-cyan-900/20 dark:to-blue-900/20" 
+            : "bg-gradient-to-r from-purple-500/10 to-indigo-500/10 dark:from-purple-900/20 dark:to-indigo-900/20"
+        }`}>
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-wrap md:flex-nowrap justify-between items-start gap-2">
+              <CardTitle className={`text-2xl font-bold ${
+                announced ? "text-cyan-800 dark:text-cyan-300" : "text-purple-800 dark:text-purple-300"
+              }`}>
+                {event.title}
+                {event.enabled === false && (
+                  <Badge className="ml-2 bg-gray-600 text-white">
+                    <Lock className="h-3 w-3 mr-1" />
+                    Closed
+                  </Badge>
+                )}
+                {announced && (
+                  <Badge variant="outline" className="ml-2 border-cyan-500 text-cyan-700 dark:border-cyan-600 dark:text-cyan-300">
+                    <BellRing className="h-3 w-3 mr-1" />
+                    Announced
+                  </Badge>
+                )}
+              </CardTitle>
+              <Badge className={`date-badge whitespace-nowrap flex-shrink-0 ${
+                announced ? "bg-cyan-600 hover:bg-cyan-700" : "bg-purple-600 hover:bg-purple-700"
+              }`}>
+                <Calendar className="h-4 w-4 mr-1" />
+                {safelyFormatDate(event.eventDate || (event.date ? String(event.date) : undefined))}
+              </Badge>
             </div>
-          )}
-        </div>
-      </CardHeader>
-      <CardContent className="pt-4 bg-white dark:bg-gray-800 flex flex-col flex-grow">
-        <div className="mb-3 flex gap-2 items-center">
-          <MessageSquare className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-          <p className="text-base font-medium text-gray-700 dark:text-gray-300">
-            {(event.talks && event.talks.length) || 0} {(event.talks && event.talks.length === 1) ? 'talk' : 'talks'} submitted
-          </p>
-        </div>
-        <div className="mt-auto pt-2">
-          <Link to={`/event/${event.id}`} className="block">
-            <Button variant="outline" size="lg" className="w-full border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-700 dark:text-purple-300 dark:hover:bg-purple-900/30 group text-lg focus-ring">
-              View Event
-              <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
-            </Button>
-          </Link>
-        </div>
-      </CardContent>
-    </Card>
-  );
+            <CardDescription className="mt-1 text-base dark:text-gray-300">
+              {getFirstLine(event.description)}
+            </CardDescription>
+            {event.ownerAddress && (
+              <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
+                <Wallet className="h-3 w-3 mr-1" />
+                <span>Created by: {formatWalletAddress(event.ownerAddress)}</span>
+              </div>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent className="pt-4 bg-white dark:bg-gray-800 flex flex-col flex-grow">
+          <div className="mb-3 flex gap-2 items-center">
+            <MessageSquare className={`h-5 w-5 ${
+              announced ? "text-cyan-600 dark:text-cyan-400" : "text-purple-600 dark:text-purple-400"
+            }`} />
+            <p className="text-base font-medium text-gray-700 dark:text-gray-300">
+              {(event.talks && event.talks.length) || 0} {(event.talks && event.talks.length === 1) ? 'talk' : 'talks'} submitted
+            </p>
+          </div>
+          <div className="mt-auto pt-2">
+            <Link to={`/event/${event.id}`} className="block">
+              <Button 
+                variant="outline" 
+                size="lg" 
+                className={`w-full focus-ring text-lg ${
+                  announced 
+                    ? "border-cyan-200 text-cyan-700 hover:bg-cyan-50 dark:border-cyan-700 dark:text-cyan-300 dark:hover:bg-cyan-900/30" 
+                    : "border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-700 dark:text-purple-300 dark:hover:bg-purple-900/30"
+                } group`}
+              >
+                View Event
+                <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+              </Button>
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
 
   return (
     <div className="space-y-8">

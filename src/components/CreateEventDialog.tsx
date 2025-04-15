@@ -8,6 +8,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { BellRing } from "lucide-react";
 
 interface CreateEventDialogProps {
   open: boolean;
@@ -20,6 +22,7 @@ interface CreateEventDialogProps {
     location?: string;
     contact?: string;
     bannerImage?: string;
+    announce?: boolean;
   }) => void;
 }
 
@@ -30,7 +33,8 @@ const formSchema = z.object({
   website: z.string().url("Must be a valid URL").optional().or(z.literal('')),
   location: z.string().optional(),
   contact: z.string().optional(),
-  bannerImage: z.string().url("Must be a valid image URL").optional().or(z.literal(''))
+  bannerImage: z.string().url("Must be a valid image URL").optional().or(z.literal('')),
+  announce: z.boolean().default(true)
 });
 
 const CreateEventDialog = ({ open, onOpenChange, onSubmit }: CreateEventDialogProps) => {
@@ -45,7 +49,8 @@ const CreateEventDialog = ({ open, onOpenChange, onSubmit }: CreateEventDialogPr
       website: "",
       location: "",
       contact: "",
-      bannerImage: ""
+      bannerImage: "",
+      announce: true
     }
   });
 
@@ -61,7 +66,8 @@ const CreateEventDialog = ({ open, onOpenChange, onSubmit }: CreateEventDialogPr
         website: values.website || "",
         location: values.location || "",
         contact: values.contact || "",
-        bannerImage: values.bannerImage || ""
+        bannerImage: values.bannerImage || "",
+        announce: values.announce
       });
       form.reset();
     } catch (error) {
@@ -212,6 +218,32 @@ const CreateEventDialog = ({ open, onOpenChange, onSubmit }: CreateEventDialogPr
                       URL to an image that will be displayed as the event banner
                     </FormDescription>
                     <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="announce"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm border-gray-200 dark:border-gray-700">
+                    <div className="space-y-0.5">
+                      <FormLabel className="dark:text-gray-200">
+                        <div className="flex items-center">
+                          <BellRing className="h-4 w-4 mr-2 text-cyan-500" />
+                          Announce Event
+                        </div>
+                      </FormLabel>
+                      <FormDescription className="dark:text-gray-400">
+                        Make this event visible to all users on the announcement channel
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
                   </FormItem>
                 )}
               />
