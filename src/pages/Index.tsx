@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -18,12 +17,10 @@ const Index = () => {
   const { connected, walletAddress } = useWallet();
   const queryClient = useQueryClient();
   
-  // Refresh events data when identity state changes
   useEffect(() => {
     queryClient.invalidateQueries({ queryKey: ['events'] });
   }, [walletAddress, connected, queryClient]);
   
-  // Initialize qakulib to make sure announced events are loaded
   useEffect(() => {
     const initQakulib = async () => {
       try {
@@ -36,12 +33,11 @@ const Index = () => {
     initQakulib();
   }, []);
   
-  // Use React Query for data fetching with improved polling for real-time updates
   const { data: events = [], isLoading, isError } = useQuery({
     queryKey: ['events'],
     queryFn: fetchEvents,
     refetchOnWindowFocus: true,
-    refetchInterval: 10000, // Refresh data every 10 seconds
+    refetchInterval: 10000,
   });
 
   const handleCreateEvent = async (eventData: { 
@@ -73,7 +69,6 @@ const Index = () => {
         });
         setIsCreateEventOpen(false);
         
-        // Invalidate and refetch events to update the list
         queryClient.invalidateQueries({ queryKey: ['events'] });
       } else {
         toast({

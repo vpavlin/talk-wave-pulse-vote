@@ -3,12 +3,15 @@ import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, ArrowRight, MessageSquare, Wallet, User, MessageSquarePlus, Vote, PresentationIcon, Lock, ChevronDown, ChevronUp, BellRing, BellOff } from "lucide-react";
+import { Calendar, ArrowRight, MessageSquare, Wallet, User, MessageSquarePlus, Vote, PresentationIcon, Lock, ChevronDown, ChevronUp, BellRing, BellOff, Search } from "lucide-react";
 import { format, isValid } from "date-fns";
 import { Link } from "react-router-dom";
 import { Event } from "@/services/eventService";
 import { useWallet } from "@/contexts/WalletContext";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Input } from "@/components/ui/input";
+import { Form, FormField, FormItem, FormControl } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
 
 interface EventListProps {
   events: Event[];
@@ -16,13 +19,43 @@ interface EventListProps {
 
 const EventList = ({ events }: EventListProps) => {
   const [filter, setFilter] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const [isClosedEventsOpen, setIsClosedEventsOpen] = useState(false);
   const { connected, walletAddress } = useWallet();
+  
+  const form = useForm({
+    defaultValues: {
+      search: "",
+    },
+  });
   
   const activeEvents = events.filter(event => event.enabled !== false);
   const closedEvents = events.filter(event => event.enabled === false);
   
+  // Search function to check if event matches the search query
+  const eventMatchesSearch = (event: Event, query: string) => {
+    if (!query.trim()) return true;
+    
+    const searchTerms = query.toLowerCase().trim().split(/\s+/);
+    
+    const fieldsToSearch = [
+      event.title || '',
+      event.description || '',
+      event.location || '',
+      event.website || '',
+      event.contact || ''
+    ];
+    
+    return searchTerms.every(term => 
+      fieldsToSearch.some(field => field.toLowerCase().includes(term))
+    );
+  };
+  
   const filteredActiveEvents = activeEvents.filter(event => {
+    // First apply search filter
+    if (!eventMatchesSearch(event, searchQuery)) return false;
+    
+    // Then apply category filters
     if (filter === "all") return true;
     if (filter === "all-but-announced") return !(event.announced || false);
     if (filter === "upcoming") {
@@ -47,6 +80,10 @@ const EventList = ({ events }: EventListProps) => {
   });
   
   const filteredClosedEvents = closedEvents.filter(event => {
+    // First apply search filter
+    if (!eventMatchesSearch(event, searchQuery)) return false;
+    
+    // Then apply category filters
     if (filter === "all") return true;
     if (filter === "all-but-announced") return !(event.announced || false);
     if (filter === "upcoming") return false;
@@ -181,8 +218,32 @@ const EventList = ({ events }: EventListProps) => {
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="flex flex-col gap-6">
         <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-100">Events</h2>
+        
+        {/* Search input */}
+        <div className="relative w-full max-w-md">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
+            <Input 
+              type="text"
+              placeholder="Search events by title, description, location..."
+              className="pl-10 pr-4 py-2 h-10"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            {searchQuery && (
+              <button 
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+                onClick={() => setSearchQuery("")}
+                aria-label="Clear search"
+              >
+                ×
+              </button>
+            )}
+          </div>
+        </div>
+        
         <div className="flex flex-wrap gap-2">
           <Button 
             variant={filter === "all" ? "default" : "outline"}
@@ -263,7 +324,11 @@ const EventList = ({ events }: EventListProps) => {
       {filteredActiveEvents.length === 0 && filteredClosedEvents.length === 0 ? (
         <Card className="glass-card">
           <CardContent className="pt-6 text-center">
-            {!connected && (filter === "created" || filter === "submitted" || filter === "voted") ? (
+            {searchQuery ? (
+              <p className="text-lg text-gray-500 dark:text-gray-400">
+                No events found matching your search. Try different keywords or clear the search.
+              </p>
+            ) : !connected && (filter === "created" || filter === "submitted" || filter === "voted") ? (
               <p className="text-lg text-gray-500 dark:text-gray-400">Connect your wallet to see your events.</p>
             ) : (
               <p className="text-lg text-gray-500 dark:text-gray-400">
@@ -278,6 +343,13 @@ const EventList = ({ events }: EventListProps) => {
         </Card>
       ) : (
         <div className="space-y-8">
+          {/* Display search result stats */}
+          {searchQuery && (
+            <div className="text-sm text-gray-500 dark:text-gray-400">
+              Found {filteredActiveEvents.length + filteredClosedEvents.length} events matching "{searchQuery}"
+            </div>
+          )}
+        
           {filteredActiveEvents.length > 0 && (
             <div>
               <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-4">
