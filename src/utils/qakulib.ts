@@ -498,7 +498,7 @@ export const getEventById = async (eventId: string): Promise<ExtendedControlMess
       owner: event.controlState?.owner,
       timestamp: event.controlState?.timestamp,
       updated: event.controlState?.updated,
-      enabled: event.controlState?.enabled !== false // Default to true if not explicitly set to false
+      enabled: event.controlState?.enabled // Default to true if not explicitly set to false
     };
     
     if (extendedControlState.owner === currentUserAddress) {
