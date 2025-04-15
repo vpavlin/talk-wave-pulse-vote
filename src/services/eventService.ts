@@ -13,6 +13,7 @@ export interface Talk {
   isAuthor: boolean;
   walletAddress?: string;
   createdAt: string;
+  upvotedByMe?: boolean; // Add this property to fix TypeScript error
 }
 
 // Define Event interface for TypeScript
