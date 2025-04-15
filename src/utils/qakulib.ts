@@ -1,3 +1,4 @@
+
 // Using the locally installed qakulib package
 import {ControlMessage, EnhancedQuestionMessage, Qaku} from "qakulib";
 import { wakuPeerExchangeDiscovery } from "@waku/discovery";
@@ -186,6 +187,9 @@ export const getEvents = async (): Promise<any[]> => {
       extendedEvent.contact = (event.controlState as any).contact;
       extendedEvent.bannerImage = (event.controlState as any).bannerImage;
       
+      // Log the event data for debugging
+      console.log("Event data:", event.id, extendedEvent);
+      
       events.push(extendedEvent);
     }
     
@@ -221,7 +225,7 @@ export const getEventById = async (eventId: string): Promise<ExtendedControlMess
                               qakulib.identity.address() : '';
     
     // We need to cast to ExtendedControlMessage to add our custom property
-    const extendedControlState = event.controlState as ExtendedControlMessage;
+    const extendedControlState = {...event.controlState} as ExtendedControlMessage;
     
     if (extendedControlState.owner === currentUserAddress) {
       extendedControlState.isCreator = true;
@@ -236,6 +240,10 @@ export const getEventById = async (eventId: string): Promise<ExtendedControlMess
     extendedControlState.website = (event.controlState as any).website;
     extendedControlState.contact = (event.controlState as any).contact;
     extendedControlState.bannerImage = (event.controlState as any).bannerImage;
+    
+    // Log the raw event data
+    console.log("Raw event control state:", event.controlState);
+    console.log("Extended event data:", extendedControlState);
     
     // Get talks for this event and attach them to the extended control state
     const talks = await getTalks(eventId);

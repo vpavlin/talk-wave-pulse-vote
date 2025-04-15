@@ -46,7 +46,7 @@ export const fetchEvents = async () => {
       // Parse description if it's a JSON string
       description: parseJsonField(event.description),
       // Ensure date fields are valid
-      date: ensureValidDateString(event.timestamp),
+      date: ensureValidDateString(event.timestamp || new Date()),
       eventDate: event.eventDate ? ensureValidDateString(event.eventDate) : undefined,
       // Ensure talks is always an array
       talks: Array.isArray(event.talks) ? event.talks : [],
@@ -124,6 +124,10 @@ export const fetchEventById = async (eventId: string): Promise<Event> => {
   try {
     const event = await qakulib.getEventById(eventId);
     
+    if (!event) {
+      throw new Error(`Event with ID ${eventId} not found`);
+    }
+    
     // Fetch talks for this event
     const talks = await qakulib.getTalks(eventId);
     
@@ -144,12 +148,15 @@ export const fetchEventById = async (eventId: string): Promise<Event> => {
       createdAt: ensureValidDateString(talk.timestamp)
     })) : [];
     
+    // Make sure we capture all the event metadata
+    console.log("Raw event data:", event);
+    
     // Ensure the date property exists and construct Event object
     return {
       id: event.id || eventId,
       title: event.title || '',
       description: parsedDescription,
-      date: ensureValidDateString(event.timestamp),
+      date: ensureValidDateString(event.timestamp || new Date()),
       eventDate: event.eventDate ? ensureValidDateString(event.eventDate) : undefined,
       location: event.location,
       website: event.website,

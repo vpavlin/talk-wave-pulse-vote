@@ -72,6 +72,15 @@ const EventDetail = () => {
     } as TalkSuggestion));
   }, []);
 
+  useEffect(() => {
+    if (event) {
+      console.log("Event detail data loaded:", event);
+      if (event.eventDate) {
+        console.log("Event date:", new Date(event.eventDate));
+      }
+    }
+  }, [event]);
+
   const handleGenerateSuggestion = async () => {
     if (!event) return;
     
@@ -285,6 +294,22 @@ const EventDetail = () => {
     return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
   };
 
+  const formatEventDate = (dateString: string | undefined) => {
+    if (!dateString) return "Date TBD";
+    
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        console.error("Invalid date:", dateString);
+        return "Date TBD";
+      }
+      return format(date, "MMMM d, yyyy");
+    } catch (err) {
+      console.error("Error formatting date:", err, dateString);
+      return "Date TBD";
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-indigo-50 to-purple-50 dark:from-gray-900 dark:to-indigo-950">
@@ -451,7 +476,7 @@ const EventDetail = () => {
               
               <Badge className="date-badge text-lg self-start">
                 <Calendar className="h-5 w-5 mr-1" />
-                {event?.eventDate ? format(new Date(event.eventDate), "MMMM d, yyyy") : "Date TBD"}
+                {formatEventDate(event?.eventDate)}
               </Badge>
             </div>
           </CardHeader>
