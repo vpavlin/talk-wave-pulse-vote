@@ -28,8 +28,15 @@ const networkConfig =  {clusterId: 42, shards: [0]}
 // Event handlers for qakulib events
 let eventListeners: any[] = [];
 
+let initializing = false
+let initPromise: Promise<Qaku>;
+
 export const getQakulib = async ():Promise<Qaku> => {
-  if (!qakulibInstance) {
+  if (initializing) return initPromise
+  if (!initializing && !qakulibInstance) {
+    initializing = true;
+
+    initPromise = new Promise(async (resolve) => {
     try {
       console.log("Initializing Qakulib instance");
       const node:IWaku = await createLightNode({            
@@ -59,8 +66,11 @@ export const getQakulib = async ():Promise<Qaku> => {
       console.error("Error initializing Qakulib:", error);
       throw error;
     }
+
+    resolve(qakulibInstance)
+  })
   }
-  return qakulibInstance;
+  return initPromise;
 };
 
 // Load history and initialize QA events from history

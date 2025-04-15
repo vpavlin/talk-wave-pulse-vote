@@ -6,9 +6,7 @@ import {
   submitTalk,
   voteTalk,
   getTalks,
-  getQakulib
 } from "@/utils/qakulib";
-import { EnhancedQuestionMessage } from "qakulib";
 
 export interface Talk {
   id: string;
