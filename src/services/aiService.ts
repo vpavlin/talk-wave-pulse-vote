@@ -48,6 +48,7 @@ export const generateTalkSuggestion = async (talks: any[]): Promise<string> => {
     ${latestTalks.map((talk, index) => `
     Talk ${index + 1}:
     Title: ${talk.title}
+    Event: ${talk.eventTitle || 'Unknown Event'}
     Description: ${talk.description || 'No description provided'}
     `).join('\n')}
     
