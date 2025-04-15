@@ -29,10 +29,10 @@ const EventList = ({ events }: EventListProps) => {
       return event.isCreator || false;
     }
     if (filter === "submitted") {
-      return event.talks.some(talk => talk.isAuthor || false);
+      return event.talks && event.talks.some(talk => talk.isAuthor || false);
     }
     if (filter === "voted") {
-      return event.talks.some(talk => talk.upvotedByMe || false);
+      return event.talks && event.talks.some(talk => talk.upvotedByMe || false);
     }
     return false;
   });
@@ -174,7 +174,7 @@ const EventList = ({ events }: EventListProps) => {
                 <div className="mb-3 flex gap-2 items-center">
                   <MessageSquare className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                   <p className="text-base font-medium text-gray-700 dark:text-gray-300">
-                    {event.talks.length} {event.talks.length === 1 ? 'talk' : 'talks'} submitted
+                    {(event.talks && event.talks.length) || 0} {(event.talks && event.talks.length === 1) ? 'talk' : 'talks'} submitted
                   </p>
                 </div>
                 <Link to={`/event/${event.id}`} className="block">

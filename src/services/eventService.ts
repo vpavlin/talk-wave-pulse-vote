@@ -39,7 +39,12 @@ export interface Event {
 export const fetchEvents = async () => {
   try {
     const events = await qakulib.getEvents();
-    return events;
+    
+    // Ensure each event has a talks property that's an array
+    return events.map(event => ({
+      ...event,
+      talks: Array.isArray(event.talks) ? event.talks : [],
+    }));
   } catch (error) {
     console.error('Error fetching events:', error);
     throw error;
