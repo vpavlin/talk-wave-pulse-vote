@@ -168,7 +168,7 @@ export const fetchEventById = async (eventId: string): Promise<Event> => {
       const talkBio = extractBio(talk);
       
       console.log("Extracted talk data:", {
-        id: talk.id || talk.question || '',
+        id: talk.hash || talk.question || '',
         title: talkTitle,
         speaker: talkSpeaker,
         bioExists: !!talkBio,
@@ -177,7 +177,7 @@ export const fetchEventById = async (eventId: string): Promise<Event> => {
       });
       
       return {
-        id: talk.id || talk.question || '',
+        id: talk.hash || talk.question || '',
         title: talkTitle,
         speaker: talkSpeaker,
         description: talkDesc,

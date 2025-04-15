@@ -14,7 +14,7 @@ interface ExtendedTalk extends EnhancedQuestionMessage {
 interface ExtendedControlMessage extends ControlMessage {
   isCreator?: boolean; // Add isCreator property
   ownerAddress?: string;
-  eventDate?: string;
+  eventDate?: number;
   location?: string;
   website?: string;
   contact?: string;
@@ -92,8 +92,11 @@ const loadHistoryAndInitializeQAs = async (qakulib: Qaku) => {
     
     // Initialize each QA event from history to ensure proper subscription
     for (const qaEvent of knownQAs) {
+      console.log(qaEvent)
       // Extract the QA ID from the history entry using toString() method
-      const qaId = typeof qaEvent === 'string' ? qaEvent : qaEvent.toString();
+      const qaId = qaEvent.id
+
+      console.log(qaId)
       
       console.log(`Initializing QA event from history: ${qaId}`);
       try {
@@ -163,6 +166,7 @@ export const getEvents = async (): Promise<any[]> => {
     
     const eventsList = qakulib.qas.values();
     const events = [];
+
     
     // Get current user address for comparison - handle safely
     const currentUserAddress = qakulib.identity && 
@@ -179,16 +183,25 @@ export const getEvents = async (): Promise<any[]> => {
         extendedEvent.isCreator = true;
       }
       
-      // Make sure we preserve all metadata fields - safely access with optional chaining
-      extendedEvent.eventDate = (event.controlState as any).eventDate;
-      extendedEvent.location = (event.controlState as any).location;
-      extendedEvent.website = (event.controlState as any).website;
-      extendedEvent.contact = (event.controlState as any).contact;
-      extendedEvent.bannerImage = (event.controlState as any).bannerImage;
+      if (typeof extendedEvent.description === 'string') {
+      try {
+        const descObj = JSON.parse(extendedEvent.description);
+        console.log(descObj)
+        if (descObj && typeof descObj === 'object') {
+          extendedEvent.eventDate = descObj.eventDate;
+          extendedEvent.location = descObj.location;
+          extendedEvent.website = descObj.website;
+          extendedEvent.contact = descObj.contact;
+          extendedEvent.bannerImage = descObj.bannerImage;
+        }
+      } catch (e) {
+        // Not valid JSON, leave as is
+      }
+    }
       
       // Log the event data for debugging - use a safe approach to access event ID
       // Use toString() to safely get an identifier regardless of the actual property name
-      const eventIdentifier = event.toString();
+      const eventIdentifier = event.controlState.id;
       console.log("Event data:", eventIdentifier, extendedEvent);
       
       events.push(extendedEvent);
@@ -324,7 +337,7 @@ export const getTalks = async (eventId: string): Promise<ExtendedTalk[]> => {
       }
       
       // Add debug logging
-      console.log(`Talk details: id=${talk.id || 'no-id'}, title=${extendedTalk.question || 'no-title'}, author status:`, 
+      console.log(`Talk details: id=${talk.hash || 'no-id'}, title=${extendedTalk.question || 'no-title'}, author status:`, 
                  extendedTalk.isAuthor ? 'YES' : 'NO',
                  'signer:', extendedTalk.signer);
       
