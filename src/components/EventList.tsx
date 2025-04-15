@@ -1,9 +1,8 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, ArrowRight, MessageSquare, Wallet, User, MessageSquarePlus, Vote, PresentationIcon, Lock, ChevronDown, ChevronUp, BellRing, BellOff, Search } from "lucide-react";
+import { Calendar, ArrowRight, MessageSquare, Wallet, User, MessageSquarePlus, Vote, PresentationIcon, Lock, ChevronDown, ChevronUp, BellRing, BellOff, Search, EyeOff, Eye } from "lucide-react";
 import { format, isValid } from "date-fns";
 import { Link } from "react-router-dom";
 import { Event } from "@/services/eventService";
@@ -12,15 +11,20 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Input } from "@/components/ui/input";
 import { Form, FormField, FormItem, FormControl } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface EventListProps {
   events: Event[];
 }
 
+const HIDDEN_EVENTS_KEY = "lightning-talk-hidden-events";
+
 const EventList = ({ events }: EventListProps) => {
   const [filter, setFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [isClosedEventsOpen, setIsClosedEventsOpen] = useState(false);
+  const [hiddenEventIds, setHiddenEventIds] = useState<string[]>([]);
+  const [showHiddenEvents, setShowHiddenEvents] = useState(false);
   const { connected, walletAddress } = useWallet();
   
   const form = useForm({
@@ -28,6 +32,34 @@ const EventList = ({ events }: EventListProps) => {
       search: "",
     },
   });
+  
+  useEffect(() => {
+    const savedHiddenEvents = localStorage.getItem(HIDDEN_EVENTS_KEY);
+    if (savedHiddenEvents) {
+      try {
+        const parsedHiddenEvents = JSON.parse(savedHiddenEvents);
+        if (Array.isArray(parsedHiddenEvents)) {
+          setHiddenEventIds(parsedHiddenEvents);
+        }
+      } catch (error) {
+        console.error("Error parsing hidden events from localStorage:", error);
+      }
+    }
+  }, []);
+  
+  useEffect(() => {
+    localStorage.setItem(HIDDEN_EVENTS_KEY, JSON.stringify(hiddenEventIds));
+  }, [hiddenEventIds]);
+  
+  const toggleHideEvent = (eventId: string) => {
+    setHiddenEventIds(prev => {
+      if (prev.includes(eventId)) {
+        return prev.filter(id => id !== eventId);
+      } else {
+        return [...prev, eventId];
+      }
+    });
+  };
   
   const activeEvents = events.filter(event => event.enabled !== false);
   const closedEvents = events.filter(event => event.enabled === false);
@@ -50,8 +82,10 @@ const EventList = ({ events }: EventListProps) => {
     );
   };
   
-  const filteredActiveEvents = activeEvents.filter(event => {
+  const applyFilters = (event: Event) => {
     if (!eventMatchesSearch(event, searchQuery)) return false;
+    
+    if (hiddenEventIds.includes(event.id) && !showHiddenEvents) return false;
     
     if (filter === "all") return true;
     if (filter === "all-but-announced") return !(event.announced || false);
@@ -74,28 +108,10 @@ const EventList = ({ events }: EventListProps) => {
       return event.announced || false;
     }
     return false;
-  });
+  };
   
-  const filteredClosedEvents = closedEvents.filter(event => {
-    if (!eventMatchesSearch(event, searchQuery)) return false;
-    
-    if (filter === "all") return true;
-    if (filter === "all-but-announced") return !(event.announced || false);
-    if (filter === "upcoming") return false;
-    if (filter === "created") {
-      return event.isCreator || false;
-    }
-    if (filter === "submitted") {
-      return event.talks && event.talks.some(talk => talk.isAuthor || false);
-    }
-    if (filter === "voted") {
-      return event.talks && event.talks.some(talk => talk.hasOwnProperty('upvotedByMe') && talk.upvotedByMe);
-    }
-    if (filter === "announced") {
-      return event.announced || false;
-    }
-    return false;
-  });
+  const filteredActiveEvents = activeEvents.filter(applyFilters);
+  const filteredClosedEvents = closedEvents.filter(applyFilters);
 
   const formatWalletAddress = (address: string | undefined) => {
     if (!address) return "Unknown";
@@ -131,13 +147,14 @@ const EventList = ({ events }: EventListProps) => {
 
   const renderEventCard = (event: Event) => {
     const announced = isAnnouncedEvent(event);
+    const isHidden = hiddenEventIds.includes(event.id);
     
     return (
       <Card 
         key={event.id} 
         className={`overflow-hidden transition-all duration-300 hover:shadow-xl border-gray-200 dark:border-gray-700 card-hover flex flex-col h-full ${
           announced ? "border-l-4 border-l-cyan-500 dark:border-l-cyan-600" : ""
-        }`}
+        } ${isHidden && showHiddenEvents ? "opacity-60" : ""}`}
       >
         <CardHeader className={`pb-3 ${
           announced 
@@ -160,6 +177,12 @@ const EventList = ({ events }: EventListProps) => {
                   <Badge variant="outline" className="ml-2 border-cyan-500 text-cyan-700 dark:border-cyan-600 dark:text-cyan-300">
                     <BellRing className="h-3 w-3 mr-1" />
                     Announced
+                  </Badge>
+                )}
+                {isHidden && (
+                  <Badge variant="outline" className="ml-2 border-gray-500 text-gray-700 dark:border-gray-600 dark:text-gray-300">
+                    <EyeOff className="h-3 w-3 mr-1" />
+                    Hidden
                   </Badge>
                 )}
               </CardTitle>
@@ -190,26 +213,54 @@ const EventList = ({ events }: EventListProps) => {
               {(event.talks && event.talks.length) || 0} {(event.talks && event.talks.length === 1) ? 'talk' : 'talks'} submitted
             </p>
           </div>
-          <div className="mt-auto pt-2">
-            <Link to={`/event/${event.id}`} className="block">
-              <Button 
-                variant="outline" 
-                size="lg" 
-                className={`w-full focus-ring text-lg ${
-                  announced 
-                    ? "border-cyan-200 text-cyan-700 hover:bg-cyan-50 dark:border-cyan-700 dark:text-cyan-300 dark:hover:bg-cyan-900/30" 
-                    : "border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-700 dark:text-purple-300 dark:hover:bg-purple-900/30"
-                } group`}
-              >
-                View Event
-                <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
-              </Button>
-            </Link>
+          <div className="mt-auto pt-2 space-y-2">
+            <div className="flex justify-between items-center">
+              <Link to={`/event/${event.id}`} className="flex-grow">
+                <Button 
+                  variant="outline" 
+                  size="lg" 
+                  className={`w-full focus-ring text-lg ${
+                    announced 
+                      ? "border-cyan-200 text-cyan-700 hover:bg-cyan-50 dark:border-cyan-700 dark:text-cyan-300 dark:hover:bg-cyan-900/30" 
+                      : "border-purple-200 text-purple-700 hover:bg-purple-50 dark:border-purple-700 dark:text-purple-300 dark:hover:bg-purple-900/30"
+                  } group`}
+                >
+                  View Event
+                  <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+                </Button>
+              </Link>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="ml-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        toggleHideEvent(event.id);
+                      }}
+                    >
+                      {isHidden ? (
+                        <Eye className="h-5 w-5" />
+                      ) : (
+                        <EyeOff className="h-5 w-5" />
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {isHidden ? "Show event" : "Hide event"}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
           </div>
         </CardContent>
       </Card>
     );
   };
+
+  const hiddenEventsCount = events.filter(event => hiddenEventIds.includes(event.id)).length;
 
   return (
     <div className="space-y-8">
@@ -316,6 +367,26 @@ const EventList = ({ events }: EventListProps) => {
             <Vote className="mr-1 h-4 w-4" />
             Voted
           </Button>
+
+          {hiddenEventIds.length > 0 && (
+            <Button 
+              variant={showHiddenEvents ? "default" : "outline"}
+              onClick={() => setShowHiddenEvents(prev => !prev)}
+              className={`ml-auto ${showHiddenEvents ? "bg-gray-600 hover:bg-gray-700" : "text-gray-600 hover:bg-gray-100"}`}
+            >
+              {showHiddenEvents ? (
+                <>
+                  <Eye className="mr-2 h-4 w-4" />
+                  Showing Hidden ({hiddenEventsCount})
+                </>
+              ) : (
+                <>
+                  <EyeOff className="mr-2 h-4 w-4" />
+                  Hidden Events ({hiddenEventsCount})
+                </>
+              )}
+            </Button>
+          )}
         </div>
       </div>
       
