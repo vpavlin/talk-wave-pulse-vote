@@ -49,7 +49,7 @@ export const getUserInfo = (): { name: string, bio: string } => {
 };
 
 // Generate a talk suggestion based on existing talks and event details
-export const generateTalkSuggestion = async (talks: any[], eventDetails?: any): Promise<string> => {
+export const generateTalkSuggestion = async (talks: any[], eventDetails?: any, userProfile?: {name?: string, bio?: string}): Promise<string> => {
   const apiKey = getApiKey();
   
   if (!apiKey) {
@@ -91,6 +91,17 @@ export const generateTalkSuggestion = async (talks: any[], eventDetails?: any): 
     `).join('\n')}
     `;
     
+  // Add user profile information if provided
+  if (userProfile && (userProfile.name || userProfile.bio)) {
+    prompt += `
+    I'm creating a talk submission with the following personal information:
+    ${userProfile.name ? `Name: ${userProfile.name}` : ''}
+    ${userProfile.bio ? `Bio/Experience: ${userProfile.bio}` : ''}
+    
+    Please suggest a talk that would suit my background and expertise.
+    `;
+  }
+    
   // Add event details if provided
   if (eventDetails) {
     prompt += `
@@ -100,7 +111,7 @@ export const generateTalkSuggestion = async (talks: any[], eventDetails?: any): 
     ${eventDetails.location ? `Location: ${eventDetails.location}` : ''}
     ${eventDetails.eventDate ? `Date: ${eventDetails.eventDate}` : ''}
     
-    Based on the event details and existing submissions, suggest a new original lightning talk (5-10 minutes) 
+    Based on the event details${userProfile?.bio ? ', my background,' : ''} and existing submissions, suggest a new original lightning talk (5-10 minutes) 
     that would be perfect for this specific event.
     
     IMPORTANT: Follow this exact format in your response:
@@ -112,7 +123,7 @@ export const generateTalkSuggestion = async (talks: any[], eventDetails?: any): 
     `;
   } else {
     prompt += `
-    Based on these submissions, suggest a new original lightning talk (5-10 minutes) 
+    Based on these submissions${userProfile?.bio ? ' and my background' : ''}, suggest a new original lightning talk (5-10 minutes) 
     that would complement these topics but cover something missing.
     
     IMPORTANT: Follow this exact format in your response:
@@ -130,7 +141,7 @@ export const generateTalkSuggestion = async (talks: any[], eventDetails?: any): 
   
   try {
     const response = await client.post('/chat/completions', {
-      model: "Meta-Llama-4-Maverick-17B-128E-Instruct-FP8",
+      model: "Meta-Llama-4-Maverick-17B-128E-Instruct",
       messages: [
         {
           role: "user",

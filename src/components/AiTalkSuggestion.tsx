@@ -1,10 +1,10 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Brain, Loader2, Key } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { generateTalkSuggestion, hasApiKey } from '@/services/aiService';
+import { generateTalkSuggestion, hasApiKey, getUserInfo } from '@/services/aiService';
 import AkashApiKeyDialog from './AkashApiKeyDialog';
 
 interface AiTalkSuggestionProps {
@@ -17,6 +17,13 @@ const AiTalkSuggestion = ({ talks, onUseSuggestion }: AiTalkSuggestionProps) => 
   const [suggestion, setSuggestion] = useState<{ title: string; description: string } | null>(null);
   const [isKeyDialogOpen, setIsKeyDialogOpen] = useState(false);
   const { toast } = useToast();
+  const [userProfile, setUserProfile] = useState<{name: string, bio: string}>({name: '', bio: ''});
+
+  useEffect(() => {
+    // Get user profile information when component mounts
+    const userInfo = getUserInfo();
+    setUserProfile(userInfo);
+  }, []);
 
   const handleGenerateSuggestion = async () => {
     if (!hasApiKey()) {
@@ -28,7 +35,7 @@ const AiTalkSuggestion = ({ talks, onUseSuggestion }: AiTalkSuggestionProps) => 
     setSuggestion(null);
     
     try {
-      const response = await generateTalkSuggestion(talks);
+      const response = await generateTalkSuggestion(talks, null, userProfile);
       
       // Parse the response to extract title and description
       let title = '';
