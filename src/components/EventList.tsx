@@ -213,7 +213,20 @@ const EventList = ({ events }: EventListProps) => {
   return (
     <div className="space-y-8">
       <div className="flex flex-col gap-6">
-        <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-100">Events</h2>
+        <div className="flex justify-between items-center">
+          <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-100">Events</h2>
+          {connected && (
+            <Link to="/my-talks">
+              <Button 
+                variant="outline" 
+                className="border-2 border-orange-500 bg-orange-50 text-orange-600 hover:bg-orange-100 hover:text-orange-700 transition-colors duration-300 font-bold"
+              >
+                <PresentationIcon className="mr-2 h-5 w-5" />
+                My Talks
+              </Button>
+            </Link>
+          )}
+        </div>
         
         <div className="relative w-full max-w-md">
           <div className="relative">
@@ -302,18 +315,6 @@ const EventList = ({ events }: EventListProps) => {
             <Vote className="mr-1 h-4 w-4" />
             Voted
           </Button>
-          
-          {connected && (
-            <Link to="/my-talks">
-              <Button 
-                variant="outline" 
-                className="ml-1 border-2 border-orange-500 bg-orange-50 text-orange-600 hover:bg-orange-100 hover:text-orange-700 transition-colors duration-300 font-bold"
-              >
-                <PresentationIcon className="mr-2 h-5 w-5" />
-                My Talks
-              </Button>
-            </Link>
-          )}
         </div>
       </div>
       
