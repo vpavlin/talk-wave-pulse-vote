@@ -32,7 +32,7 @@ interface ExtendedControlMessage {
   talks?: ExtendedTalk[];
   title?: string;
   description?: string;
-  timestamp?: string | number | Date;
+  timestamp?:number;
   updated?: number;
   enabled?: boolean; // Add enabled property to track if event is open/closed
 }
