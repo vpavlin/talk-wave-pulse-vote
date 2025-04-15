@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -9,13 +8,16 @@ import CreateEventDialog from "@/components/CreateEventDialog";
 import WalletConnectButton from "@/components/WalletConnectButton";
 import ThemeToggle from "@/components/ThemeToggle";
 import { useWallet } from "@/contexts/WalletContext";
-import { fetchEvents, createEvent } from "@/services/eventService";
+import { fetchEvents, createEvent, useEventAnnouncements } from "@/services/eventService";
 
 const Index = () => {
   const [isCreateEventOpen, setIsCreateEventOpen] = useState(false);
   const { toast } = useToast();
   const { connected, walletAddress } = useWallet();
   const queryClient = useQueryClient();
+  
+  // Set up event announcement listener
+  useEventAnnouncements();
   
   // Refresh events data when identity state changes
   useEffect(() => {
@@ -44,8 +46,8 @@ const Index = () => {
         eventData.title, 
         eventData.description, 
         eventData.date,
-        eventData.website,
         eventData.location,
+        eventData.website,
         eventData.contact,
         eventData.bannerImage
       );

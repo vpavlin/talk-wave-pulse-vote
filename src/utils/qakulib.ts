@@ -3,6 +3,7 @@ import {ControlMessage, EnhancedQuestionMessage, Qaku} from "qakulib";
 import { wakuPeerExchangeDiscovery } from "@waku/discovery";
 import { derivePubsubTopicsFromNetworkConfig } from "@waku/utils"
 import { createLightNode, IWaku, LightNode, Protocols } from '@waku/sdk';
+import { createDecoder, createEncoder, DecodedMessage } from '@waku/sdk';
 
 // Define an extended interface for the talk without extending EnhancedQuestionMessage
 interface ExtendedTalk {
@@ -41,6 +42,13 @@ interface ExtendedControlMessage {
 // Initialize the Qakulib instance
 let qakulibInstance: any | null = null;
 
+// Define the common content topic for event announcements
+const ANNOUNCE_CONTENT_TOPIC = "/lightningtalkwave/1/announce/json";
+
+// Create encoder and decoder for the announcement content topic
+let announceEncoder: any = null;
+let announceDecoder: any = null;
+
 const bootstrapNodes: string[] = [
   "/dns4/waku-test.bloxy.one/tcp/8095/wss/p2p/16Uiu2HAmSZbDB7CusdRhgkD81VssRjQV5ZH13FbzCGcdnbbh6VwZ",
   "/dns4/node-01.do-ams3.waku.sandbox.status.im/tcp/8000/wss/p2p/16Uiu2HAmNaeL4p3WEYzC9mgXBmBWSgWjPHRvatZTXnp8Jgv3iKsb",
@@ -50,6 +58,9 @@ const networkConfig =  {clusterId: 42, shards: [0]}
 
 // Event handlers for qakulib events
 let eventListeners: any[] = [];
+
+// Event announcement listeners
+let announceEventListeners: any[] = [];
 
 let initializing = false
 let initPromise: Promise<Qaku>;
@@ -80,6 +91,13 @@ export const getQakulib = async ():Promise<Qaku> => {
       qakulibInstance = new Qaku(node as LightNode);
       await qakulibInstance.init();
 
+      // Setup encoder and decoder for event announcements
+      announceEncoder = createEncoder({ contentTopic: ANNOUNCE_CONTENT_TOPIC });
+      announceDecoder = createDecoder(ANNOUNCE_CONTENT_TOPIC);
+
+      // Set up announcement message listener
+      setupAnnouncementListener(node);
+
       // Load history and initialize all QA events we've interacted with
       await loadHistoryAndInitializeQAs(qakulibInstance);
 
@@ -94,6 +112,115 @@ export const getQakulib = async ():Promise<Qaku> => {
   })
   }
   return initPromise;
+};
+
+// Set up listener for event announcements
+const setupAnnouncementListener = async (node: IWaku) => {
+  try {
+    console.log(`Setting up listener for announcement topic: ${ANNOUNCE_CONTENT_TOPIC}`);
+
+    // Subscribe to the Filter protocol
+    const subscription = await node.filter.subscribe(
+      [announceDecoder],
+      (message: DecodedMessage) => {
+        if (!message.payload) return;
+        
+        try {
+          const announcementData = JSON.parse(Buffer.from(message.payload).toString('utf-8'));
+          console.log('Received event announcement:', announcementData);
+          
+          // Notify all listeners about the announcement
+          announceEventListeners.forEach(listener => {
+            if (listener.callback && typeof listener.callback === 'function') {
+              listener.callback(announcementData);
+            }
+          });
+          
+          // If it's a new event, try to initialize it in Qakulib
+          if (announcementData.id && qakulibInstance) {
+            console.log(`Initializing announced event: ${announcementData.id}`);
+            qakulibInstance.initQA(announcementData.id).catch(err => {
+              console.error(`Failed to initialize announced event ${announcementData.id}:`, err);
+            });
+          }
+        } catch (error) {
+          console.error('Error processing announcement message:', error);
+        }
+      }
+    );
+
+    // Store the subscription for cleanup
+    announceEventListeners.push({ 
+      callback: null, 
+      subscription,
+      remove: () => {
+        if (subscription && subscription.unsubscribe) {
+          subscription.unsubscribe();
+        }
+      }
+    });
+
+    console.log('Announcement listener setup complete');
+  } catch (error) {
+    console.error('Error setting up announcement listener:', error);
+  }
+};
+
+// Function to subscribe to event announcements
+export const onEventAnnounce = (callback: (data: any) => void) => {
+  const listener = { callback, remove: () => {} };
+  announceEventListeners.push(listener);
+  
+  // Return an object with a remove method for cleanup
+  return {
+    remove: () => {
+      const index = announceEventListeners.findIndex(l => l === listener);
+      if (index !== -1) {
+        announceEventListeners.splice(index, 1);
+      }
+    }
+  };
+};
+
+// Function to announce an event to the common topic
+export const announceEvent = async (event: ExtendedControlMessage) => {
+  try {
+    console.log(`Announcing event to common topic: ${ANNOUNCE_CONTENT_TOPIC}`);
+    const node = await getWakuNode();
+    
+    if (!announceEncoder) {
+      announceEncoder = createEncoder({ contentTopic: ANNOUNCE_CONTENT_TOPIC });
+    }
+    
+    // Create announcement payload with essential event details
+    const announcementData = {
+      id: event.id,
+      title: event.title,
+      description: typeof event.description === 'string' ? event.description.substring(0, 200) : '', // Trim for announcement
+      timestamp: Date.now(),
+      owner: event.owner,
+      eventDate: event.eventDate,
+      location: event.location
+    };
+    
+    // Convert to JSON and then to Buffer
+    const payload = Buffer.from(JSON.stringify(announcementData), 'utf-8');
+    
+    // Send the message using LightPush protocol
+    await node.lightPush.send(announceEncoder, { payload });
+    
+    console.log('Event announcement sent successfully');
+    return true;
+  } catch (error) {
+    console.error('Error announcing event:', error);
+    return false;
+  }
+};
+
+// Helper to get the Waku node
+const getWakuNode = async (): Promise<IWaku> => {
+  const qakulib = await getQakulib();
+  return qakulib.node;
 };
 
 // Load history and initialize QA events from history
@@ -169,6 +296,35 @@ export const publishEvent = async (title:string, desc:string, moderation:boolean
   const eventId = await qakulib.newQA(title, desc, true, [], moderation);
   
   console.log("Event published with ID:", eventId);
+  
+  // Announce the event to the common topic for discovery
+  const eventData: ExtendedControlMessage = {
+    id: eventId,
+    title: title,
+    description: desc,
+    owner: qakulib.identity?.address ? qakulib.identity.address() : '',
+    timestamp: Date.now()
+  };
+  
+  // If description is JSON, try to parse and extract metadata
+  if (typeof desc === 'string') {
+    try {
+      const descObj = JSON.parse(desc);
+      if (descObj && typeof descObj === 'object') {
+        eventData.eventDate = descObj.eventDate;
+        eventData.location = descObj.location;
+        eventData.website = descObj.website;
+        eventData.contact = descObj.contact;
+        eventData.bannerImage = descObj.bannerImage;
+      }
+    } catch (e) {
+      // Not valid JSON, leave as is
+    }
+  }
+  
+  // Announce the event
+  await announceEvent(eventData);
+  
   return eventId;
 }
 

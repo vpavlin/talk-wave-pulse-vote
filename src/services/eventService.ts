@@ -1,4 +1,3 @@
-
 import { 
   getEvents as fetchEventsFromQakulib, 
   getEventById as fetchEventByIdFromQakulib,
@@ -7,8 +6,11 @@ import {
   submitTalk as submitTalkToQakulib,
   voteTalk as voteTalkToQakulib,
   closeEvent as closeEventInQakulib,
-  acceptTalk as acceptTalkInQakulib
+  acceptTalk as acceptTalkInQakulib,
+  onEventAnnounce
 } from "@/utils/qakulib";
+import { useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 // Define the Talk interface
 export interface Talk {
@@ -24,7 +26,7 @@ export interface Talk {
   isAuthor?: boolean;
   upvotedByMe?: boolean;
   createdAt: string | number | Date;
-  answer?: string; // Add answer field to show accepted status
+  answer?: string;
 }
 
 // Define the Event interface
@@ -35,7 +37,7 @@ export interface Event {
   ownerAddress?: string;
   isCreator?: boolean;
   eventDate?: string;
-  date?: string | number | Date; // Add date property
+  date?: string | number | Date;
   location?: string;
   website?: string;
   contact?: string;
@@ -43,6 +45,36 @@ export interface Event {
   talks: Talk[];
   enabled?: boolean;
 }
+
+// Hook to listen for event announcements and invalidate queries
+export const useEventAnnouncements = () => {
+  const queryClient = useQueryClient();
+  
+  useEffect(() => {
+    console.log("Setting up event announcement listener");
+    
+    // Subscribe to event announcements
+    const subscription = onEventAnnounce((announcementData) => {
+      console.log("Received event announcement:", announcementData);
+      
+      // Invalidate the events query to refresh the list
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+      
+      // If we have the event ID, also invalidate that specific event query
+      if (announcementData.id) {
+        queryClient.invalidateQueries({ queryKey: ['event', announcementData.id] });
+      }
+    });
+    
+    // Cleanup subscription on unmount
+    return () => {
+      console.log("Cleaning up event announcement listener");
+      if (subscription && subscription.remove) {
+        subscription.remove();
+      }
+    };
+  }, [queryClient]);
+};
 
 // Function to fetch all events
 export const fetchEvents = async (): Promise<Event[]> => {
@@ -82,7 +114,7 @@ export const fetchEvents = async (): Promise<Event[]> => {
         isAuthor: talk.isAuthor || false,
         upvotedByMe: talk.upvotedByMe || false,
         createdAt: talk.timestamp || new Date(),
-        answer: talk.answer // Include answer in the talk data
+        answer: talk.answer
       }))
     });
   }
@@ -146,7 +178,7 @@ export const fetchEventById = async (eventId: string): Promise<Event | null> => 
       isAuthor: talk.isAuthor || false,
       upvotedByMe: talk.upvotedByMe || false,
       createdAt: talk.timestamp || new Date(),
-      answer: talk.answer // Include answer in the talk data
+      answer: talk.answer
     }))
   };
 };
@@ -192,6 +224,7 @@ export const createEvent = async (
       bannerImage
     });
     
+    // This publishEventToQakulib function now also handles announcing the event
     const eventId = await publishEventToQakulib(title, descriptionWithMetadata, true);
     return eventId;
   } catch (error) {
