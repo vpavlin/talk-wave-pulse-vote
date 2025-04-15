@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -91,11 +90,8 @@ const EventList = ({ events }: EventListProps) => {
     }
   };
 
-  // Determine if an event is from the announcement channel
   const isAnnouncedEvent = (event: Event) => {
-    // Events fetched directly from the blockchain typically have a qaId property
-    // while events from the announcement channel don't
-    return event.announed
+    return event.announced || false;
   };
 
   const renderEventCard = (event: Event) => {
