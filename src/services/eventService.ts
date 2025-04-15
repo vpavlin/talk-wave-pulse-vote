@@ -7,11 +7,11 @@ import {
   voteTalk as voteTalkToQakulib,
   closeEvent as closeEventInQakulib,
   acceptTalk as acceptTalkInQakulib,
+  announcedEvents
 } from "@/utils/qakulib";
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
-// Define the Talk interface
 export interface Talk {
   id: string;
   title: string;
@@ -28,7 +28,6 @@ export interface Talk {
   answer?: string;
 }
 
-// Define the Event interface
 export interface Event {
   id: string;
   title: string;
@@ -45,74 +44,81 @@ export interface Event {
   enabled?: boolean;
 }
 
-// Function to fetch all events
 export const fetchEvents = async (): Promise<Event[]> => {
-  const rawEvents = await fetchEventsFromQakulib();
-  
-  console.log("Raw events:", rawEvents);
-  
-  // Process each event and include talks
-  const processedEvents = [];
-  
-  for (const event of rawEvents) {
-    // Fetch talks for this event
-    const eventTalks = await fetchTalksFromQakulib(event.id);
+  try {
+    console.log("Fetching all events");
     
-    processedEvents.push({
-      id: event.id,
-      title: event.title || 'Untitled Event',
-      description: parseEventDescription(event.description),
-      ownerAddress: event.ownerAddress || event.owner,
-      isCreator: event.isCreator || false,
-      eventDate: event.eventDate ? String(event.eventDate) : undefined,
-      date: event.timestamp || event.updated,
-      location: event.location,
-      website: event.website,
-      contact: event.contact,
-      bannerImage: event.bannerImage,
-      enabled: event.enabled,
-      talks: (eventTalks || []).map(talk => ({
-        id: talk.hash,
-        title: extractTalkData(talk.question || '').title || 'Unknown Talk',
-        description: extractTalkData(talk.question || '').description || '',
-        speaker: extractTalkData(talk.question || '').speaker || 'Anonymous',
-        bio: extractTalkData(talk.question || '').bio,
-        votes: talk.upvotes || 0,
-        voterAddresses: talk.voterAddresses || [],
-        walletAddress: talk.signer,
-        isAuthor: talk.isAuthor || false,
-        upvotedByMe: talk.upvotedByMe || false,
-        createdAt: talk.timestamp || new Date(),
-        answer: talk.answer
-      }))
-    });
+    const rawEvents = await fetchEventsFromQakulib();
+    
+    const combinedEvents = [
+      ...rawEvents,
+      ...announcedEvents.filter(
+        announcedEvent => !rawEvents.some(event => event.id === announcedEvent.id)
+      )
+    ];
+    
+    console.log("Combined events:", combinedEvents);
+    
+    const processedEvents = [];
+    
+    for (const event of combinedEvents) {
+      const eventTalks = rawEvents.some(e => e.id === event.id) 
+        ? await fetchTalksFromQakulib(event.id) 
+        : [];
+      
+      processedEvents.push({
+        id: event.id,
+        title: event.title || 'Untitled Event',
+        description: parseEventDescription(event.description),
+        ownerAddress: event.ownerAddress || event.owner,
+        isCreator: event.isCreator || false,
+        eventDate: event.eventDate ? String(event.eventDate) : undefined,
+        date: event.timestamp || event.updated,
+        location: event.location,
+        website: event.website,
+        contact: event.contact,
+        bannerImage: event.bannerImage,
+        enabled: event.enabled !== false,
+        talks: (eventTalks || []).map(talk => ({
+          id: talk.hash,
+          title: extractTalkData(talk.question || '').title || 'Unknown Talk',
+          description: extractTalkData(talk.question || '').description || '',
+          speaker: extractTalkData(talk.question || '').speaker || 'Anonymous',
+          bio: extractTalkData(talk.question || '').bio,
+          votes: talk.upvotes || 0,
+          voterAddresses: talk.voterAddresses || [],
+          walletAddress: talk.signer,
+          isAuthor: talk.isAuthor || false,
+          upvotedByMe: talk.upvotedByMe || false,
+          createdAt: talk.timestamp || new Date(),
+          answer: talk.answer
+        }))
+      });
+    }
+    
+    return processedEvents;
+  } catch (error) {
+    console.error("Failed to fetch events:", error);
+    return [];
   }
-  
-  return processedEvents;
 };
 
-// Helper function to parse event description
 export const parseEventDescription = (description: string | undefined): string => {
   if (!description) return '';
   
   try {
-    // Try to parse it as JSON
     const descObj = JSON.parse(description);
     
-    // If it has a description property, return that
     if (descObj && typeof descObj === 'object' && descObj.description) {
       return descObj.description;
     }
     
-    // Otherwise return the original string
     return description;
   } catch (e) {
-    // If it's not valid JSON, just return the original string
     return description;
   }
 };
 
-// Function to fetch a single event by ID
 export const fetchEventById = async (eventId: string): Promise<Event | null> => {
   const event = await fetchEventByIdFromQakulib(eventId);
   
@@ -152,7 +158,6 @@ export const fetchEventById = async (eventId: string): Promise<Event | null> => 
   };
 };
 
-// Helper function to extract talk data from JSON string
 export const extractTalkData = (talkData: string): { title?: string; description?: string; speaker?: string; bio?: string } => {
   try {
     const data = JSON.parse(talkData);
@@ -172,7 +177,6 @@ export const extractTalkData = (talkData: string): { title?: string; description
   }
 };
 
-// Function to create a new event
 export const createEvent = async (
   title: string,
   description: string,
@@ -183,7 +187,6 @@ export const createEvent = async (
   bannerImage?: string
 ): Promise<string | null> => {
   try {
-    // Format the description as a JSON object to include metadata
     const descriptionWithMetadata = JSON.stringify({
       description,
       eventDate,
@@ -193,7 +196,6 @@ export const createEvent = async (
       bannerImage
     });
     
-    // This publishEventToQakulib function now also handles announcing the event
     const eventId = await publishEventToQakulib(title, descriptionWithMetadata, true);
     return eventId;
   } catch (error) {
@@ -202,7 +204,6 @@ export const createEvent = async (
   }
 };
 
-// Function to submit a talk to an event
 export const createTalk = async (
   eventId: string,
   title: string,
@@ -219,7 +220,6 @@ export const createTalk = async (
   }
 };
 
-// Function to upvote a talk
 export const upvoteTalk = async (eventId: string, talkId: string): Promise<boolean> => {
   try {
     return await voteTalkToQakulib(eventId, talkId);
@@ -229,7 +229,6 @@ export const upvoteTalk = async (eventId: string, talkId: string): Promise<boole
   }
 };
 
-// Function to close an event
 export const closeEvent = async (eventId: string): Promise<boolean> => {
   try {
     return await closeEventInQakulib(eventId);
@@ -239,7 +238,6 @@ export const closeEvent = async (eventId: string): Promise<boolean> => {
   }
 };
 
-// Function to accept a talk
 export const acceptTalk = async (eventId: string, talkId: string, feedback?: string): Promise<boolean> => {
   try {
     return await acceptTalkInQakulib(eventId, talkId, feedback);
