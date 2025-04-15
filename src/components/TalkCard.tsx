@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { ThumbsUp, Clock, Wallet, ChevronDown, ChevronUp, User, Users } from "lucide-react";
+import { ThumbsUp, Clock, Wallet, ChevronDown, ChevronUp, Users } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import ReactMarkdown from "react-markdown";
 import { Talk } from "@/services/eventService";

@@ -1,4 +1,3 @@
-
 // Using the locally installed qakulib package
 import {ControlMessage, EnhancedQuestionMessage, Qaku} from "qakulib";
 import { wakuPeerExchangeDiscovery } from "@waku/discovery";
@@ -35,6 +34,7 @@ interface ExtendedControlMessage {
   description?: string;
   timestamp?: string | number | Date;
   updated?: number;
+  enabled?: boolean; // Add enabled property to track if event is open/closed
 }
 
 // Initialize the Qakulib instance
@@ -200,7 +200,8 @@ export const getEvents = async (): Promise<ExtendedControlMessage[]> => {
         description: event.controlState?.description,
         owner: event.controlState?.owner,
         timestamp: event.controlState?.timestamp,
-        updated: event.controlState?.updated
+        updated: event.controlState?.updated,
+        enabled: event.controlState?.enabled !== false // Default to true if not explicitly set to false
       };
       
       // Check if the current user is the creator of this event
@@ -271,7 +272,8 @@ export const getEventById = async (eventId: string): Promise<ExtendedControlMess
       description: event.controlState?.description,
       owner: event.controlState?.owner,
       timestamp: event.controlState?.timestamp,
-      updated: event.controlState?.updated
+      updated: event.controlState?.updated,
+      enabled: event.controlState?.enabled !== false // Default to true if not explicitly set to false
     };
     
     if (extendedControlState.owner === currentUserAddress) {
@@ -465,6 +467,28 @@ export const voteTalk = async (eventId: string, talkId: string): Promise<boolean
     return true;
   } catch (error) {
     console.error("Failed to vote for talk:", error);
+    return false;
+  }
+};
+
+export const closeEvent = async (eventId: string): Promise<boolean> => {
+  try {
+    console.log(`Closing event with ID ${eventId}`);
+    const qakulib = await getQakulib();
+    
+    // Make sure the QA is initialized
+    if (!qakulib.qas.has(eventId)) {
+      console.log(`Event ${eventId} not initialized yet, initializing...`);
+      await qakulib.initQA(eventId);
+    }
+    
+    // Use the QA switch state function to close the event (false = closed)
+    await qakulib.switchQAState(eventId, false);
+    
+    console.log(`Event ${eventId} closed successfully`);
+    return true;
+  } catch (error) {
+    console.error(`Failed to close event with ID ${eventId}:`, error);
     return false;
   }
 };

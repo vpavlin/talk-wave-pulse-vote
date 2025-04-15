@@ -5,12 +5,12 @@ import { v4 as uuidv4 } from 'uuid';
 export interface Talk {
   id: string;
   title: string;
-  speaker: string;
   description: string;
+  speaker: string;
   bio?: string;
   votes: number;
-  isAuthor?: boolean;
-  upvotedByMe?: boolean;
+  voterAddresses: string[];
+  isAuthor: boolean;
   walletAddress?: string;
   createdAt: string;
 }
@@ -29,6 +29,9 @@ export interface Event {
   ownerAddress?: string;
   isCreator?: boolean;
   talks: Talk[];
+  timestamp?: number;
+  updated?: number;
+  enabled: boolean; // Add enabled property to track if the event is open/closed
 }
 
 /**
@@ -58,6 +61,7 @@ export const fetchEvents = async () => {
           description: talkDesc,
           bio: talkBio,
           votes: talk.upvotes || 0,
+          voterAddresses: talk.voterAddresses || [],
           isAuthor: talk.isAuthor || false,
           upvotedByMe: talk.upvotedByMe || false,
           walletAddress: talk.signer || '',
@@ -79,6 +83,9 @@ export const fetchEvents = async () => {
         ownerAddress: event.owner || event.ownerAddress,
         isCreator: event.isCreator,
         talks: formattedTalks,
+        timestamp: event.timestamp,
+        updated: event.updated,
+        enabled: event.enabled
       } as Event;
     }));
   } catch (error) {
@@ -211,6 +218,7 @@ export const fetchEventById = async (eventId: string): Promise<Event> => {
         description: talkDesc,
         bio: talkBio,
         votes: talk.upvotes || 0,
+        voterAddresses: talk.voterAddresses || [],
         isAuthor: talk.isAuthor || false,
         upvotedByMe: talk.upvotedByMe || false,
         walletAddress: talk.signer || '',
@@ -234,7 +242,10 @@ export const fetchEventById = async (eventId: string): Promise<Event> => {
       bannerImage: bannerImage || (event.bannerImage && typeof event.bannerImage !== 'object' ? event.bannerImage : undefined),
       ownerAddress: event.owner || event.ownerAddress,
       isCreator: event.isCreator,
-      talks: formattedTalks
+      talks: formattedTalks,
+      timestamp: event.timestamp,
+      updated: event.updated,
+      enabled: event.enabled
     };
   } catch (error) {
     console.error(`Error fetching event with ID ${eventId}:`, error);
@@ -407,5 +418,15 @@ export const createEvent = async (
   } catch (error) {
     console.error('Error creating event:', error);
     return null;
+  }
+};
+
+// Add new function to close an event
+export const closeEvent = async (eventId: string): Promise<boolean> => {
+  try {
+    return await qakulib.closeEvent(eventId);
+  } catch (error) {
+    console.error("Error closing event:", error);
+    return false;
   }
 };

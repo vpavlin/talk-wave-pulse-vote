@@ -25,14 +25,17 @@ import {
   Copy,
   CheckCircle,
   Hash,
-  Sparkles
+  Sparkles,
+  LockOpen,
+  Lock,
+  X
 } from "lucide-react";
 import SubmitTalkDialog from "@/components/SubmitTalkDialog";
 import TalkCard from "@/components/TalkCard";
 import { format } from "date-fns";
 import { useWallet } from "@/contexts/WalletContext";
 import ThemeToggle from "@/components/ThemeToggle";
-import { fetchEventById, createTalk, upvoteTalk, Event } from "@/services/eventService";
+import { fetchEventById, createTalk, upvoteTalk, Event, closeEvent } from "@/services/eventService";
 import { generateTalkSuggestion, hasApiKey, getUserInfo } from "@/services/aiService";
 import AkashApiKeyDialog from "@/components/AkashApiKeyDialog";
 
@@ -80,6 +83,34 @@ const EventDetail = () => {
       }
     }
   }, [event]);
+
+  const handleCloseEvent = async () => {
+    if (!event) return;
+    
+    try {
+      const success = await closeEvent(event.id);
+      if (success) {
+        toast({
+          title: "Event Updated",
+          description: "Event has been closed for submissions",
+        });
+        
+        queryClient.invalidateQueries({ queryKey: ['event', eventId] });
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to close event",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleGenerateSuggestion = async () => {
     if (!event) return;
@@ -413,9 +444,27 @@ const EventDetail = () => {
           <CardHeader className="pb-3">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div>
-                <CardTitle className="text-3xl md:text-4xl font-bold text-purple-800 dark:text-purple-300 mb-2">
-                  {event?.title}
-                </CardTitle>
+                <div className="flex items-center gap-3">
+                  <CardTitle className="text-3xl md:text-4xl font-bold text-purple-800 dark:text-purple-300 mb-2">
+                    {event?.title}
+                  </CardTitle>
+                  <Badge 
+                    variant={event?.enabled ? "default" : "destructive"}
+                    className="text-sm py-1 px-2"
+                  >
+                    {event?.enabled ? (
+                      <div className="flex items-center">
+                        <LockOpen className="h-3 w-3 mr-1" />
+                        Open
+                      </div>
+                    ) : (
+                      <div className="flex items-center">
+                        <Lock className="h-3 w-3 mr-1" />
+                        Closed
+                      </div>
+                    )}
+                  </Badge>
+                </div>
                 <div className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed prose dark:prose-invert prose-p:my-2 max-w-none">
                   <ReactMarkdown>{event?.description || ""}</ReactMarkdown>
                 </div>
@@ -474,10 +523,26 @@ const EventDetail = () => {
                 </div>
               </div>
               
-              <Badge className="date-badge text-lg self-start">
-                <Calendar className="h-5 w-5 mr-1" />
-                {formatEventDate(event?.eventDate)}
-              </Badge>
+              <div className="flex flex-col gap-2 items-end">
+                <Badge className="date-badge text-lg self-start">
+                  <Calendar className="h-5 w-5 mr-1" />
+                  {formatEventDate(event?.eventDate)}
+                </Badge>
+                
+                {event?.isCreator && (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleCloseEvent}
+                    disabled={event.enabled === false}
+                    aria-label={event?.enabled ? "Close event for submissions" : "Event already closed"}
+                    className="mt-2"
+                  >
+                    <X className="mr-2 h-4 w-4" />
+                    {event?.enabled ? "Close Event" : "Event Closed"}
+                  </Button>
+                )}
+              </div>
             </div>
           </CardHeader>
           <CardContent>
@@ -485,7 +550,7 @@ const EventDetail = () => {
               <Button 
                 onClick={() => setIsSubmitTalkOpen(true)}
                 className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 dark:from-purple-600 dark:to-indigo-600 dark:hover:from-purple-700 dark:hover:to-indigo-700 text-lg px-6 py-6 h-auto focus-ring"
-                disabled={!connected}
+                disabled={!connected || !event?.enabled}
                 size="lg"
                 aria-label="Submit a lightning talk"
               >
@@ -496,7 +561,7 @@ const EventDetail = () => {
               <Button
                 onClick={handleGenerateSuggestion}
                 className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 dark:from-amber-600 dark:to-yellow-600 dark:hover:from-amber-700 dark:hover:to-yellow-700 text-lg px-6 py-6 h-auto focus-ring text-white"
-                disabled={isGeneratingSuggestion}
+                disabled={isGeneratingSuggestion || !event?.enabled}
                 size="lg"
                 aria-label="Generate AI talk suggestion"
               >
@@ -509,6 +574,13 @@ const EventDetail = () => {
               <p className="mt-2 text-amber-600 dark:text-amber-400 text-sm flex items-center">
                 <AlertCircle className="inline-block mr-1 h-4 w-4" />
                 Connect your wallet to submit a talk
+              </p>
+            )}
+            
+            {!event?.enabled && (
+              <p className="mt-2 text-amber-600 dark:text-amber-400 text-sm flex items-center">
+                <AlertCircle className="inline-block mr-1 h-4 w-4" />
+                This event is closed for new submissions
               </p>
             )}
           </CardContent>
