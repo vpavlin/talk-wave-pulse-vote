@@ -56,9 +56,10 @@ export const fetchEventById = async (eventId: string): Promise<Event> => {
     // Fetch talks for this event
     const talks = await qakulib.getTalks(eventId);
     
-    // Combine event data with talks
+    // Combine event data with talks and ensure the date property exists
     return {
       ...event,
+      date: event.date || event.created?.toString() || new Date().toISOString(),
       talks: talks || []
     } as Event;
   } catch (error) {

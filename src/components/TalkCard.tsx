@@ -36,7 +36,9 @@ const TalkCard = ({ talk, onVote, showFullDescription = false }: TalkCardProps) 
   };
 
   // Function to extract the first line of text
-  const getFirstLine = (text: string) => {
+  const getFirstLine = (text: string | undefined) => {
+    if (!text) return "No description available";
+    
     const firstLine = text.split('\n')[0].trim();
     // If first line is too long, truncate it
     if (firstLine.length > 100) {
@@ -45,11 +47,15 @@ const TalkCard = ({ talk, onVote, showFullDescription = false }: TalkCardProps) 
     return firstLine;
   };
 
-  // Get appropriate description based on expanded state
-  const description = isExpanded ? talk.description : getFirstLine(talk.description);
+  // Ensure description is not undefined before processing
+  const description = isExpanded 
+    ? (talk.description || "No description available") 
+    : getFirstLine(talk.description);
   
-  // Check if there's more content to show
-  const hasMoreContent = talk.description.length > getFirstLine(talk.description).length;
+  // Check if there's more content to show (only if description exists)
+  const hasMoreContent = talk.description 
+    ? talk.description.length > getFirstLine(talk.description).length
+    : false;
 
   return (
     <Card className="overflow-hidden transition-all duration-300 hover:shadow-lg border-gray-700 bg-gray-800 card-hover h-full flex flex-col">
