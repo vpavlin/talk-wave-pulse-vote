@@ -1,0 +1,154 @@
+
+import React, { useState } from 'react';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Brain, Loader2, Key } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { generateTalkSuggestion, hasApiKey } from '@/services/aiService';
+import AkashApiKeyDialog from './AkashApiKeyDialog';
+
+interface AiTalkSuggestionProps {
+  talks: any[];
+  onUseSuggestion: (suggestion: { title: string; description: string }) => void;
+}
+
+const AiTalkSuggestion = ({ talks, onUseSuggestion }: AiTalkSuggestionProps) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [suggestion, setSuggestion] = useState<{ title: string; description: string } | null>(null);
+  const [isKeyDialogOpen, setIsKeyDialogOpen] = useState(false);
+  const { toast } = useToast();
+
+  const handleGenerateSuggestion = async () => {
+    if (!hasApiKey()) {
+      setIsKeyDialogOpen(true);
+      return;
+    }
+
+    setIsLoading(true);
+    setSuggestion(null);
+    
+    try {
+      const response = await generateTalkSuggestion(talks);
+      
+      // Parse the response to extract title and description
+      let title = '';
+      let description = '';
+      
+      // Simple parsing logic - can be improved
+      const titleMatch = response.match(/Title:(.*?)(?:\n|$)/i);
+      const descMatch = response.match(/Description:(.*?)(?:\n|$)/i);
+      
+      if (titleMatch && titleMatch[1]) {
+        title = titleMatch[1].trim();
+      } else {
+        // If structured format not found, use the first line as title
+        const lines = response.split('\n').filter(line => line.trim().length > 0);
+        if (lines.length > 0) {
+          title = lines[0].trim();
+        }
+      }
+      
+      if (descMatch && descMatch[1]) {
+        description = descMatch[1].trim();
+      } else {
+        // Use the rest as description
+        const content = response.replace(title, '').trim();
+        description = content;
+      }
+      
+      setSuggestion({ title, description });
+    } catch (error) {
+      console.error('Error generating suggestion:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate suggestion. Please check your API key and try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleUseSuggestion = () => {
+    if (suggestion) {
+      onUseSuggestion(suggestion);
+      setSuggestion(null);
+    }
+  };
+
+  return (
+    <>
+      <Card className="bg-gradient-to-r from-indigo-900/30 to-purple-900/30 border-indigo-700/30">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-white">
+            <Brain className="h-5 w-5 text-purple-400" />
+            AI Talk Suggestions
+          </CardTitle>
+          <CardDescription className="text-gray-300">
+            Use AI to generate talk ideas based on recent submissions
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {suggestion ? (
+            <div className="space-y-3 bg-gray-800/50 p-4 rounded-lg">
+              <h3 className="font-bold text-purple-300">{suggestion.title}</h3>
+              <p className="text-gray-300 text-sm">{suggestion.description}</p>
+            </div>
+          ) : (
+            <p className="text-gray-300 text-sm">
+              Click the button below to generate a talk suggestion using Akash AI. 
+              You'll need an API key from the Akash Network.
+            </p>
+          )}
+        </CardContent>
+        <CardFooter className="flex gap-2">
+          {!hasApiKey() && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setIsKeyDialogOpen(true)}
+              className="border-purple-700 text-purple-400 hover:bg-purple-900/30"
+            >
+              <Key className="mr-2 h-4 w-4" />
+              Set API Key
+            </Button>
+          )}
+          
+          <Button 
+            onClick={handleGenerateSuggestion}
+            disabled={isLoading || (talks.length === 0)}
+            className="bg-purple-600 hover:bg-purple-700"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Generating...
+              </>
+            ) : (
+              <>
+                <Brain className="mr-2 h-4 w-4" />
+                Generate Suggestion
+              </>
+            )}
+          </Button>
+          
+          {suggestion && (
+            <Button 
+              onClick={handleUseSuggestion}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              Use This Suggestion
+            </Button>
+          )}
+        </CardFooter>
+      </Card>
+      
+      <AkashApiKeyDialog 
+        open={isKeyDialogOpen} 
+        onOpenChange={setIsKeyDialogOpen} 
+      />
+    </>
+  );
+};
+
+export default AiTalkSuggestion;

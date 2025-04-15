@@ -1,4 +1,5 @@
-import React, { useEffect } from "react";
+
+import React, { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchEvents } from "@/services/eventService";
 import { useWallet } from "@/contexts/WalletContext";
@@ -7,13 +8,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { PresentationIcon, ThumbsUp, MessageSquare, Calendar, ArrowRight, ArrowLeft } from "lucide-react";
+import { PresentationIcon, ThumbsUp, MessageSquare, Calendar, ArrowRight, ArrowLeft, BrainCircuit } from "lucide-react";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
+import AiTalkSuggestion from "@/components/AiTalkSuggestion";
+import SubmitTalkDialog from "@/components/SubmitTalkDialog";
 
 const MyTalks = () => {
   const { walletAddress, connected, connect } = useWallet();
   const { toast } = useToast();
+  const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
+  const [talkData, setTalkData] = useState({ title: "", speaker: "", description: "" });
 
   // Fetch all events (we'll filter for the user's talks from these)
   const { data: events, isLoading, error } = useQuery({
@@ -72,6 +77,26 @@ const MyTalks = () => {
   const totalSubmissions = myTalks.length;
   const totalVotes = myTalks.reduce((sum, talk) => sum + talk.votes, 0);
   const eventsParticipated = new Set(myTalks.map(talk => talk.eventId)).size;
+
+  // Handle the submission of a talk using AI suggestion
+  const handleSubmitTalk = async (talkData) => {
+    // This is just a stub - in a real app you would submit to a specific event
+    toast({
+      title: "Talk Created",
+      description: "Your talk has been saved as a draft. Select an event to submit it.",
+    });
+    setSubmitDialogOpen(false);
+  };
+
+  // Handle using an AI suggestion
+  const handleUseSuggestion = (suggestion) => {
+    setTalkData({
+      title: suggestion.title,
+      speaker: "", // User would need to fill this in
+      description: suggestion.description
+    });
+    setSubmitDialogOpen(true);
+  };
 
   if (isLoading) {
     return (
@@ -159,6 +184,14 @@ const MyTalks = () => {
         </Card>
       </div>
       
+      {/* AI Talk Suggestion */}
+      <div className="mb-8">
+        <AiTalkSuggestion 
+          talks={myTalks} 
+          onUseSuggestion={handleUseSuggestion}
+        />
+      </div>
+      
       {/* Talk list */}
       {myTalks.length === 0 ? (
         <Card className="bg-gray-800/50 border-gray-700">
@@ -216,6 +249,13 @@ const MyTalks = () => {
           </CardContent>
         </Card>
       )}
+      
+      {/* Talk submission dialog that can be triggered by AI suggestions */}
+      <SubmitTalkDialog
+        open={submitDialogOpen}
+        onOpenChange={setSubmitDialogOpen}
+        onSubmit={handleSubmitTalk}
+      />
     </div>
   );
 };
