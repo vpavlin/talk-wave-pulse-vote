@@ -32,9 +32,16 @@ import TalkCard from "@/components/TalkCard";
 import { format } from "date-fns";
 import { useWallet } from "@/contexts/WalletContext";
 import ThemeToggle from "@/components/ThemeToggle";
-import { fetchEventById, createTalk, upvoteTalk } from "@/services/eventService";
+import { fetchEventById, createTalk, upvoteTalk, Event } from "@/services/eventService";
 import { generateTalkSuggestion, hasApiKey, getUserInfo } from "@/services/aiService";
 import AkashApiKeyDialog from "@/components/AkashApiKeyDialog";
+
+interface TalkSuggestion {
+  title: string;
+  description: string;
+  speaker?: string;
+  bio?: string;
+}
 
 const EventDetail = () => {
   const { eventId = "" } = useParams();
@@ -43,7 +50,7 @@ const EventDetail = () => {
   const [isApiKeyDialogOpen, setIsApiKeyDialogOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [isGeneratingSuggestion, setIsGeneratingSuggestion] = useState(false);
-  const [suggestionData, setSuggestionData] = useState<{ title: string; description: string } | null>(null);
+  const [suggestionData, setSuggestionData] = useState<TalkSuggestion | null>(null);
   const { toast } = useToast();
   const { connected, connect } = useWallet();
   const queryClient = useQueryClient();
@@ -62,7 +69,7 @@ const EventDetail = () => {
       ...prevData,
       speaker: userInfo.name || "",
       bio: userInfo.bio || ""
-    }));
+    } as TalkSuggestion));
   }, []);
 
   const handleGenerateSuggestion = async () => {
@@ -257,7 +264,7 @@ const EventDetail = () => {
   };
 
   const getSortedTalks = () => {
-    if (!event) return [];
+    if (!event || !event.talks) return [];
     
     const sortedTalks = [...event.talks];
     
@@ -313,7 +320,7 @@ const EventDetail = () => {
     );
   }
 
-  const eventBanner = event.bannerImage ? (
+  const eventBanner = event?.bannerImage ? (
     <div className="w-full h-48 md:h-64 mb-6 rounded-lg overflow-hidden">
       <img 
         src={event.bannerImage} 
@@ -382,28 +389,28 @@ const EventDetail = () => {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div>
                 <CardTitle className="text-3xl md:text-4xl font-bold text-purple-800 dark:text-purple-300 mb-2">
-                  {event.title}
+                  {event?.title}
                 </CardTitle>
                 <div className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed prose dark:prose-invert prose-p:my-2 max-w-none">
-                  <ReactMarkdown>{event.description}</ReactMarkdown>
+                  <ReactMarkdown>{event?.description || ""}</ReactMarkdown>
                 </div>
                 
                 <div className="mt-4 space-y-2">
-                  {event.ownerAddress && (
+                  {event?.ownerAddress && (
                     <div className="flex items-center text-gray-600 dark:text-gray-400 text-sm">
                       <Wallet className="h-4 w-4 mr-2 flex-shrink-0" />
                       <span>Created by: {formatWalletAddress(event.ownerAddress)}</span>
                     </div>
                   )}
                   
-                  {event.location && (
+                  {event?.location && (
                     <div className="flex items-center text-gray-600 dark:text-gray-400 text-sm">
                       <MapPin className="h-4 w-4 mr-2 flex-shrink-0" />
                       <span>{event.location}</span>
                     </div>
                   )}
                   
-                  {event.website && (
+                  {event?.website && (
                     <div className="flex items-center text-gray-600 dark:text-gray-400 text-sm">
                       <LinkIcon className="h-4 w-4 mr-2 flex-shrink-0" />
                       <a 
@@ -417,7 +424,7 @@ const EventDetail = () => {
                     </div>
                   )}
                   
-                  {event.contact && (
+                  {event?.contact && (
                     <div className="flex items-center text-gray-600 dark:text-gray-400 text-sm">
                       <Phone className="h-4 w-4 mr-2 flex-shrink-0" />
                       {event.contact.includes('@') ? (
@@ -444,7 +451,7 @@ const EventDetail = () => {
               
               <Badge className="date-badge text-lg self-start">
                 <Calendar className="h-5 w-5 mr-1" />
-                {event.eventDate ? format(new Date(event.eventDate), "MMMM d, yyyy") : "Date TBD"}
+                {event?.eventDate ? format(new Date(event.eventDate), "MMMM d, yyyy") : "Date TBD"}
               </Badge>
             </div>
           </CardHeader>
@@ -486,7 +493,7 @@ const EventDetail = () => {
           <h2 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-gray-100">
             Submitted Talks 
             <span className="ml-2 text-lg font-normal text-gray-500 dark:text-gray-400">
-              ({event.talks.length || 0})
+              ({event?.talks?.length || 0})
             </span>
           </h2>
           

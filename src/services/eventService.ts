@@ -49,10 +49,18 @@ export const fetchEvents = async () => {
 /**
  * Fetch a single event by ID
  */
-export const fetchEventById = async (eventId: string) => {
+export const fetchEventById = async (eventId: string): Promise<Event> => {
   try {
     const event = await qakulib.getEventById(eventId);
-    return event;
+    
+    // Fetch talks for this event
+    const talks = await qakulib.getTalks(eventId);
+    
+    // Combine event data with talks
+    return {
+      ...event,
+      talks: talks || []
+    } as Event;
   } catch (error) {
     console.error(`Error fetching event with ID ${eventId}:`, error);
     throw error;
@@ -67,7 +75,7 @@ export const upvoteTalk = async (eventId: string, talkId: string): Promise<boole
     console.log(`Upvoting talk ${talkId} for event ${eventId}`);
     
     // Optimistically update the vote count
-    const success = await qakulib.upvoteTalk(eventId, talkId);
+    const success = await qakulib.voteTalk(eventId, talkId);
     
     return success;
   } catch (error) {
@@ -92,24 +100,16 @@ export const createTalk = async (
     // Generate a random ID for the talk
     const talkId = uuidv4();
     
-    // Add the talk to the event
-    const eventUpdateMessage = {
-      eventId: eventId,
-      talk: {
-        id: talkId,
-        title: title,
-        speaker: speaker,
-        description: description,
-        bio: bio || '', // Add the bio field
-        votes: 0,
-        isAuthor: true, // Mark the talk as owned by the user
-        createdAt: new Date().toISOString()
-      }
-    };
+    // Add the talk to the event using qakulib
+    const newTalkId = await qakulib.submitTalk(
+      eventId,
+      title,
+      description,
+      speaker,
+      bio
+    );
     
-    await qakulib.submitTalk(eventUpdateMessage);
-    
-    return talkId;
+    return newTalkId || talkId;
   } catch (error) {
     console.error('Error creating talk:', error);
     return null;

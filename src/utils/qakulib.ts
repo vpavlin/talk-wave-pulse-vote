@@ -1,4 +1,3 @@
-
 // Using the locally installed qakulib package
 import {ControlMessage, EnhancedQuestionMessage, Qaku} from "qakulib";
 import { wakuPeerExchangeDiscovery } from "@waku/discovery";
@@ -14,6 +13,13 @@ interface ExtendedTalk extends EnhancedQuestionMessage {
 // Define an extended interface for the control message
 interface ExtendedControlMessage extends ControlMessage {
   isCreator?: boolean; // Add isCreator property
+  ownerAddress?: string;
+  eventDate?: string;
+  location?: string;
+  website?: string;
+  contact?: string;
+  bannerImage?: string;
+  talks?: ExtendedTalk[];
 }
 
 // Initialize the Qakulib instance
@@ -184,7 +190,7 @@ export const getEvents = async (): Promise<any[]> => {
   }
 };
 
-export const getEventById = async (eventId: string): Promise<ControlMessage | null> => {
+export const getEventById = async (eventId: string): Promise<ExtendedControlMessage | null> => {
   try {
     console.log(`Fetching event with ID ${eventId}`);
     const qakulib = await getQakulib();
@@ -214,6 +220,13 @@ export const getEventById = async (eventId: string): Promise<ControlMessage | nu
       extendedControlState.isCreator = true;
     }
     
+    // Set ownerAddress for consistency
+    extendedControlState.ownerAddress = extendedControlState.owner;
+    
+    // Get talks for this event and attach them to the extended control state
+    const talks = await getTalks(eventId);
+    extendedControlState.talks = talks;
+    
     console.log(`Successfully retrieved event: ${event.controlState.title}`);
     return extendedControlState;
   } catch (error) {
@@ -222,7 +235,7 @@ export const getEventById = async (eventId: string): Promise<ControlMessage | nu
   }
 };
 
-export const getTalks = async (eventId: string): Promise<EnhancedQuestionMessage[]> => {
+export const getTalks = async (eventId: string): Promise<ExtendedTalk[]> => {
   try {
     console.log(`Fetching talks for event ${eventId}`);
     const qakulib = await getQakulib();
