@@ -129,11 +129,13 @@ const TalkCard = ({ talk, onVote, renderActions }: TalkCardProps) => {
             size="sm" 
             onClick={onVote}
             disabled={hasVoted || !!talk.answer}
-            className={
-              (hasVoted || talk.answer) ? 
-              "bg-purple-100 text-purple-800 border-purple-300 cursor-not-allowed dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-700" : 
-              "border-purple-400 text-purple-700 hover:bg-purple-100/70 dark:border-purple-700 dark:text-purple-400 dark:hover:bg-purple-900/50"
-            }
+            className={`
+              flex items-center justify-center min-w-[90px] 
+              ${(hasVoted || talk.answer) 
+                ? "bg-purple-100 text-purple-800 border-purple-300 cursor-not-allowed dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-700" 
+                : "border-purple-400 text-purple-700 hover:bg-purple-100/70 dark:border-purple-700 dark:text-purple-400 dark:hover:bg-purple-900/50"
+              }
+            `}
           >
             <ThumbsUp className="h-4 w-4 mr-1" />
             {(hasVoted || talk.answer) ? "Voted" : "Vote"}
