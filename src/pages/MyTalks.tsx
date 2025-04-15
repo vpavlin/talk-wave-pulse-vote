@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchEvents } from "@/services/eventService";
@@ -8,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { PresentationIcon, ThumbsUp, MessageSquare, Calendar, ArrowRight, ArrowLeft, BrainCircuit, Lock, Unlock } from "lucide-react";
+import { PresentationIcon, ThumbsUp, MessageSquare, Calendar, ArrowRight, ArrowLeft, BrainCircuit, Lock, Unlock, CheckCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import AiTalkSuggestion from "@/components/AiTalkSuggestion";
@@ -291,7 +292,16 @@ const MyTalks = () => {
               <TableBody>
                 {myTalks.map(talk => (
                   <TableRow key={talk.id} className="border-gray-700 hover:bg-gray-700/30">
-                    <TableCell className="font-medium text-white">{talk.title}</TableCell>
+                    <TableCell className="font-medium text-white">
+                      <div className="flex items-center">
+                        {talk.title}
+                        {talk.answer && (
+                          <Badge className="ml-2 bg-green-800/60 hover:bg-green-800 text-white">
+                            <CheckCircle className="h-3 w-3 mr-1" /> Accepted
+                          </Badge>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell className="text-gray-300">{talk.eventTitle}</TableCell>
                     <TableCell className="text-gray-300">{talk.eventDate}</TableCell>
                     <TableCell className="text-center">
