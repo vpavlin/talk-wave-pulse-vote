@@ -1,4 +1,3 @@
-
 import { 
   getEvents as fetchEventsFromQakulib, 
   getEventById as fetchEventByIdFromQakulib,
@@ -44,7 +43,7 @@ export interface Event {
   bannerImage?: string;
   talks: Talk[];
   enabled?: boolean;
-  announed?: boolean;
+  announced?: boolean;
 }
 
 export const fetchEvents = async (): Promise<Event[]> => {

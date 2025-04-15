@@ -39,6 +39,9 @@ const EventList = ({ events }: EventListProps) => {
     if (filter === "voted") {
       return event.talks && event.talks.some(talk => talk.hasOwnProperty('upvotedByMe') && talk.upvotedByMe);
     }
+    if (filter === "announced") {
+      return event.announced || false;
+    }
     return false;
   });
   
@@ -53,6 +56,9 @@ const EventList = ({ events }: EventListProps) => {
     }
     if (filter === "voted") {
       return event.talks && event.talks.some(talk => talk.hasOwnProperty('upvotedByMe') && talk.upvotedByMe);
+    }
+    if (filter === "announced") {
+      return event.announced || false;
     }
     return false;
   });
@@ -194,6 +200,15 @@ const EventList = ({ events }: EventListProps) => {
             aria-pressed={filter === "upcoming"}
           >
             Upcoming
+          </Button>
+          <Button 
+            variant={filter === "announced" ? "default" : "outline"}
+            onClick={() => setFilter("announced")}
+            className={filter === "announced" ? "bg-accent hover:bg-accent/90" : ""}
+            aria-pressed={filter === "announced"}
+          >
+            <BellRing className="mr-1 h-4 w-4" />
+            Announced
           </Button>
           <Button 
             variant={filter === "created" ? "default" : "outline"}
