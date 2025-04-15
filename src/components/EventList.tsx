@@ -77,7 +77,7 @@ const EventList = ({ events }: EventListProps) => {
     if (!isValid(date)) return "Invalid date";
     
     try {
-      return format(date, "MMM d, yyyy");
+      return format(date, "MMM d, yy");
     } catch (error) {
       console.error("Error formatting date:", error, "Date value:", dateValue);
       return "Date error";
