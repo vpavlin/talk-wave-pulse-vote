@@ -18,7 +18,9 @@ interface TalkCardProps {
 const TalkCard = ({ talk, onVote, showFullDescription = false }: TalkCardProps) => {
   const [isExpanded, setIsExpanded] = useState(showFullDescription);
   
-  const getInitials = (name: string) => {
+  const getInitials = (name: string | undefined) => {
+    if (!name) return "?";
+    
     return name
       .split(' ')
       .map(part => part[0])
@@ -27,7 +29,11 @@ const TalkCard = ({ talk, onVote, showFullDescription = false }: TalkCardProps) 
   };
 
   const getTimeAgo = (date: string) => {
-    return formatDistanceToNow(new Date(date), { addSuffix: true });
+    try {
+      return formatDistanceToNow(new Date(date), { addSuffix: true });
+    } catch (error) {
+      return "recently";
+    }
   };
 
   const formatWalletAddress = (address: string | undefined) => {
@@ -62,7 +68,7 @@ const TalkCard = ({ talk, onVote, showFullDescription = false }: TalkCardProps) 
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
           <CardTitle className="text-2xl font-bold text-gray-100">
-            {talk.title}
+            {talk.title || "Untitled Talk"}
           </CardTitle>
           <Badge variant="outline" className="text-base px-3 py-1 bg-gray-700/60 text-gray-200 border-gray-600">
             {talk.votes} {talk.votes === 1 ? 'vote' : 'votes'}
@@ -74,7 +80,7 @@ const TalkCard = ({ talk, onVote, showFullDescription = false }: TalkCardProps) 
               {getInitials(talk.speaker)}
             </AvatarFallback>
           </Avatar>
-          <span className="font-medium">{talk.speaker}</span>
+          <span className="font-medium">{talk.speaker || "Anonymous"}</span>
           <span className="flex items-center text-sm text-gray-400 ml-3">
             <Clock className="h-4 w-4 mr-1" />
             {getTimeAgo(talk.createdAt)}
@@ -119,7 +125,7 @@ const TalkCard = ({ talk, onVote, showFullDescription = false }: TalkCardProps) 
           size="lg" 
           className="ml-auto text-gray-300 border-gray-600 hover:bg-gray-700 hover:text-gray-100 focus-ring"
           onClick={onVote}
-          aria-label={`Upvote ${talk.title} by ${talk.speaker}`}
+          aria-label={`Upvote ${talk.title} by ${talk.speaker || "Anonymous"}`}
         >
           <ThumbsUp className="mr-2 h-5 w-5" />
           Upvote

@@ -56,12 +56,35 @@ export const fetchEventById = async (eventId: string): Promise<Event> => {
     // Fetch talks for this event
     const talks = await qakulib.getTalks(eventId);
     
-    // Combine event data with talks and ensure the date property exists
+    // Convert qakulib ExtendedTalk objects to our Talk interface
+    const formattedTalks: Talk[] = Array.isArray(talks) ? talks.map(talk => ({
+      id: talk.id || talk.questionId || '',
+      title: talk.title || '',
+      speaker: talk.speaker || '',
+      description: talk.description || '',
+      bio: talk.bio,
+      votes: talk.upvotes || 0,
+      isAuthor: talk.isAuthor || false,
+      upvotedByMe: talk.upvotedByMe || false,
+      walletAddress: talk.signer || talk.walletAddress,
+      createdAt: talk.timestamp || new Date().toISOString()
+    })) : [];
+    
+    // Ensure the date property exists and construct Event object
     return {
-      ...event,
-      date: event.date || event.created?.toString() || new Date().toISOString(),
-      talks: talks || []
-    } as Event;
+      id: event.id || eventId,
+      title: event.title || '',
+      description: event.description || '',
+      date: event.date || event.timestamp || event.created?.toString() || new Date().toISOString(),
+      eventDate: event.eventDate,
+      location: event.location,
+      website: event.website,
+      contact: event.contact,
+      bannerImage: event.bannerImage,
+      ownerAddress: event.ownerAddress || event.owner,
+      isCreator: event.isCreator,
+      talks: formattedTalks
+    };
   } catch (error) {
     console.error(`Error fetching event with ID ${eventId}:`, error);
     throw error;
