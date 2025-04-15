@@ -212,21 +212,8 @@ export const createEvent = async (
     if (announce) {
       console.log("Announcing event to global channel");
       
-      // Create event data for announcement
-      const eventData = {
-        id: eventId,
-        title: title,
-        description: descriptionWithMetadata,
-        eventDate: eventDate,
-        location: location,
-        website: website,
-        contact: contact,
-        bannerImage: bannerImage,
-        timestamp: Date.now()
-      };
-      
-      // Announce the event
-      await announceEvent(eventData);
+      // Announce the event using its ID
+      await announceEvent(eventId);
     } else {
       console.log("Skipping event announcement as per user preference");
     }
@@ -304,7 +291,7 @@ export const announceEvent = async (eventId: string): Promise<boolean> => {
       timestamp: Date.now()
     };
     
-    // Announce the event
+    // Announce the event by passing the eventData object
     const success = await announceEventToQakulib(eventData);
     return success;
   } catch (error) {
