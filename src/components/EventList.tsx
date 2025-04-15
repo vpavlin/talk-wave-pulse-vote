@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, ArrowRight, MessageSquare, Wallet, User, MessageSquarePlus, Vote, PresentationIcon } from "lucide-react";
-import { format } from "date-fns";
+import { format, isValid } from "date-fns";
 import { Link } from "react-router-dom";
 import { Event } from "@/services/eventService";
 import { useWallet } from "@/contexts/WalletContext";
@@ -48,6 +48,21 @@ const EventList = ({ events }: EventListProps) => {
       return firstLine.substring(0, 120) + '...';
     }
     return firstLine;
+  };
+
+  // Helper function to safely format dates
+  const safelyFormatDate = (dateValue: string | undefined) => {
+    if (!dateValue) return "Unknown date";
+    
+    const date = new Date(dateValue);
+    if (!isValid(date)) return "Invalid date";
+    
+    try {
+      return format(date, "MMM d, yyyy");
+    } catch (error) {
+      console.error("Error formatting date:", error, "Date value:", dateValue);
+      return "Date error";
+    }
   };
 
   return (
@@ -141,9 +156,7 @@ const EventList = ({ events }: EventListProps) => {
                     </CardTitle>
                     <Badge className="date-badge">
                       <Calendar className="h-4 w-4" />
-                      {event.eventDate 
-                        ? format(new Date(event.eventDate), "MMM d, yyyy")
-                        : format(new Date(event.date), "MMM d, yyyy")}
+                      {safelyFormatDate(event.eventDate || event.date)}
                     </Badge>
                   </div>
                   <CardDescription className="mt-1 text-base dark:text-gray-300">

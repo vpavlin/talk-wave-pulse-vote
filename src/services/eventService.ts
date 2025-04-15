@@ -1,3 +1,4 @@
+
 import * as qakulib from '@/utils/qakulib';
 import { v4 as uuidv4 } from 'uuid';
 import { useWallet } from '@/contexts/WalletContext';
@@ -79,6 +80,30 @@ function parseJsonField(field: any): string {
   return String(field);
 }
 
+// Helper function to ensure we have a valid ISO date string
+function ensureValidDateString(dateValue: any): string {
+  if (!dateValue) return new Date().toISOString();
+  
+  // If it's already a string that looks like an ISO date, return it
+  if (typeof dateValue === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(dateValue)) {
+    return dateValue;
+  }
+  
+  // Try to create a valid date
+  try {
+    const date = new Date(dateValue);
+    // Check if the date is valid
+    if (!isNaN(date.getTime())) {
+      return date.toISOString();
+    }
+  } catch (e) {
+    console.error("Invalid date value:", dateValue);
+  }
+  
+  // Default to current date if we couldn't parse it
+  return new Date().toISOString();
+}
+
 /**
  * Fetch a single event by ID
  */
@@ -103,7 +128,7 @@ export const fetchEventById = async (eventId: string): Promise<Event> => {
       isAuthor: talk.isAuthor || false,
       upvotedByMe: talk.upvotedByMe || false,
       walletAddress: talk.signer || '',
-      createdAt: typeof talk.timestamp === 'string' ? talk.timestamp : new Date().toISOString()
+      createdAt: ensureValidDateString(talk.timestamp)
     })) : [];
     
     // Ensure the date property exists and construct Event object
@@ -111,8 +136,8 @@ export const fetchEventById = async (eventId: string): Promise<Event> => {
       id: event.id || eventId,
       title: event.title || '',
       description: parsedDescription,
-      date: typeof event.timestamp === 'string' ? event.timestamp : new Date().toISOString(),
-      eventDate: event.eventDate,
+      date: ensureValidDateString(event.timestamp),
+      eventDate: event.eventDate ? ensureValidDateString(event.eventDate) : undefined,
       location: event.location,
       website: event.website,
       contact: event.contact,
