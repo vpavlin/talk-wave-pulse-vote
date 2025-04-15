@@ -267,6 +267,7 @@ export const getTalks = async (eventId: string): Promise<EnhancedQuestionMessage
       
       talks.push(extendedTalk);
     }
+
     
     console.log(`Found ${talks.length} talks for event ${eventId}`);
     return talks;
