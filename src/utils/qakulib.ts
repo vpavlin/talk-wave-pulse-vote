@@ -8,6 +8,7 @@ import { createLightNode, IWaku, LightNode, Protocols } from '@waku/sdk';
 interface ExtendedTalk extends EnhancedQuestionMessage {
   voterAddresses?: string[];
   isAuthor?: boolean; // Add isAuthor property
+  hash?: string; // Add hash property to match 'id' in events
 }
 
 // Define an extended interface for the control message
@@ -20,6 +21,7 @@ interface ExtendedControlMessage extends ControlMessage {
   contact?: string;
   bannerImage?: string;
   talks?: ExtendedTalk[];
+  id?: string; // Add id property to match our data model
 }
 
 // Initialize the Qakulib instance
@@ -156,7 +158,7 @@ export const publishEvent = async (title:string, desc:string, moderation:boolean
   return eventId;
 }
 
-export const getEvents = async (): Promise<any[]> => {
+export const getEvents = async (): Promise<ExtendedControlMessage[]> => {
   try {
     console.log("Fetching all events from qakulib");
     const qakulib = await getQakulib();
@@ -177,6 +179,10 @@ export const getEvents = async (): Promise<any[]> => {
     for (const event of eventsList) {
       // Create extended control state with additional properties
       const extendedEvent = {...event.controlState} as ExtendedControlMessage;
+      
+      // Ensure event has an ID
+      const eventId = event.controlState?.id || event.controlState?.qaId || '';
+      extendedEvent.id = eventId;
       
       // Check if the current user is the creator of this event
       if (extendedEvent.owner === currentUserAddress) {
@@ -200,9 +206,7 @@ export const getEvents = async (): Promise<any[]> => {
     }
       
       // Log the event data for debugging - use a safe approach to access event ID
-      // Use toString() to safely get an identifier regardless of the actual property name
-      const eventIdentifier = event.controlState.id;
-      console.log("Event data:", eventIdentifier, extendedEvent);
+      console.log("Event data:", eventId, extendedEvent);
       
       events.push(extendedEvent);
     }
@@ -240,6 +244,9 @@ export const getEventById = async (eventId: string): Promise<ExtendedControlMess
     
     // We need to cast to ExtendedControlMessage to add our custom property
     const extendedControlState = {...event.controlState} as ExtendedControlMessage;
+    
+    // Ensure event has an ID
+    extendedControlState.id = eventId;
     
     if (extendedControlState.owner === currentUserAddress) {
       extendedControlState.isCreator = true;
@@ -312,6 +319,9 @@ export const getTalks = async (eventId: string): Promise<ExtendedTalk[]> => {
       // Create an extended talk with our custom properties
       const extendedTalk = {...talk} as ExtendedTalk;
       
+      // Ensure talk has a hash property (for id)
+      extendedTalk.hash = talk.hash || talk.question || '';
+      
       // Add voterAddresses property based on upvoters
       extendedTalk.voterAddresses = [];
       
@@ -337,7 +347,7 @@ export const getTalks = async (eventId: string): Promise<ExtendedTalk[]> => {
       }
       
       // Add debug logging
-      console.log(`Talk details: id=${talk.hash || 'no-id'}, title=${extendedTalk.question || 'no-title'}, author status:`, 
+      console.log(`Talk details: id=${extendedTalk.hash}, title=${extendedTalk.question || 'no-title'}, author status:`, 
                  extendedTalk.isAuthor ? 'YES' : 'NO',
                  'signer:', extendedTalk.signer);
       

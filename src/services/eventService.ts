@@ -41,17 +41,44 @@ export const fetchEvents = async () => {
     const events = await qakulib.getEvents();
     
     // Process each event to ensure proper data structure and parsing
-    return events.map(event => ({
-      ...event,
-      // Parse description if it's a JSON string
-      description: parseJsonField(event.description),
-      // Ensure date fields are valid
-      date: ensureValidDateString(event.timestamp || new Date()),
-      eventDate: event.eventDate ? ensureValidDateString(event.eventDate) : undefined,
-      // Ensure talks is always an array
-      talks: Array.isArray(event.talks) ? event.talks : [],
-      // Set owner address for consistency
-      ownerAddress: event.owner || event.ownerAddress
+    return Promise.all(events.map(async event => {
+      // Fetch talks for each event
+      const talks = await qakulib.getTalks(event.id);
+      
+      // Convert qakulib ExtendedTalk objects to our Talk interface
+      const formattedTalks: Talk[] = Array.isArray(talks) ? talks.map(talk => {
+        // Extract properties
+        const talkTitle = extractTitle(talk);
+        const talkSpeaker = extractSpeaker(talk);
+        const talkDesc = extractDescription(talk);
+        const talkBio = extractBio(talk);
+        
+        return {
+          id: talk.hash || talk.question || '',
+          title: talkTitle,
+          speaker: talkSpeaker,
+          description: talkDesc,
+          bio: talkBio,
+          votes: talk.upvotes || 0,
+          isAuthor: talk.isAuthor || false,
+          upvotedByMe: talk.upvotedByMe || false,
+          walletAddress: talk.signer || '',
+          createdAt: ensureValidDateString(talk.timestamp)
+        };
+      }) : [];
+      
+      return {
+        ...event,
+        // Parse description if it's a JSON string
+        description: parseJsonField(event.description),
+        // Ensure date fields are valid
+        date: ensureValidDateString(event.timestamp || new Date()),
+        eventDate: event.eventDate ? ensureValidDateString(event.eventDate) : undefined,
+        // Add the processed talks
+        talks: formattedTalks,
+        // Set owner address for consistency
+        ownerAddress: event.owner || event.ownerAddress
+      };
     }));
   } catch (error) {
     console.error('Error fetching events:', error);
