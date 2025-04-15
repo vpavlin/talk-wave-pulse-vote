@@ -1,27 +1,40 @@
+
 // Using the locally installed qakulib package
 import {ControlMessage, EnhancedQuestionMessage, Qaku} from "qakulib";
 import { wakuPeerExchangeDiscovery } from "@waku/discovery";
 import { derivePubsubTopicsFromNetworkConfig } from "@waku/utils"
 import { createLightNode, IWaku, LightNode, Protocols } from '@waku/sdk';
 
-// Define an extended interface for the talk with our custom properties
-interface ExtendedTalk extends EnhancedQuestionMessage {
+// Define an extended interface for the talk without extending EnhancedQuestionMessage
+interface ExtendedTalk {
+  question?: string;
+  hash: string; // Make hash required
   voterAddresses?: string[];
-  isAuthor?: boolean; // Add isAuthor property
-  hash?: string; // Add hash property to match 'id' in events
+  isAuthor?: boolean;
+  upvoters?: string[];
+  upvotes?: number;
+  upvotedByMe?: boolean;
+  signer?: string;
+  timestamp?: string | number | Date;
 }
 
-// Define an extended interface for the control message
-interface ExtendedControlMessage extends ControlMessage {
-  isCreator?: boolean; // Add isCreator property
+// Define an extended interface for the control message without extending ControlMessage
+interface ExtendedControlMessage {
+  id: string; // Make id required
+  isCreator?: boolean;
+  owner?: string;
   ownerAddress?: string;
-  eventDate?: number;
+  qaId?: string;
+  eventDate?: string | number | Date;
   location?: string;
   website?: string;
   contact?: string;
   bannerImage?: string;
   talks?: ExtendedTalk[];
-  id?: string; // Add id property to match our data model
+  title?: string;
+  description?: string;
+  timestamp?: string | number | Date;
+  updated?: number;
 }
 
 // Initialize the Qakulib instance
@@ -167,7 +180,7 @@ export const getEvents = async (): Promise<ExtendedControlMessage[]> => {
     // The event listeners will take care of real-time updates
     
     const eventsList = qakulib.qas.values();
-    const events = [];
+    const events: ExtendedControlMessage[] = [];
 
     
     // Get current user address for comparison - handle safely
@@ -178,35 +191,41 @@ export const getEvents = async (): Promise<ExtendedControlMessage[]> => {
     
     for (const event of eventsList) {
       // Create extended control state with additional properties
-      const extendedEvent = {...event.controlState} as ExtendedControlMessage;
-      
-      // Ensure event has an ID
-      const eventId = event.controlState?.id || event.controlState?.qaId || '';
-      extendedEvent.id = eventId;
+      const extendedEvent: ExtendedControlMessage = {
+        id: event.controlState?.id || event.id || '', // Ensure id is always present and required
+        title: event.controlState?.title,
+        description: event.controlState?.description,
+        owner: event.controlState?.owner,
+        timestamp: event.controlState?.timestamp,
+        updated: event.controlState?.updated
+      };
       
       // Check if the current user is the creator of this event
       if (extendedEvent.owner === currentUserAddress) {
         extendedEvent.isCreator = true;
       }
       
+      // Set ownerAddress for consistency
+      extendedEvent.ownerAddress = extendedEvent.owner;
+      
       if (typeof extendedEvent.description === 'string') {
-      try {
-        const descObj = JSON.parse(extendedEvent.description);
-        console.log(descObj)
-        if (descObj && typeof descObj === 'object') {
-          extendedEvent.eventDate = descObj.eventDate;
-          extendedEvent.location = descObj.location;
-          extendedEvent.website = descObj.website;
-          extendedEvent.contact = descObj.contact;
-          extendedEvent.bannerImage = descObj.bannerImage;
+        try {
+          const descObj = JSON.parse(extendedEvent.description);
+          console.log(descObj)
+          if (descObj && typeof descObj === 'object') {
+            extendedEvent.eventDate = descObj.eventDate;
+            extendedEvent.location = descObj.location;
+            extendedEvent.website = descObj.website;
+            extendedEvent.contact = descObj.contact;
+            extendedEvent.bannerImage = descObj.bannerImage;
+          }
+        } catch (e) {
+          // Not valid JSON, leave as is
         }
-      } catch (e) {
-        // Not valid JSON, leave as is
       }
-    }
       
       // Log the event data for debugging - use a safe approach to access event ID
-      console.log("Event data:", eventId, extendedEvent);
+      console.log("Event data:", extendedEvent.id, extendedEvent);
       
       events.push(extendedEvent);
     }
@@ -242,11 +261,15 @@ export const getEventById = async (eventId: string): Promise<ExtendedControlMess
                               typeof qakulib.identity.address === 'function' ? 
                               qakulib.identity.address() : '';
     
-    // We need to cast to ExtendedControlMessage to add our custom property
-    const extendedControlState = {...event.controlState} as ExtendedControlMessage;
-    
-    // Ensure event has an ID
-    extendedControlState.id = eventId;
+    // Create an ExtendedControlMessage with required id property
+    const extendedControlState: ExtendedControlMessage = {
+      id: eventId,
+      title: event.controlState?.title,
+      description: event.controlState?.description,
+      owner: event.controlState?.owner,
+      timestamp: event.controlState?.timestamp,
+      updated: event.controlState?.updated
+    };
     
     if (extendedControlState.owner === currentUserAddress) {
       extendedControlState.isCreator = true;
@@ -279,7 +302,7 @@ export const getEventById = async (eventId: string): Promise<ExtendedControlMess
     const talks = await getTalks(eventId);
     extendedControlState.talks = talks;
     
-    console.log(`Successfully retrieved event: ${event.controlState.title}`);
+    console.log(`Successfully retrieved event: ${extendedControlState.title}`);
     return extendedControlState;
   } catch (error) {
     console.error(`Failed to fetch event with ID ${eventId}:`, error);
@@ -305,7 +328,7 @@ export const getTalks = async (eventId: string): Promise<ExtendedTalk[]> => {
     }
     
     const talksList = event.questions.values();
-    const talks = [];
+    const talks: ExtendedTalk[] = [];
     
     // Get current user address safely
     const currentUserAddress = qakulib.identity && 
@@ -317,10 +340,15 @@ export const getTalks = async (eventId: string): Promise<ExtendedTalk[]> => {
     
     for (const talk of talksList) {
       // Create an extended talk with our custom properties
-      const extendedTalk = {...talk} as ExtendedTalk;
-      
-      // Ensure talk has a hash property (for id)
-      extendedTalk.hash = talk.hash || talk.question || '';
+      const extendedTalk: ExtendedTalk = {
+        hash: talk.hash || talk.question || '', // Ensure hash is always present and required
+        question: talk.question,
+        upvoters: talk.upvoters,
+        upvotes: talk.upvotes,
+        upvotedByMe: talk.upvotedByMe,
+        signer: talk.signer,
+        timestamp: talk.timestamp
+      };
       
       // Add voterAddresses property based on upvoters
       extendedTalk.voterAddresses = [];

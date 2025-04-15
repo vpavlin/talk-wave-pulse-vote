@@ -1,7 +1,5 @@
-
 import * as qakulib from '@/utils/qakulib';
 import { v4 as uuidv4 } from 'uuid';
-import { useWallet } from '@/contexts/WalletContext';
 
 // Define Talk interface for TypeScript
 export interface Talk {
@@ -54,7 +52,7 @@ export const fetchEvents = async () => {
         const talkBio = extractBio(talk);
         
         return {
-          id: talk.hash || talk.question || '',
+          id: talk.hash || '',
           title: talkTitle,
           speaker: talkSpeaker,
           description: talkDesc,
@@ -67,18 +65,21 @@ export const fetchEvents = async () => {
         };
       }) : [];
       
+      // Ensure we have a valid Event object with all required properties
       return {
-        ...event,
-        // Parse description if it's a JSON string
+        id: event.id, // This is now required in both interfaces
+        title: event.title || '',
         description: parseJsonField(event.description),
-        // Ensure date fields are valid
         date: ensureValidDateString(event.timestamp || new Date()),
         eventDate: event.eventDate ? ensureValidDateString(event.eventDate) : undefined,
-        // Add the processed talks
+        location: event.location,
+        website: event.website,
+        contact: event.contact,
+        bannerImage: event.bannerImage,
+        ownerAddress: event.owner || event.ownerAddress,
+        isCreator: event.isCreator,
         talks: formattedTalks,
-        // Set owner address for consistency
-        ownerAddress: event.owner || event.ownerAddress
-      };
+      } as Event;
     }));
   } catch (error) {
     console.error('Error fetching events:', error);
@@ -195,7 +196,7 @@ export const fetchEventById = async (eventId: string): Promise<Event> => {
       const talkBio = extractBio(talk);
       
       console.log("Extracted talk data:", {
-        id: talk.hash || talk.question || '',
+        id: talk.hash || '',
         title: talkTitle,
         speaker: talkSpeaker,
         bioExists: !!talkBio,
@@ -204,7 +205,7 @@ export const fetchEventById = async (eventId: string): Promise<Event> => {
       });
       
       return {
-        id: talk.hash || talk.question || '',
+        id: talk.hash || '',
         title: talkTitle,
         speaker: talkSpeaker,
         description: talkDesc,
@@ -222,11 +223,11 @@ export const fetchEventById = async (eventId: string): Promise<Event> => {
     
     // Use the extracted metadata or fall back to event properties
     return {
-      id: event.id || eventId,
+      id: event.id,
       title: event.title || '',
       description: parsedDescription,
       date: ensureValidDateString(event.timestamp || new Date()),
-      eventDate: eventDate || (event.eventDate && typeof event.eventDate !== 'object' ? event.eventDate : undefined),
+      eventDate: eventDate || (event.eventDate && typeof event.eventDate !== 'object' ? ensureValidDateString(event.eventDate) : undefined),
       location: location || (event.location && typeof event.location !== 'object' ? event.location : undefined),
       website: website || (event.website && typeof event.website !== 'object' ? event.website : undefined),
       contact: contact || (event.contact && typeof event.contact !== 'object' ? event.contact : undefined),
