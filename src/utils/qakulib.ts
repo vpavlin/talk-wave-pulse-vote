@@ -237,6 +237,8 @@ export const getTalks = async (eventId: string): Promise<EnhancedQuestionMessage
                               typeof qakulib.identity.address === 'function' ? 
                               qakulib.identity.address() : '';
     
+    console.log(`Current user address when fetching talks: ${currentUserAddress}`);
+    
     for (const talk of talksList) {
       // Create an extended talk with our custom properties
       const extendedTalk = {...talk} as ExtendedTalk;
@@ -260,6 +262,7 @@ export const getTalks = async (eventId: string): Promise<EnhancedQuestionMessage
       // Check if the current user is the author
       if (extendedTalk.signer === currentUserAddress) {
         extendedTalk.isAuthor = true;
+        console.log(`Found user's talk: ${extendedTalk.question}, signer: ${extendedTalk.signer}`);
       }
       
       talks.push(extendedTalk);

@@ -46,7 +46,11 @@ const MyTalks = () => {
     const userTalks = [];
     
     for (const event of events) {
-      const filteredTalks = event.talks.filter(talk => talk.isAuthor);
+      // Filter talks where the wallet address matches or isAuthor is true
+      const filteredTalks = event.talks.filter(talk => 
+        talk.isAuthor === true || 
+        (talk.walletAddress && walletAddress && talk.walletAddress === walletAddress)
+      );
       
       if (filteredTalks.length > 0) {
         filteredTalks.forEach(talk => {
@@ -58,6 +62,18 @@ const MyTalks = () => {
           });
         });
       }
+    }
+    
+    console.log("Found user talks:", userTalks.length, "User wallet:", walletAddress);
+    // Log the first few talks for debugging
+    if (userTalks.length > 0) {
+      userTalks.slice(0, 3).forEach((talk, i) => {
+        console.log(`Talk ${i+1}:`, {
+          title: talk.title,
+          isAuthor: talk.isAuthor,
+          walletAddress: talk.walletAddress
+        });
+      });
     }
     
     return userTalks;
