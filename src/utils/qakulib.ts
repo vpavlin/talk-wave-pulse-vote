@@ -1,3 +1,4 @@
+
 // Using the locally installed qakulib package
 import {ControlMessage, EnhancedQuestionMessage, Qaku} from "qakulib";
 import { wakuPeerExchangeDiscovery } from "@waku/discovery";
@@ -187,8 +188,8 @@ export const getEvents = async (): Promise<any[]> => {
       extendedEvent.bannerImage = (event.controlState as any).bannerImage;
       
       // Log the event data for debugging
-      // Access qaId instead of id to fix the TypeScript error
-      console.log("Event data:", event.qaId, extendedEvent);
+      // Need to access the correct property for event ID
+      console.log("Event data:", event.id || event.qaId || event.controlState.id, extendedEvent);
       
       events.push(extendedEvent);
     }
