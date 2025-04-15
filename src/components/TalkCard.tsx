@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ThumbsUp, Trophy, User, Calendar, AlertCircle, CheckCheck } from "lucide-react";
+import { ThumbsUp, Trophy, User, Calendar, CheckCheck } from "lucide-react";
 import { format } from "date-fns";
 import ReactMarkdown from "react-markdown";
 import { useWallet } from "@/contexts/WalletContext";
@@ -21,7 +20,7 @@ interface Talk {
   isAuthor?: boolean;
   upvotedByMe?: boolean;
   createdAt: string | number | Date;
-  answer?: string; // Add answer field to show accepted status
+  answer?: string;
 }
 
 interface TalkCardProps {
@@ -44,7 +43,6 @@ const TalkCard = ({ talk, onVote, renderActions }: TalkCardProps) => {
   };
   
   const hasVoted = React.useMemo(() => {
-    // Check if the current user has voted
     if (talk.voterAddresses && walletAddress) {
       return talk.voterAddresses.some(
         voter => voter.toLowerCase() === walletAddress.toLowerCase()
@@ -130,14 +128,15 @@ const TalkCard = ({ talk, onVote, renderActions }: TalkCardProps) => {
             variant="outline" 
             size="sm" 
             onClick={onVote}
-            disabled={hasVoted}
-            className={hasVoted ? 
+            disabled={hasVoted || !!talk.answer}
+            className={
+              (hasVoted || talk.answer) ? 
               "bg-purple-100 text-purple-800 border-purple-300 cursor-not-allowed dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-700" : 
               "border-purple-400 text-purple-700 hover:bg-purple-100/70 dark:border-purple-700 dark:text-purple-400 dark:hover:bg-purple-900/50"
             }
           >
             <ThumbsUp className="h-4 w-4 mr-1" />
-            {hasVoted ? "Voted" : "Vote"}
+            {(hasVoted || talk.answer) ? "Voted" : "Vote"}
           </Button>
         </div>
       </CardFooter>
