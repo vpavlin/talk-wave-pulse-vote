@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -32,7 +31,6 @@ const EventList = ({ events }: EventListProps) => {
   const activeEvents = events.filter(event => event.enabled !== false);
   const closedEvents = events.filter(event => event.enabled === false);
   
-  // Search function to check if event matches the search query
   const eventMatchesSearch = (event: Event, query: string) => {
     if (!query.trim()) return true;
     
@@ -52,10 +50,8 @@ const EventList = ({ events }: EventListProps) => {
   };
   
   const filteredActiveEvents = activeEvents.filter(event => {
-    // First apply search filter
     if (!eventMatchesSearch(event, searchQuery)) return false;
     
-    // Then apply category filters
     if (filter === "all") return true;
     if (filter === "all-but-announced") return !(event.announced || false);
     if (filter === "upcoming") {
@@ -80,10 +76,8 @@ const EventList = ({ events }: EventListProps) => {
   });
   
   const filteredClosedEvents = closedEvents.filter(event => {
-    // First apply search filter
     if (!eventMatchesSearch(event, searchQuery)) return false;
     
-    // Then apply category filters
     if (filter === "all") return true;
     if (filter === "all-but-announced") return !(event.announced || false);
     if (filter === "upcoming") return false;
@@ -221,7 +215,6 @@ const EventList = ({ events }: EventListProps) => {
       <div className="flex flex-col gap-6">
         <h2 className="text-3xl font-bold text-gray-800 dark:text-gray-100">Events</h2>
         
-        {/* Search input */}
         <div className="relative w-full max-w-md">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
@@ -312,8 +305,11 @@ const EventList = ({ events }: EventListProps) => {
           
           {connected && (
             <Link to="/my-talks">
-              <Button variant="outline" className="ml-1 border-purple-500 text-purple-400 hover:bg-purple-950 hover:text-purple-200">
-                <PresentationIcon className="mr-1 h-4 w-4" />
+              <Button 
+                variant="outline" 
+                className="ml-1 border-2 border-orange-500 bg-orange-50 text-orange-600 hover:bg-orange-100 hover:text-orange-700 transition-colors duration-300 font-bold"
+              >
+                <PresentationIcon className="mr-2 h-5 w-5" />
                 My Talks
               </Button>
             </Link>
@@ -343,7 +339,6 @@ const EventList = ({ events }: EventListProps) => {
         </Card>
       ) : (
         <div className="space-y-8">
-          {/* Display search result stats */}
           {searchQuery && (
             <div className="text-sm text-gray-500 dark:text-gray-400">
               Found {filteredActiveEvents.length + filteredClosedEvents.length} events matching "{searchQuery}"
