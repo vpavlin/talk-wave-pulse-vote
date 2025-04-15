@@ -1,4 +1,3 @@
-
 import * as qakulib from '@/utils/qakulib';
 import { v4 as uuidv4 } from 'uuid';
 import { useWallet } from '@/contexts/WalletContext';
@@ -47,6 +46,40 @@ export const fetchEvents = async () => {
 };
 
 /**
+ * Parse potentially JSON-encoded data
+ */
+function parseJsonField(field: any): string {
+  if (!field) return '';
+  
+  if (typeof field === 'string') {
+    try {
+      // Try to parse it as JSON
+      const parsed = JSON.parse(field);
+      // If it's an object with a description field, return that
+      if (parsed && typeof parsed === 'object') {
+        return parsed.description || parsed.text || JSON.stringify(parsed);
+      }
+      // If it's a string, return it
+      if (typeof parsed === 'string') {
+        return parsed;
+      }
+      // Otherwise stringify it again
+      return JSON.stringify(parsed);
+    } catch (e) {
+      // Not valid JSON, return as is
+      return field;
+    }
+  }
+  
+  // If it's already an object, stringify it
+  if (typeof field === 'object') {
+    return field?.description || field?.text || JSON.stringify(field);
+  }
+  
+  return String(field);
+}
+
+/**
  * Fetch a single event by ID
  */
 export const fetchEventById = async (eventId: string): Promise<Event> => {
@@ -55,6 +88,9 @@ export const fetchEventById = async (eventId: string): Promise<Event> => {
     
     // Fetch talks for this event
     const talks = await qakulib.getTalks(eventId);
+    
+    // Parse the event description if it's JSON
+    const parsedDescription = parseJsonField(event.description);
     
     // Convert qakulib ExtendedTalk objects to our Talk interface
     const formattedTalks: Talk[] = Array.isArray(talks) ? talks.map(talk => ({
@@ -74,7 +110,7 @@ export const fetchEventById = async (eventId: string): Promise<Event> => {
     return {
       id: event.id || eventId,
       title: event.title || '',
-      description: event.description || '',
+      description: parsedDescription,
       date: typeof event.timestamp === 'string' ? event.timestamp : new Date().toISOString(),
       eventDate: event.eventDate,
       location: event.location,
@@ -193,7 +229,9 @@ export const createTalk = async (
   }
 };
 
-// Add the missing createEvent function
+/**
+ * Create a new event
+ */
 export const createEvent = async (
   title: string, 
   description: string, 
