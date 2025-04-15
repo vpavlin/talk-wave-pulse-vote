@@ -1,6 +1,37 @@
-import qakulib from '@/utils/qakulib';
+
+import * as qakulib from '@/utils/qakulib';
 import { v4 as uuidv4 } from 'uuid';
 import { useWallet } from '@/contexts/WalletContext';
+
+// Define Talk interface for TypeScript
+export interface Talk {
+  id: string;
+  title: string;
+  speaker: string;
+  description: string;
+  bio?: string;
+  votes: number;
+  isAuthor?: boolean;
+  upvotedByMe?: boolean;
+  walletAddress?: string;
+  createdAt: string;
+}
+
+// Define Event interface for TypeScript
+export interface Event {
+  id: string;
+  title: string;
+  description: string;
+  date: string;
+  eventDate?: string;
+  location?: string;
+  website?: string;
+  contact?: string;
+  bannerImage?: string;
+  ownerAddress?: string;
+  isCreator?: boolean;
+  talks: Talk[];
+}
 
 /**
  * Fetch all events
@@ -81,6 +112,33 @@ export const createTalk = async (
     return talkId;
   } catch (error) {
     console.error('Error creating talk:', error);
+    return null;
+  }
+};
+
+// Add the missing createEvent function
+export const createEvent = async (
+  title: string, 
+  description: string, 
+  date: string,
+  website?: string,
+  location?: string,
+  contact?: string,
+  bannerImage?: string
+): Promise<string | null> => {
+  try {
+    console.log(`Creating new event: ${title}`);
+    
+    // Use moderation for production, false for testing
+    const enableModeration = false;
+    
+    // Call the qakulib publishEvent function
+    const eventId = await qakulib.publishEvent(title, description, enableModeration);
+    
+    console.log(`Event created with ID: ${eventId}`);
+    return eventId;
+  } catch (error) {
+    console.error('Error creating event:', error);
     return null;
   }
 };

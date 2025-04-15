@@ -581,7 +581,8 @@ const EventDetail = () => {
         onOpenChange={setIsSubmitTalkOpen}
         onSubmit={handleSubmitTalk}
         initialData={{
-          ...suggestionData,
+          title: suggestionData?.title || "",
+          description: suggestionData?.description || "",
           speaker: suggestionData?.speaker || getUserInfo().name || "",
           bio: suggestionData?.bio || getUserInfo().bio || ""
         }}
