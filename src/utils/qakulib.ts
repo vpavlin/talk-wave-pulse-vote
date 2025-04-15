@@ -44,7 +44,8 @@ interface ExtendedControlMessage {
 let qakulibInstance: any | null = null;
 
 let announceDispatcher: Dispatcher | null = null;
-const announcedEvents: ExtendedControlMessage[] = []
+// Export the announcedEvents array so it can be used in eventService.ts
+export const announcedEvents: ExtendedControlMessage[] = []
 
 // Define the common content topic for event announcements
 const ANNOUNCE_CONTENT_TOPIC = "/lightningtalkwave/1/announce/json";
@@ -78,9 +79,10 @@ export const getQakulib = async ():Promise<Qaku> => {
         defaultBootstrap: false,
         bootstrapPeers: bootstrapNodes,
         numPeersToUse: 3,
+        // Fix type error by using type assertion for the peer discovery
         libp2p: {
           peerDiscovery: [
-            wakuPeerExchangeDiscovery(derivePubsubTopicsFromNetworkConfig(networkConfig))
+            wakuPeerExchangeDiscovery(derivePubsubTopicsFromNetworkConfig(networkConfig)) as any
           ]
         }, });
       await node.start();
