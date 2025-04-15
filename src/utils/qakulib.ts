@@ -1,5 +1,5 @@
 // Using the locally installed qakulib package
-import {ControlMessage, EnhancedQuestionMessage, Qaku} from "qakulib";
+import {ControlMessage, EnhancedQuestionMessage, HistoryTypes, Qaku} from "qakulib";
 import { wakuPeerExchangeDiscovery } from "@waku/discovery";
 import { derivePubsubTopicsFromNetworkConfig } from "@waku/utils"
 import { createLightNode, IWaku, LightNode, Protocols } from '@waku/sdk';
@@ -442,7 +442,7 @@ export const getEventById = async (eventId: string): Promise<ExtendedControlMess
         questionsCount: historyEvent.questionsCnt || 0
       };
       
-      if (extendedControlState.owner === currentUserAddress) {
+      if (extendedControlState.owner === currentUserAddress || historyEvent.type == HistoryTypes.CREATED) {
         extendedControlState.isCreator = true;
       }
       
