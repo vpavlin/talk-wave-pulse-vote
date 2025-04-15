@@ -28,7 +28,8 @@ import {
   Sparkles,
   LockOpen,
   Lock,
-  X
+  X,
+  CheckCheck
 } from "lucide-react";
 import SubmitTalkDialog from "@/components/SubmitTalkDialog";
 import TalkCard from "@/components/TalkCard";
@@ -38,6 +39,10 @@ import ThemeToggle from "@/components/ThemeToggle";
 import { fetchEventById, createTalk, upvoteTalk, Event, closeEvent } from "@/services/eventService";
 import { generateTalkSuggestion, hasApiKey, getUserInfo } from "@/services/aiService";
 import AkashApiKeyDialog from "@/components/AkashApiKeyDialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { acceptTalk } from "@/utils/qakulib";
 
 interface TalkSuggestion {
   title: string;
@@ -46,11 +51,66 @@ interface TalkSuggestion {
   bio?: string;
 }
 
+interface AcceptTalkDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onAccept: (feedback: string) => void;
+}
+
+const AcceptTalkDialog = ({ open, onOpenChange, onAccept }: AcceptTalkDialogProps) => {
+  const [feedback, setFeedback] = useState("");
+  
+  const handleSubmit = () => {
+    onAccept(feedback);
+    onOpenChange(false);
+  };
+  
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="bg-gray-800 border-purple-700 text-white">
+        <DialogHeader>
+          <DialogTitle className="text-xl text-purple-200">Accept This Talk</DialogTitle>
+          <DialogDescription className="text-gray-300">
+            Add optional feedback for the speaker. This will be visible to them.
+          </DialogDescription>
+        </DialogHeader>
+        
+        <div className="space-y-4 mt-4">
+          <div className="space-y-2">
+            <Textarea
+              placeholder="Congratulations! Your talk has been accepted."
+              value={feedback}
+              onChange={(e) => setFeedback(e.target.value)}
+              className="bg-gray-700 border-gray-600 text-white min-h-[120px]"
+            />
+          </div>
+        </div>
+        
+        <DialogFooter className="mt-4">
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            className="border-gray-600 text-gray-300 hover:bg-gray-700"
+          >
+            Cancel
+          </Button>
+          <Button onClick={handleSubmit} className="bg-green-600 hover:bg-green-700 text-white">
+            <CheckCheck className="mr-2 h-4 w-4" />
+            Accept Talk
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 const EventDetail = () => {
   const { eventId = "" } = useParams();
   const [sortOption, setSortOption] = useState("votes");
   const [isSubmitTalkOpen, setIsSubmitTalkOpen] = useState(false);
   const [isApiKeyDialogOpen, setIsApiKeyDialogOpen] = useState(false);
+  const [isAcceptTalkDialogOpen, setIsAcceptTalkDialogOpen] = useState(false);
+  const [currentTalkId, setCurrentTalkId] = useState("");
   const [copied, setCopied] = useState(false);
   const [isGeneratingSuggestion, setIsGeneratingSuggestion] = useState(false);
   const [suggestionData, setSuggestionData] = useState<TalkSuggestion | null>(null);
@@ -303,6 +363,50 @@ const EventDetail = () => {
     }
   };
 
+  const handleAcceptTalk = async (talkId: string) => {
+    if (!event) return;
+    
+    if (!event.isCreator) {
+      toast({
+        title: "Permission Denied",
+        description: "Only the event creator can accept talks",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setCurrentTalkId(talkId);
+    setIsAcceptTalkDialogOpen(true);
+  };
+
+  const handleAcceptTalkSubmit = async (feedback: string) => {
+    if (!event || !currentTalkId) return;
+    
+    try {
+      const success = await acceptTalk(event.id, currentTalkId, feedback);
+      if (success) {
+        toast({
+          title: "Talk Accepted",
+          description: "The talk has been accepted successfully",
+        });
+        
+        queryClient.invalidateQueries({ queryKey: ['event', eventId] });
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to accept talk",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    }
+  };
+
   const getSortedTalks = () => {
     if (!event || !event.talks) return [];
     
@@ -339,6 +443,25 @@ const EventDetail = () => {
       console.error("Error formatting date:", err, dateString);
       return "Date TBD";
     }
+  };
+
+  const renderTalkCard = (talk) => {
+    return (
+      <TalkCard 
+        key={talk.id} 
+        talk={talk} 
+        onVote={() => handleVote(talk.id)}
+        renderActions={event?.isCreator && !talk.answer ? (
+          <Button 
+            size="sm" 
+            onClick={() => handleAcceptTalk(talk.id)}
+            className="bg-green-600 hover:bg-green-700 text-white mt-2"
+          >
+            <CheckCheck className="mr-2 h-4 w-4" /> Accept Talk
+          </Button>
+        ) : null}
+      />
+    );
   };
 
   if (isLoading) {
@@ -641,16 +764,16 @@ const EventDetail = () => {
             >
               Top Rated
             </TabsTrigger>
+            <TabsTrigger 
+              value="accepted" 
+              className="text-lg data-[state=active]:bg-purple-200 data-[state=active]:text-purple-800 dark:data-[state=active]:bg-purple-800 dark:data-[state=active]:text-purple-100 focus-ring"
+            >
+              Accepted
+            </TabsTrigger>
           </TabsList>
           <TabsContent value="all" className="mt-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {getSortedTalks().map(talk => (
-                <TalkCard 
-                  key={talk.id} 
-                  talk={talk} 
-                  onVote={() => handleVote(talk.id)} 
-                />
-              ))}
+              {getSortedTalks().map(talk => renderTalkCard(talk))}
               {getSortedTalks().length === 0 && (
                 <p className="text-lg text-gray-500 dark:text-gray-400 col-span-2 text-center py-12 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
                   No talks have been submitted yet. Be the first to submit a talk!
@@ -662,17 +785,24 @@ const EventDetail = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {getSortedTalks()
                 .filter(talk => talk.votes >= 10)
-                .map(talk => (
-                  <TalkCard 
-                    key={talk.id} 
-                    talk={talk} 
-                    onVote={() => handleVote(talk.id)} 
-                  />
-                ))
+                .map(talk => renderTalkCard(talk))
               }
               {getSortedTalks().filter(talk => talk.votes >= 10).length === 0 && (
                 <p className="text-lg text-gray-500 dark:text-gray-400 col-span-2 text-center py-12 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
                   No talks have received 10 or more votes yet.
+                </p>
+              )}
+            </div>
+          </TabsContent>
+          <TabsContent value="accepted" className="mt-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {getSortedTalks()
+                .filter(talk => talk.answer)
+                .map(talk => renderTalkCard(talk))
+              }
+              {getSortedTalks().filter(talk => talk.answer).length === 0 && (
+                <p className="text-lg text-gray-500 dark:text-gray-400 col-span-2 text-center py-12 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                  No talks have been accepted yet.
                 </p>
               )}
             </div>
@@ -695,6 +825,12 @@ const EventDetail = () => {
       <AkashApiKeyDialog
         open={isApiKeyDialogOpen}
         onOpenChange={setIsApiKeyDialogOpen}
+      />
+      
+      <AcceptTalkDialog
+        open={isAcceptTalkDialogOpen}
+        onOpenChange={setIsAcceptTalkDialogOpen}
+        onAccept={handleAcceptTalkSubmit}
       />
     </div>
   );

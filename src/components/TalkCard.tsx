@@ -1,167 +1,145 @@
 
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import React from 'react';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { ThumbsUp, Clock, Wallet, ChevronDown, ChevronUp, Users } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
+import { ThumbsUp, Trophy, User, Calendar, AlertCircle, CheckCheck } from "lucide-react";
+import { format } from "date-fns";
 import ReactMarkdown from "react-markdown";
-import { Talk } from "@/services/eventService";
-import { useState } from "react";
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import { useWallet } from "@/contexts/WalletContext";
+
+interface Talk {
+  id: string;
+  title: string;
+  description: string;
+  speaker: string;
+  bio?: string;
+  votes: number;
+  voters?: string[];
+  voterAddresses?: string[];
+  walletAddress?: string;
+  isAuthor?: boolean;
+  upvotedByMe?: boolean;
+  createdAt: string | number | Date;
+  answer?: string; // Add answer field to show accepted status
+}
 
 interface TalkCardProps {
   talk: Talk;
   onVote: () => void;
-  showFullDescription?: boolean;
+  renderActions?: React.ReactNode;
 }
 
-const TalkCard = ({ talk, onVote, showFullDescription = false }: TalkCardProps) => {
-  const [isExpanded, setIsExpanded] = useState(showFullDescription);
+const TalkCard = ({ talk, onVote, renderActions }: TalkCardProps) => {
+  const { walletAddress } = useWallet();
   
-  const getInitials = (name: string | undefined) => {
-    if (!name) return "?";
-    
-    return name
-      .split(' ')
-      .map(part => part[0])
-      .join('')
-      .toUpperCase();
-  };
-
-  const getTimeAgo = (date: string) => {
+  const formatDate = (dateString: string | number | Date) => {
     try {
-      return formatDistanceToNow(new Date(date), { addSuffix: true });
-    } catch (error) {
-      return "recently";
+      const date = new Date(dateString);
+      return format(date, 'MMM d, yyyy h:mm a');
+    } catch (err) {
+      console.error("Date formatting error:", err);
+      return "Unknown date";
     }
   };
-
-  const formatWalletAddress = (address: string | undefined) => {
-    if (!address) return "Unknown";
-    return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
-  };
-
-  // Function to extract the first line of text
-  const getFirstLine = (text: string | undefined) => {
-    if (!text) return "No description available";
-    
-    const firstLine = text.split('\n')[0].trim();
-    // If first line is too long, truncate it
-    if (firstLine.length > 100) {
-      return firstLine.substring(0, 100) + '...';
-    }
-    return firstLine;
-  };
-
-  // Ensure description is not undefined before processing
-  const description = isExpanded 
-    ? (talk.description || "No description available") 
-    : getFirstLine(talk.description);
   
-  // Check if there's more content to show (only if description exists)
-  const hasMoreContent = talk.description 
-    ? talk.description.length > getFirstLine(talk.description).length
-    : false;
+  const hasVoted = React.useMemo(() => {
+    // Check if the current user has voted
+    if (talk.voterAddresses && walletAddress) {
+      return talk.voterAddresses.some(
+        voter => voter.toLowerCase() === walletAddress.toLowerCase()
+      );
+    }
+    
+    if (talk.upvotedByMe) {
+      return true;
+    }
+    
+    return false;
+  }, [talk, walletAddress]);
+  
+  const isMyTalk = React.useMemo(() => {
+    return talk.isAuthor === true || 
+           (talk.walletAddress && walletAddress && 
+            talk.walletAddress.toLowerCase() === walletAddress.toLowerCase());
+  }, [talk, walletAddress]);
 
   return (
-    <Card className="overflow-hidden transition-all duration-300 hover:shadow-lg border-gray-700 bg-gray-800 card-hover h-full flex flex-col">
-      <CardHeader className="pb-2">
-        <div className="flex justify-between items-start">
-          <CardTitle className="text-2xl font-bold text-gray-100">
-            {talk.title || "Untitled Talk"}
-          </CardTitle>
-          <Badge variant="outline" className="text-base px-3 py-1 bg-gray-700/60 text-gray-200 border-gray-600">
-            {talk.votes} {talk.votes === 1 ? 'vote' : 'votes'}
+    <Card className="overflow-hidden border-purple-800/30 dark:border-purple-700/30 bg-white/90 dark:bg-gray-800/70 backdrop-blur hover:shadow-lg transition-shadow talk-card">
+      <CardHeader className="pb-2 relative">
+        {talk.answer && (
+          <Badge className="absolute top-2 right-2 bg-green-600 text-white flex items-center gap-1 p-1">
+            <CheckCheck className="h-3 w-3" /> Accepted
           </Badge>
-        </div>
-        <CardDescription className="flex items-center mt-2 text-base text-gray-300">
-          <HoverCard>
-            <HoverCardTrigger asChild>
-              <div className="flex items-center cursor-pointer">
-                <Avatar className="h-8 w-8 mr-2 border-2 border-gray-700">
-                  <AvatarFallback className="bg-gray-700 text-gray-200 font-semibold">
-                    {getInitials(talk.speaker)}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="font-medium">{talk.speaker || "Anonymous"}</span>
-              </div>
-            </HoverCardTrigger>
-            <HoverCardContent className="w-80 bg-gray-800 border-gray-700 text-gray-200">
-              <div className="flex justify-between space-x-4">
-                <Avatar className="h-12 w-12 border-2 border-gray-700">
-                  <AvatarFallback className="bg-gray-700 text-gray-200 font-semibold text-lg">
-                    {getInitials(talk.speaker)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="space-y-1">
-                  <h4 className="text-md font-semibold text-gray-100">{talk.speaker || "Anonymous"}</h4>
-                  <div className="flex items-center pt-2">
-                    <Users className="h-4 w-4 mr-1 text-gray-400" />
-                    <span className="text-xs text-gray-400">Speaker</span>
-                  </div>
-                </div>
-              </div>
-              <div className="mt-3">
-                {talk.bio ? (
-                  <div className="space-y-2">
-                    <p className="text-sm text-gray-300">{talk.bio}</p>
-                  </div>
-                ) : (
-                  <p className="text-sm text-gray-400 italic">No bio available</p>
-                )}
-              </div>
-            </HoverCardContent>
-          </HoverCard>
-          <span className="flex items-center text-sm text-gray-400 ml-3">
-            <Clock className="h-4 w-4 mr-1" />
-            {getTimeAgo(talk.createdAt)}
-          </span>
-        </CardDescription>
-        {talk.walletAddress && (
-          <div className="mt-1 flex items-center text-xs text-gray-400">
-            <Wallet className="h-3 w-3 mr-1" />
-            <span>{formatWalletAddress(talk.walletAddress)}</span>
-          </div>
         )}
-      </CardHeader>
-      <CardContent className="flex-grow">
-        <div className="text-gray-300 text-base leading-relaxed prose dark:prose-invert prose-p:my-2 max-w-none">
-          {isExpanded ? (
-            <ReactMarkdown>{description}</ReactMarkdown>
-          ) : (
-            <p>{description}</p>
+        <CardTitle className="text-xl text-purple-800 dark:text-purple-300 leading-tight">
+          {talk.title}
+        </CardTitle>
+        <div className="flex flex-wrap gap-2 text-sm text-gray-600 dark:text-gray-400 mt-2">
+          <div className="flex items-center gap-1">
+            <User className="h-4 w-4" />
+            <span>{talk.speaker}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <Calendar className="h-4 w-4" />
+            <span>{formatDate(talk.createdAt)}</span>
+          </div>
+          {isMyTalk && (
+            <Badge variant="outline" className="bg-purple-100/50 dark:bg-purple-900/50 text-purple-800 dark:text-purple-300 border-purple-300 dark:border-purple-700">
+              Your Talk
+            </Badge>
           )}
         </div>
+      </CardHeader>
+      <CardContent className="py-2">
+        <div className="prose dark:prose-invert prose-sm max-w-none">
+          <ReactMarkdown>{talk.description}</ReactMarkdown>
+        </div>
         
-        {hasMoreContent && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="mt-2 text-gray-400 hover:text-gray-200 p-0 h-auto"
-            aria-expanded={isExpanded}
-            aria-label={isExpanded ? "Show less" : "Show more"}
-          >
-            {isExpanded ? (
-              <>Show less <ChevronUp className="ml-1 h-4 w-4" /></>
-            ) : (
-              <>Show more <ChevronDown className="ml-1 h-4 w-4" /></>
-            )}
-          </Button>
+        {talk.bio && (
+          <div className="mt-4 bg-gray-100 dark:bg-gray-700/50 p-3 rounded-md">
+            <div className="font-medium text-sm text-gray-700 dark:text-gray-300 mb-1">About the speaker:</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400 prose dark:prose-invert prose-sm max-w-none">
+              <ReactMarkdown>{talk.bio}</ReactMarkdown>
+            </div>
+          </div>
+        )}
+        
+        {talk.answer && (
+          <div className="mt-4 bg-green-100 dark:bg-green-900/30 p-3 rounded-md border border-green-200 dark:border-green-800/50">
+            <div className="font-medium text-sm text-green-800 dark:text-green-300 mb-1 flex items-center">
+              <Trophy className="h-4 w-4 mr-1" /> Talk Accepted
+            </div>
+            <div className="text-sm text-green-700 dark:text-green-400">
+              {talk.answer}
+            </div>
+          </div>
         )}
       </CardContent>
-      <CardFooter className="border-t border-gray-700/50 pt-3 pb-3 mt-auto">
-        <Button 
-          variant="outline" 
-          size="lg" 
-          className="ml-auto text-gray-300 border-gray-600 hover:bg-gray-700 hover:text-gray-100 focus-ring"
-          onClick={onVote}
-          aria-label={`Upvote ${talk.title} by ${talk.speaker || "Anonymous"}`}
-        >
-          <ThumbsUp className="mr-2 h-5 w-5" />
-          Upvote
-        </Button>
+      <CardFooter className="flex justify-between items-center pt-3 pb-3 gap-2">
+        <div className="flex items-center gap-1">
+          <ThumbsUp className={`h-5 w-5 ${hasVoted ? 'text-purple-600 dark:text-purple-400 fill-purple-600 dark:fill-purple-400' : 'text-gray-500 dark:text-gray-400'}`} />
+          <span className="font-medium ml-1 text-purple-600 dark:text-purple-400">{talk.votes}</span>
+          <span className="text-gray-500 dark:text-gray-400 text-sm">votes</span>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          {renderActions}
+          
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={onVote}
+            disabled={hasVoted}
+            className={hasVoted ? 
+              "bg-purple-100 text-purple-800 border-purple-300 cursor-not-allowed dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-700" : 
+              "border-purple-400 text-purple-700 hover:bg-purple-100/70 dark:border-purple-700 dark:text-purple-400 dark:hover:bg-purple-900/50"
+            }
+          >
+            <ThumbsUp className="h-4 w-4 mr-1" />
+            {hasVoted ? "Voted" : "Vote"}
+          </Button>
+        </div>
       </CardFooter>
     </Card>
   );

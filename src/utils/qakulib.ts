@@ -15,6 +15,7 @@ interface ExtendedTalk {
   upvotedByMe?: boolean;
   signer?: string;
   timestamp?: string | number | Date;
+  answer?: string; // Add answer property to track if a talk has been accepted
 }
 
 // Define an extended interface for the control message without extending ControlMessage
@@ -352,7 +353,8 @@ export const getTalks = async (eventId: string): Promise<ExtendedTalk[]> => {
         upvotes: talk.upvotes,
         upvotedByMe: talk.upvotedByMe,
         signer: talk.signer,
-        timestamp: talk.timestamp
+        timestamp: talk.timestamp,
+        answer: talk.answer // Include answer field to track accepted talks
       };
       
       // Add voterAddresses property based on upvoters
@@ -382,7 +384,8 @@ export const getTalks = async (eventId: string): Promise<ExtendedTalk[]> => {
       // Add debug logging
       console.log(`Talk details: id=${extendedTalk.hash}, title=${extendedTalk.question || 'no-title'}, author status:`, 
                  extendedTalk.isAuthor ? 'YES' : 'NO',
-                 'signer:', extendedTalk.signer);
+                 'signer:', extendedTalk.signer,
+                 'answer:', extendedTalk.answer ? 'YES' : 'NO');
       
       talks.push(extendedTalk);
     }
@@ -489,6 +492,29 @@ export const closeEvent = async (eventId: string): Promise<boolean> => {
     return true;
   } catch (error) {
     console.error(`Failed to close event with ID ${eventId}:`, error);
+    return false;
+  }
+};
+
+// Add new function to accept a talk
+export const acceptTalk = async (eventId: string, talkId: string, feedback?: string): Promise<boolean> => {
+  try {
+    console.log(`Accepting talk ${talkId} in event ${eventId}`);
+    const qakulib = await getQakulib();
+    
+    // Make sure the QA is initialized
+    if (!qakulib.qas.has(eventId)) {
+      console.log(`Event ${eventId} not initialized yet, initializing...`);
+      await qakulib.initQA(eventId);
+    }
+    
+    // Use the answer method to accept the talk
+    await qakulib.answer(eventId, talkId, feedback || "Talk accepted");
+    
+    console.log(`Talk ${talkId} accepted successfully`);
+    return true;
+  } catch (error) {
+    console.error("Failed to accept talk:", error);
     return false;
   }
 };
