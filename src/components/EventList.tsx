@@ -88,7 +88,7 @@ const EventList = ({ events }: EventListProps) => {
     <Card key={event.id} className="overflow-hidden transition-all duration-300 hover:shadow-xl border-gray-200 dark:border-gray-700 card-hover">
       <CardHeader className="bg-gradient-to-r from-purple-500/10 to-indigo-500/10 dark:from-purple-900/20 dark:to-indigo-900/20 pb-3">
         <div className="flex flex-col gap-3">
-          <div className="flex justify-between items-start">
+          <div className="flex flex-wrap md:flex-nowrap justify-between items-start gap-2">
             <CardTitle className="text-2xl text-purple-800 dark:text-purple-300 font-bold">
               {event.title}
               {event.enabled === false && (
@@ -98,8 +98,8 @@ const EventList = ({ events }: EventListProps) => {
                 </Badge>
               )}
             </CardTitle>
-            <Badge className="date-badge">
-              <Calendar className="h-4 w-4" />
+            <Badge className="date-badge whitespace-nowrap flex-shrink-0">
+              <Calendar className="h-4 w-4 mr-1" />
               {safelyFormatDate(event.eventDate || (event.date ? String(event.date) : undefined))}
             </Badge>
           </div>

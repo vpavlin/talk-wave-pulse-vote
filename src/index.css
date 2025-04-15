@@ -1,3 +1,4 @@
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
@@ -120,6 +121,7 @@
 .date-badge {
   @apply text-lg px-3 py-1.5 rounded-full font-medium inline-flex items-center gap-1.5;
   @apply bg-purple-800/30 text-purple-300;
+  @apply whitespace-nowrap flex-shrink-0;
 }
 
 .avatar-base {
