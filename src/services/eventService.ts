@@ -40,10 +40,18 @@ export const fetchEvents = async () => {
   try {
     const events = await qakulib.getEvents();
     
-    // Ensure each event has a talks property that's an array
+    // Process each event to ensure proper data structure and parsing
     return events.map(event => ({
       ...event,
+      // Parse description if it's a JSON string
+      description: parseJsonField(event.description),
+      // Ensure date fields are valid
+      date: ensureValidDateString(event.timestamp),
+      eventDate: event.eventDate ? ensureValidDateString(event.eventDate) : undefined,
+      // Ensure talks is always an array
       talks: Array.isArray(event.talks) ? event.talks : [],
+      // Set owner address for consistency
+      ownerAddress: event.owner || event.ownerAddress
     }));
   } catch (error) {
     console.error('Error fetching events:', error);
@@ -147,7 +155,7 @@ export const fetchEventById = async (eventId: string): Promise<Event> => {
       website: event.website,
       contact: event.contact,
       bannerImage: event.bannerImage,
-      ownerAddress: event.owner,
+      ownerAddress: event.owner || event.ownerAddress,
       isCreator: event.isCreator,
       talks: formattedTalks
     };

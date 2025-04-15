@@ -43,6 +43,7 @@ const EventList = ({ events }: EventListProps) => {
   };
 
   const getFirstLine = (text: string) => {
+    if (!text) return "";
     const firstLine = text.split('\n')[0].trim();
     if (firstLine.length > 120) {
       return firstLine.substring(0, 120) + '...';

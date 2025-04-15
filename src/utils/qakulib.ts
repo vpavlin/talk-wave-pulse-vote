@@ -1,3 +1,4 @@
+
 // Using the locally installed qakulib package
 import {ControlMessage, EnhancedQuestionMessage, Qaku} from "qakulib";
 import { wakuPeerExchangeDiscovery } from "@waku/discovery";
@@ -179,6 +180,13 @@ export const getEvents = async (): Promise<any[]> => {
         extendedEvent.isCreator = true;
       }
       
+      // Make sure we preserve all metadata fields
+      extendedEvent.eventDate = event.controlState.eventDate;
+      extendedEvent.location = event.controlState.location;
+      extendedEvent.website = event.controlState.website;
+      extendedEvent.contact = event.controlState.contact;
+      extendedEvent.bannerImage = event.controlState.bannerImage;
+      
       events.push(extendedEvent);
     }
     
@@ -222,6 +230,13 @@ export const getEventById = async (eventId: string): Promise<ExtendedControlMess
     
     // Set ownerAddress for consistency
     extendedControlState.ownerAddress = extendedControlState.owner;
+    
+    // Explicitly preserve all metadata fields
+    extendedControlState.eventDate = event.controlState.eventDate;
+    extendedControlState.location = event.controlState.location;
+    extendedControlState.website = event.controlState.website;
+    extendedControlState.contact = event.controlState.contact;
+    extendedControlState.bannerImage = event.controlState.bannerImage;
     
     // Get talks for this event and attach them to the extended control state
     const talks = await getTalks(eventId);
