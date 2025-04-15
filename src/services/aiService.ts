@@ -1,5 +1,6 @@
 
 import axios from 'axios';
+import { fetchEvents } from './eventService';
 
 const STORAGE_KEY = 'akash_api_key';
 
@@ -39,8 +40,23 @@ export const generateTalkSuggestion = async (talks: any[], eventDetails?: any): 
   
   const client = createAkashClient(apiKey);
   
+  let latestTalks = [...talks];
+  
+  // If current event has no talks, fetch talks from all events
+  if (talks.length === 0) {
+    console.log("Current event has no talks, fetching talks from all events");
+    try {
+      const allEvents = await fetchEvents();
+      const allTalks = allEvents.flatMap(event => event.talks);
+      latestTalks = allTalks;
+    } catch (error) {
+      console.error("Error fetching talks from all events:", error);
+      // Continue with empty talks array if fetching fails
+    }
+  }
+  
   // Sort talks by creation date (newest first) and limit to latest 10 talks
-  const latestTalks = [...talks].sort((a, b) => {
+  latestTalks = latestTalks.sort((a, b) => {
     const dateA = new Date(a.createdAt || 0).getTime();
     const dateB = new Date(b.createdAt || 0).getTime();
     return dateB - dateA;

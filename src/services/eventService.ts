@@ -122,7 +122,8 @@ export const fetchEvents = async (): Promise<Event[]> => {
           walletAddress: talk.signer || '',
           voterAddresses: talk.voterAddresses || talk.upvoters || [],
           upvotedByMe: talk.upvotedByMe || false,
-          isAuthor: talk.isAuthor || false
+          isAuthor: talk.isAuthor || false,
+          eventTitle: event.title // Add event title to each talk
         };
       }),
     });
@@ -165,7 +166,8 @@ export const fetchEventById = async (eventId: string): Promise<Event | null> => 
         walletAddress: talk.signer || '',
         voterAddresses: talk.voterAddresses || talk.upvoters || [],
         upvotedByMe: talk.upvotedByMe || false,
-        isAuthor: talk.isAuthor || false
+        isAuthor: talk.isAuthor || false,
+        eventTitle: rawEvent.title // Add event title to each talk
       };
     }),
   };
