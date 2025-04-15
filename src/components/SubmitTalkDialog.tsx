@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { getUserInfo } from "@/services/aiService";
 
 interface SubmitTalkDialogProps {
   open: boolean;
@@ -22,11 +23,20 @@ const SubmitTalkDialog = ({ open, onOpenChange, onSubmit, initialData }: SubmitT
 
   // Update form fields when initialData changes or when dialog opens
   useEffect(() => {
-    if (open && initialData) {
-      setTitle(initialData.title || "");
-      setDescription(initialData.description || "");
-      setSpeaker(initialData.speaker || "");
-      setBio(initialData.bio || "");
+    if (open) {
+      // Get user info when dialog opens
+      const userInfo = getUserInfo();
+      
+      if (initialData) {
+        setTitle(initialData.title || "");
+        setDescription(initialData.description || "");
+        setSpeaker(initialData.speaker || userInfo.name || "");
+        setBio(initialData.bio || userInfo.bio || "");
+      } else {
+        // If no initialData, just use the user info from localStorage
+        setSpeaker(userInfo.name || "");
+        setBio(userInfo.bio || "");
+      }
     }
   }, [initialData, open]);
 

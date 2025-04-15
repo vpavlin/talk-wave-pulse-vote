@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -34,7 +33,7 @@ import { format } from "date-fns";
 import { useWallet } from "@/contexts/WalletContext";
 import ThemeToggle from "@/components/ThemeToggle";
 import { fetchEventById, createTalk, upvoteTalk } from "@/services/eventService";
-import { generateTalkSuggestion, hasApiKey } from "@/services/aiService";
+import { generateTalkSuggestion, hasApiKey, getUserInfo } from "@/services/aiService";
 import AkashApiKeyDialog from "@/components/AkashApiKeyDialog";
 
 const EventDetail = () => {
@@ -57,6 +56,15 @@ const EventDetail = () => {
     enabled: !!eventId,
   });
 
+  useEffect(() => {
+    const userInfo = getUserInfo();
+    setSuggestionData(prevData => ({
+      ...prevData,
+      speaker: userInfo.name || "",
+      bio: userInfo.bio || ""
+    }));
+  }, []);
+
   const handleGenerateSuggestion = async () => {
     if (!event) return;
     
@@ -70,11 +78,9 @@ const EventDetail = () => {
     try {
       const suggestionText = await generateTalkSuggestion(event.talks, event);
       
-      // Parse the suggestion to extract title and description
       let title = "";
       let description = "";
       
-      // Common patterns in AI responses
       const titleMatch = suggestionText.match(/(?:Title:|#)(.*?)(?:\n|$)/i);
       if (titleMatch && titleMatch[1]) {
         title = titleMatch[1].trim();
@@ -84,26 +90,21 @@ const EventDetail = () => {
       if (descriptionMatch && descriptionMatch[1]) {
         description = descriptionMatch[1].trim();
       } else {
-        // If no clear description format, try to get content after the title
         const lines = suggestionText.split('\n').filter(line => line.trim() !== '');
         if (lines.length > 1) {
-          // Skip the title line and get the next non-empty line
           for (let i = 0; i < lines.length; i++) {
             if (lines[i].includes(title)) {
-              // Get the next line(s) as description
               description = lines.slice(i + 1).join(' ').trim();
               break;
             }
           }
         }
         
-        // If still no description, use everything after "Title:"
         if (!description && title) {
           description = suggestionText.substring(suggestionText.indexOf(title) + title.length).trim();
         }
       }
       
-      // If we still don't have a good title/description
       if (!title) {
         const lines = suggestionText.split('\n').filter(line => line.trim() !== '');
         title = lines[0] || "AI Generated Talk";
@@ -113,19 +114,23 @@ const EventDetail = () => {
         description = suggestionText.replace(title, '').trim();
       }
       
-      // Truncate description if it's too long
       if (description.length > 200) {
         description = description.substring(0, 197) + "...";
       }
       
-      setSuggestionData({ title, description });
+      const userInfo = getUserInfo();
+      setSuggestionData({ 
+        title, 
+        description,
+        speaker: userInfo.name || "",
+        bio: userInfo.bio || ""
+      });
       
       toast({
         title: "Suggestion Generated",
         description: "AI has created a talk suggestion based on event details",
       });
       
-      // Open the dialog with pre-filled data
       setIsSubmitTalkOpen(true);
     } catch (error) {
       console.error('Error generating suggestion:', error);
@@ -139,7 +144,7 @@ const EventDetail = () => {
     }
   };
 
-  const handleSubmitTalk = async (talkData: { title: string; speaker: string; description: string }) => {
+  const handleSubmitTalk = async (talkData: { title: string; speaker: string; description: string; bio?: string }) => {
     if (!event) return;
     
     try {
@@ -147,7 +152,8 @@ const EventDetail = () => {
         event.id, 
         talkData.title, 
         talkData.description, 
-        talkData.speaker
+        talkData.speaker,
+        talkData.bio
       );
       
       if (talkId) {
@@ -574,7 +580,11 @@ const EventDetail = () => {
         open={isSubmitTalkOpen}
         onOpenChange={setIsSubmitTalkOpen}
         onSubmit={handleSubmitTalk}
-        initialData={suggestionData}
+        initialData={{
+          ...suggestionData,
+          speaker: suggestionData?.speaker || getUserInfo().name || "",
+          bio: suggestionData?.bio || getUserInfo().bio || ""
+        }}
       />
       
       <AkashApiKeyDialog
