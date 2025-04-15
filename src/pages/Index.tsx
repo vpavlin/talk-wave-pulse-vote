@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -8,7 +9,7 @@ import CreateEventDialog from "@/components/CreateEventDialog";
 import WalletConnectButton from "@/components/WalletConnectButton";
 import ThemeToggle from "@/components/ThemeToggle";
 import { useWallet } from "@/contexts/WalletContext";
-import { fetchEvents, createEvent } from "@/services/eventService";
+import { fetchEvents, createEvent, announceEvent } from "@/services/eventService";
 import { getQakulib } from "@/utils/qakulib"; // Import getQakulib to access announced events
 
 const Index = () => {
@@ -87,6 +88,21 @@ const Index = () => {
     }
   };
 
+  const handleAnnounceEvent = async (eventId: string) => {
+    try {
+      const success = await announceEvent(eventId);
+      
+      if (success) {
+        queryClient.invalidateQueries({ queryKey: ['events'] });
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("Error handling event announcement:", error);
+      return false;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-purple-950 to-indigo-950 transition-colors">
       <div className="container mx-auto px-4 py-8">
@@ -130,7 +146,10 @@ const Index = () => {
             </p>
           </div>
         ) : (
-          <EventList events={events} />
+          <EventList 
+            events={events} 
+            onAnnounceEvent={handleAnnounceEvent}
+          />
         )}
       </div>
       

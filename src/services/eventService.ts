@@ -8,7 +8,7 @@ import {
   closeEvent as closeEventInQakulib,
   acceptTalk as acceptTalkInQakulib,
   announcedEvents,
-  announceEvent
+  announceEvent as announceEventToQakulib
 } from "@/utils/qakulib";
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -277,6 +277,38 @@ export const acceptTalk = async (eventId: string, talkId: string, feedback?: str
     return await acceptTalkInQakulib(eventId, talkId, feedback);
   } catch (error) {
     console.error("Error accepting talk:", error);
+    return false;
+  }
+};
+
+export const announceEvent = async (eventId: string): Promise<boolean> => {
+  try {
+    // First, fetch the event details to create the announcement
+    const event = await fetchEventByIdFromQakulib(eventId);
+    
+    if (!event) {
+      console.error("Event not found for announcement:", eventId);
+      return false;
+    }
+    
+    // Create event data for announcement
+    const eventData = {
+      id: eventId,
+      title: event.title || "Untitled Event",
+      description: event.description || "",
+      eventDate: event.eventDate,
+      location: event.location,
+      website: event.website,
+      contact: event.contact,
+      bannerImage: event.bannerImage,
+      timestamp: Date.now()
+    };
+    
+    // Announce the event
+    const success = await announceEventToQakulib(eventData);
+    return success;
+  } catch (error) {
+    console.error("Error announcing event:", error);
     return false;
   }
 };

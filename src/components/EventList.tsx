@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, ArrowRight, MessageSquare, Wallet, User, MessageSquarePlus, Vote, PresentationIcon, Lock, ChevronDown, ChevronUp, BellRing, BellOff, Search, EyeOff, Eye } from "lucide-react";
+import { Calendar, ArrowRight, MessageSquare, Wallet, User, MessageSquarePlus, Vote, PresentationIcon, Lock, ChevronDown, ChevronUp, BellRing, BellOff, Search, EyeOff, Eye, Megaphone } from "lucide-react";
 import { format, isValid } from "date-fns";
 import { Link } from "react-router-dom";
 import { Event } from "@/services/eventService";
@@ -12,20 +12,24 @@ import { Input } from "@/components/ui/input";
 import { Form, FormField, FormItem, FormControl } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useToast } from "@/hooks/use-toast";
 
 interface EventListProps {
   events: Event[];
+  onAnnounceEvent?: (eventId: string) => Promise<boolean>;
 }
 
 const HIDDEN_EVENTS_KEY = "lightning-talk-hidden-events";
 
-const EventList = ({ events }: EventListProps) => {
+const EventList = ({ events, onAnnounceEvent }: EventListProps) => {
   const [filter, setFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [isClosedEventsOpen, setIsClosedEventsOpen] = useState(false);
   const [hiddenEventIds, setHiddenEventIds] = useState<string[]>([]);
   const [showHiddenEvents, setShowHiddenEvents] = useState(false);
+  const [announcingEventId, setAnnouncingEventId] = useState<string | null>(null);
   const { connected, walletAddress } = useWallet();
+  const { toast } = useToast();
   
   const form = useForm({
     defaultValues: {
@@ -59,6 +63,36 @@ const EventList = ({ events }: EventListProps) => {
         return [...prev, eventId];
       }
     });
+  };
+  
+  const handleAnnounceEvent = async (eventId: string) => {
+    if (!onAnnounceEvent) return;
+    
+    setAnnouncingEventId(eventId);
+    try {
+      const success = await onAnnounceEvent(eventId);
+      if (success) {
+        toast({
+          title: "Event Announced",
+          description: "Your event has been announced successfully",
+        });
+      } else {
+        toast({
+          title: "Announcement Failed",
+          description: "Failed to announce the event. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error announcing event:", error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setAnnouncingEventId(null);
+    }
   };
   
   const activeEvents = events.filter(event => event.enabled !== false);
@@ -148,6 +182,7 @@ const EventList = ({ events }: EventListProps) => {
   const renderEventCard = (event: Event) => {
     const announced = isAnnouncedEvent(event);
     const isHidden = hiddenEventIds.includes(event.id);
+    const canAnnounce = event.isCreator && !announced && onAnnounceEvent;
     
     return (
       <Card 
@@ -229,30 +264,59 @@ const EventList = ({ events }: EventListProps) => {
                   <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
                 </Button>
               </Link>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="ml-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        toggleHideEvent(event.id);
-                      }}
-                    >
-                      {isHidden ? (
-                        <Eye className="h-5 w-5" />
-                      ) : (
-                        <EyeOff className="h-5 w-5" />
-                      )}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {isHidden ? "Show event" : "Hide event"}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <div className="flex ml-2">
+                {canAnnounce && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="mr-2 border-cyan-200 text-cyan-700 hover:bg-cyan-50 dark:border-cyan-700 dark:text-cyan-300 dark:hover:bg-cyan-900/30"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handleAnnounceEvent(event.id);
+                          }}
+                          disabled={announcingEventId === event.id}
+                        >
+                          {announcingEventId === event.id ? (
+                            <span className="h-5 w-5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                          ) : (
+                            <Megaphone className="h-5 w-5" />
+                          )}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        Announce this event
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          toggleHideEvent(event.id);
+                        }}
+                      >
+                        {isHidden ? (
+                          <Eye className="h-5 w-5" />
+                        ) : (
+                          <EyeOff className="h-5 w-5" />
+                        )}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {isHidden ? "Show event" : "Hide event"}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
             </div>
           </div>
         </CardContent>
