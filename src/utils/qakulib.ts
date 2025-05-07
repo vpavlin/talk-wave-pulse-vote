@@ -207,7 +207,7 @@ const loadHistoryAndInitializeQAs = async (qakulib: Qaku) => {
       }
       
       // Skip initialization if the event is closed
-      if (qaEvent.isActive === false) {
+      if (qaEvent.isActive === false && qaEvent.type == HistoryTypes.VISITED) {
         console.log(`Skipping initialization for closed event: ${qaId}`);
         continue;
       }
@@ -423,7 +423,7 @@ export const getEventById = async (eventId: string): Promise<ExtendedControlMess
     const historyEvents = qakulib.history.getAll ? qakulib.history.getAll() : [];
     const historyEvent = historyEvents.find(event => event.id === eventId);
     
-    if (historyEvent && (historyEvent.isActive === false || isHidden)) {
+    if (historyEvent && (isHidden)) {
       console.log(`Found closed or hidden event ${eventId} in history, using history data`);
       
       // Add identity check for creator - handle safely
@@ -525,7 +525,7 @@ export const getEventById = async (eventId: string): Promise<ExtendedControlMess
     }
     
     // Get talks for this event and attach them to the extended control state
-    if (!isHidden && extendedControlState.enabled !== false) {
+    if (!isHidden) {
       const talks = await getTalks(eventId);
       extendedControlState.talks = talks;
     } else {
