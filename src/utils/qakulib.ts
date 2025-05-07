@@ -1,5 +1,5 @@
 // Using the locally installed qakulib package
-import {ControlMessage, EnhancedQuestionMessage, HistoryTypes, Qaku} from "qakulib";
+import {ControlMessage, EnhancedQuestionMessage, HistoryTypes, Qaku, UpvoteType} from "qakulib";
 import { wakuPeerExchangeDiscovery } from "@waku/discovery";
 import { derivePubsubTopicsFromNetworkConfig } from "@waku/utils"
 import { createLightNode, IWaku, LightNode, Protocols } from '@waku/sdk';
@@ -571,14 +571,14 @@ export const getTalks = async (eventId: string): Promise<ExtendedTalk[]> => {
     for (const talk of talksList) {
       // Create an extended talk with our custom properties
       const extendedTalk: ExtendedTalk = {
-        hash: talk.hash || talk.question || '', // Ensure hash is always present and required
-        question: talk.question,
+        hash: talk.hash || talk.content || '', // Ensure hash is always present and required
+        question: talk.content,
         upvoters: talk.upvoters,
         upvotes: talk.upvotes,
         upvotedByMe: talk.upvotedByMe,
         signer: talk.signer,
         timestamp: talk.timestamp,
-        answer: talk.answer // Include answer field to track accepted talks
+        answer: talk.answers.length > 0 && talk.answers[0].content // Include answer field to track accepted talks
       };
       
       // Add voterAddresses property based on upvoters
@@ -666,7 +666,7 @@ export const voteTalk = async (eventId: string, talkId: string): Promise<boolean
     }
     
     // Cast vote for the talk
-    await qakulib.upvote(eventId, talkId);
+    await qakulib.upvote(eventId, talkId, UpvoteType.QUESTION);
     
     // Get the current user's wallet address
     const currentUserAddress = qakulib.identity?.address() || '';
@@ -733,7 +733,7 @@ export const acceptTalk = async (eventId: string, talkId: string, feedback?: str
     }
     
     // Use the answer method to accept the talk
-    await qakulib.answer(eventId, talkId, feedback || "Talk accepted");
+    await qakulib.answer(eventId, talkId, false, feedback || "Talk accepted");
     
     console.log(`Talk ${talkId} accepted successfully`);
     return true;
