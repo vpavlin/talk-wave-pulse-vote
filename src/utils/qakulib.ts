@@ -5,6 +5,7 @@ import { derivePubsubTopicsFromNetworkConfig } from "@waku/utils"
 import { createLightNode, IWaku, LightNode, Protocols } from '@waku/sdk';
 import { createDecoder, createEncoder, DecodedMessage } from '@waku/sdk';
 import { Dispatcher, DispatchMetadata, Signer, Store } from "waku-dispatcher";
+import { JsonRpcSigner } from "ethers";
 
 // Define an extended interface for the talk without extending EnhancedQuestionMessage
 interface ExtendedTalk {
@@ -71,7 +72,7 @@ let announceEventListeners: any[] = [];
 let initializing = false
 let initPromise: Promise<Qaku>;
 
-export const getQakulib = async ():Promise<Qaku> => {
+export const getQakulib = async (externalWalletSigner?: JsonRpcSigner):Promise<Qaku> => {
   if (initializing) return initPromise
   if (!initializing && !qakulibInstance) {
     initializing = true;
@@ -96,7 +97,9 @@ export const getQakulib = async ():Promise<Qaku> => {
       await node.waitForPeers([Protocols.Store, Protocols.Filter, Protocols.LightPush]);
       
       qakulibInstance = new Qaku(node as LightNode);
-      await qakulibInstance.init("http://localhost:8080", "https://api.qaku.app");
+      
+      // Pass the external wallet signer if provided
+      await qakulibInstance.init("http://localhost:8080", "https://api.qaku.app", externalWalletSigner);
 
       // Set up announcement message listener
       await setupAnnouncement(node);
@@ -206,8 +209,8 @@ const loadHistoryAndInitializeQAs = async (qakulib: Qaku) => {
         continue;
       }
       
-      // Skip initialization if the event is closed
-      if (qaEvent.isActive === false && qaEvent.type == HistoryTypes.VISITED) {
+      // Skip initialization if the event is closed (not active)
+      if (qaEvent.isActive === false) {
         console.log(`Skipping initialization for closed event: ${qaId}`);
         continue;
       }
@@ -374,14 +377,11 @@ export const getEvents = async (): Promise<ExtendedControlMessage[]> => {
       };
       
       // Check if the current user is the creator of this event
-      if (extendedEvent.owner === currentUserAddress) {
+      if (historyEvent.type === HistoryTypes.CREATED) {
         extendedEvent.isCreator = true;
       }
       
-      // Set ownerAddress for consistency
-      extendedEvent.ownerAddress = extendedEvent.owner;
-      
-      // Try to parse description for metadata
+      // Parse description for metadata
       if (typeof extendedEvent.description === 'string') {
         try {
           const descObj = JSON.parse(extendedEvent.description);
@@ -423,14 +423,8 @@ export const getEventById = async (eventId: string): Promise<ExtendedControlMess
     const historyEvents = qakulib.history.getAll ? qakulib.history.getAll() : [];
     const historyEvent = historyEvents.find(event => event.id === eventId);
     
-    if (historyEvent && (isHidden)) {
+    if (historyEvent && (isHidden || historyEvent.isActive === false)) {
       console.log(`Found closed or hidden event ${eventId} in history, using history data`);
-      
-      // Add identity check for creator - handle safely
-      const currentUserAddress = qakulib.identity && 
-                                qakulib.identity.address && 
-                                typeof qakulib.identity.address === 'function' ? 
-                                qakulib.identity.address() : '';
       
       // Create an ExtendedControlMessage with required id property
       const extendedControlState: ExtendedControlMessage = {
@@ -442,12 +436,10 @@ export const getEventById = async (eventId: string): Promise<ExtendedControlMess
         questionsCount: historyEvent.questionsCnt || 0
       };
       
-      if (extendedControlState.owner === currentUserAddress || historyEvent.type == HistoryTypes.CREATED) {
+      // Check if this is a created event by the user
+      if (historyEvent.type === HistoryTypes.CREATED) {
         extendedControlState.isCreator = true;
       }
-      
-      // Set ownerAddress for consistency
-      extendedControlState.ownerAddress = extendedControlState.owner;
       
       // Parse the event description to extract embedded metadata
       if (typeof extendedControlState.description === 'string') {
