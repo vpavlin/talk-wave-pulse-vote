@@ -5,12 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { getUserInfo } from "@/services/aiService";
+import { useWallet } from "@/contexts/WalletContext";
 
 interface SubmitTalkDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (talkData: { title: string; speaker: string; description: string; bio?: string }) => void;
+  onSubmit: (talkData: { title: string; speaker: string; description: string; bio?: string; useExternalWallet: boolean }) => void;
   initialData?: { title: string; description: string; speaker?: string; bio?: string } | null;
 }
 
@@ -19,7 +21,10 @@ const SubmitTalkDialog = ({ open, onOpenChange, onSubmit, initialData }: SubmitT
   const [speaker, setSpeaker] = useState("");
   const [description, setDescription] = useState("");
   const [bio, setBio] = useState("");
+  const [useEnsName, setUseEnsName] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const { ensName, connected, usingExternalWallet } = useWallet();
 
   // Update form fields when initialData changes or when dialog opens
   useEffect(() => {
@@ -27,25 +32,45 @@ const SubmitTalkDialog = ({ open, onOpenChange, onSubmit, initialData }: SubmitT
       // Get user info when dialog opens
       const userInfo = getUserInfo();
       
+      // Use ENS name if available and enabled, otherwise use stored name
+      const defaultSpeakerName = useEnsName && ensName ? ensName : userInfo.name || "";
+      
       if (initialData) {
         setTitle(initialData.title || "");
         setDescription(initialData.description || "");
-        setSpeaker(initialData.speaker || userInfo.name || "");
+        setSpeaker(initialData.speaker || defaultSpeakerName);
         setBio(initialData.bio || userInfo.bio || "");
       } else {
-        // If no initialData, just use the user info from localStorage
-        setSpeaker(userInfo.name || "");
+        // If no initialData, just use the user info from localStorage or ENS
+        setSpeaker(defaultSpeakerName);
         setBio(userInfo.bio || "");
       }
     }
-  }, [initialData, open]);
+  }, [initialData, open, ensName, useEnsName]);
+
+  // When ENS name toggle changes, update speaker name accordingly
+  useEffect(() => {
+    if (useEnsName && ensName && connected) {
+      setSpeaker(ensName);
+    } else if (!useEnsName) {
+      // If not using ENS, revert to stored user info
+      const userInfo = getUserInfo();
+      setSpeaker(userInfo.name || "");
+    }
+  }, [useEnsName, ensName, connected]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     
     try {
-      await onSubmit({ title, speaker, description, bio });
+      await onSubmit({ 
+        title, 
+        speaker, 
+        description, 
+        bio, 
+        useExternalWallet: usingExternalWallet 
+      });
     } catch (error) {
       console.error("Error submitting talk:", error);
     } finally {
@@ -86,7 +111,21 @@ const SubmitTalkDialog = ({ open, onOpenChange, onSubmit, initialData }: SubmitT
             </div>
             
             <div className="grid gap-2">
-              <Label htmlFor="speaker" className="dark:text-gray-200">Speaker Name</Label>
+              <div className="flex justify-between items-center mb-2">
+                <Label htmlFor="speaker" className="dark:text-gray-200">Speaker Name</Label>
+                {ensName && usingExternalWallet && (
+                  <div className="flex items-center space-x-2">
+                    <Switch 
+                      id="use-ens" 
+                      checked={useEnsName} 
+                      onCheckedChange={setUseEnsName} 
+                    />
+                    <Label htmlFor="use-ens" className="text-sm dark:text-gray-300">
+                      Use ENS name
+                    </Label>
+                  </div>
+                )}
+              </div>
               <Input
                 id="speaker"
                 placeholder="Your name"
@@ -94,7 +133,13 @@ const SubmitTalkDialog = ({ open, onOpenChange, onSubmit, initialData }: SubmitT
                 onChange={(e) => setSpeaker(e.target.value)}
                 required
                 className="dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                disabled={useEnsName && !!ensName}
               />
+              {useEnsName && ensName && (
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Using your ENS name
+                </p>
+              )}
             </div>
             
             <div className="grid gap-2">
@@ -127,6 +172,14 @@ const SubmitTalkDialog = ({ open, onOpenChange, onSubmit, initialData }: SubmitT
                 {description.length}/200
               </p>
             </div>
+
+            {usingExternalWallet && (
+              <div className="bg-purple-100 dark:bg-purple-900/30 p-3 rounded-md">
+                <p className="text-sm text-purple-800 dark:text-purple-200">
+                  Your talk will be published using your connected wallet address.
+                </p>
+              </div>
+            )}
           </div>
           
           <DialogFooter>

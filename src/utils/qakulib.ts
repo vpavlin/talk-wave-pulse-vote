@@ -1,4 +1,3 @@
-
 // Using the locally installed qakulib package
 import {ControlMessage, EnhancedQuestionMessage, HistoryTypes, Qaku, UpvoteType} from "qakulib";
 import { wakuPeerExchangeDiscovery } from "@waku/discovery";
@@ -264,12 +263,12 @@ const setupEventListeners = () => {
   eventListeners.push(newQaListener, newQuestionListener, voteUpdateListener);
 };
 
-export const publishEvent = async (title:string, desc:string, moderation:boolean):Promise<string> => {
-  console.log("Publishing new event:", title);
+export const publishEvent = async (title:string, desc:string, moderation:boolean, useExternalWallet: boolean = false):Promise<string> => {
+  console.log("Publishing new event:", title, "using external wallet:", useExternalWallet);
   const qakulib = await getQakulib();
   
-  // Create new QA event
-  const eventId = await qakulib.newQA(title, desc, true, [], moderation);
+  // Create new QA event with useExternal parameter
+  const eventId = await qakulib.newQA(title, desc, true, [], moderation, useExternalWallet);
   
   console.log("Event published with ID:", eventId);
   
@@ -622,10 +621,11 @@ export const submitTalk = async (
   title: string, 
   description: string,
   speaker: string,
-  bio?: string
+  bio?: string,
+  useExternalWallet: boolean = false
 ): Promise<string | null> => {
   try {
-    console.log(`Submitting talk "${title}" by ${speaker}`);
+    console.log(`Submitting talk "${title}" by ${speaker} using external wallet: ${useExternalWallet}`);
     const qakulib = await getQakulib();
     
     // Make sure the QA is initialized
@@ -637,8 +637,8 @@ export const submitTalk = async (
     // Format talk data for submission
     const talkData = JSON.stringify({title, description, speaker, bio});
     
-    // Submit the new question (talk)
-    const talkId = await qakulib.newQuestion(eventId, talkData);
+    // Submit the new question (talk) with useExternal parameter
+    const talkId = await qakulib.newQuestion(eventId, talkData, useExternalWallet);
     
     console.log(`Talk submitted successfully with ID: ${talkId}`);
     return talkId;
@@ -648,9 +648,9 @@ export const submitTalk = async (
   }
 };
 
-export const voteTalk = async (eventId: string, talkId: string): Promise<boolean> => {
+export const voteTalk = async (eventId: string, talkId: string, useExternalWallet: boolean = false): Promise<boolean> => {
   try {
-    console.log(`Voting for talk ${talkId} in event ${eventId}`);
+    console.log(`Voting for talk ${talkId} in event ${eventId} using external wallet: ${useExternalWallet}`);
     const qakulib = await getQakulib();
     
     // Make sure the QA is initialized
@@ -659,8 +659,8 @@ export const voteTalk = async (eventId: string, talkId: string): Promise<boolean
       await qakulib.initQA(eventId);
     }
     
-    // Cast vote for the talk
-    await qakulib.upvote(eventId, talkId, UpvoteType.QUESTION);
+    // Cast vote for the talk with useExternal parameter
+    await qakulib.upvote(eventId, talkId, UpvoteType.QUESTION, useExternalWallet);
     
     // Get the current user's wallet address
     const currentUserAddress = qakulib.identity?.address() || '';
@@ -692,9 +692,9 @@ export const voteTalk = async (eventId: string, talkId: string): Promise<boolean
   }
 };
 
-export const closeEvent = async (eventId: string): Promise<boolean> => {
+export const closeEvent = async (eventId: string, useExternalWallet: boolean = false): Promise<boolean> => {
   try {
-    console.log(`Closing event with ID ${eventId}`);
+    console.log(`Closing event with ID ${eventId} using external wallet: ${useExternalWallet}`);
     const qakulib = await getQakulib();
     
     // Make sure the QA is initialized
@@ -703,8 +703,8 @@ export const closeEvent = async (eventId: string): Promise<boolean> => {
       await qakulib.initQA(eventId);
     }
     
-    // Use the QA switch state function to close the event (false = closed)
-    await qakulib.switchQAState(eventId, false);
+    // Use the QA switch state function to close the event (false = closed) with useExternal parameter
+    await qakulib.switchQAState(eventId, false, useExternalWallet);
     
     console.log(`Event ${eventId} closed successfully`);
     return true;
@@ -715,9 +715,9 @@ export const closeEvent = async (eventId: string): Promise<boolean> => {
 };
 
 // Add new function to accept a talk
-export const acceptTalk = async (eventId: string, talkId: string, feedback?: string): Promise<boolean> => {
+export const acceptTalk = async (eventId: string, talkId: string, feedback?: string, useExternalWallet: boolean = false): Promise<boolean> => {
   try {
-    console.log(`Accepting talk ${talkId} in event ${eventId}`);
+    console.log(`Accepting talk ${talkId} in event ${eventId} using external wallet: ${useExternalWallet}`);
     const qakulib = await getQakulib();
     
     // Make sure the QA is initialized
@@ -726,8 +726,8 @@ export const acceptTalk = async (eventId: string, talkId: string, feedback?: str
       await qakulib.initQA(eventId);
     }
     
-    // Use the answer method to accept the talk
-    await qakulib.answer(eventId, talkId, false, feedback || "Talk accepted");
+    // Use the answer method to accept the talk with useExternal parameter
+    await qakulib.answer(eventId, talkId, useExternalWallet, feedback || "Talk accepted");
     
     console.log(`Talk ${talkId} accepted successfully`);
     return true;

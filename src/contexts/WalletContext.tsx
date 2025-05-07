@@ -6,35 +6,56 @@ import { BrowserProvider, JsonRpcSigner } from "ethers";
 
 interface WalletContextType {
   walletAddress: string | null;
+  ensName: string | null;
   connecting: boolean;
   connected: boolean;
   connect: () => Promise<void>;
   ethProvider: BrowserProvider | null;
   ethersSigner: JsonRpcSigner | null;
+  usingExternalWallet: boolean;
 }
 
 const WalletContext = createContext<WalletContextType>({
   walletAddress: null,
+  ensName: null,
   connecting: false,
   connected: false,
   connect: async () => {},
   ethProvider: null,
   ethersSigner: null,
+  usingExternalWallet: false,
 });
 
 export const useWallet = () => useContext(WalletContext);
 
 export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  const [ensName, setEnsName] = useState<string | null>(null);
   const [connecting, setConnecting] = useState(false);
   const [connected, setConnected] = useState(false);
   const [ethProvider, setEthProvider] = useState<BrowserProvider | null>(null);
   const [ethersSigner, setEthersSigner] = useState<JsonRpcSigner | null>(null);
+  const [usingExternalWallet, setUsingExternalWallet] = useState(false);
   const { toast } = useToast();
 
   // Check if window.ethereum is available
   const checkExternalWallet = () => {
     return typeof window !== 'undefined' && window.ethereum !== undefined;
+  };
+
+  // Function to lookup ENS name for an address
+  const lookupEnsName = async (provider: BrowserProvider, address: string) => {
+    try {
+      const name = await provider.lookupAddress(address);
+      if (name) {
+        console.log("ENS name found:", name);
+        setEnsName(name);
+      }
+      return name;
+    } catch (error) {
+      console.error("Error looking up ENS name:", error);
+      return null;
+    }
   };
 
   // Function to connect/refresh the wallet
@@ -58,7 +79,11 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           setEthProvider(provider);
           setEthersSigner(signer);
           setConnected(true);
+          setUsingExternalWallet(true);
 
+          // Look up ENS name if available
+          await lookupEnsName(provider, address);
+          
           // Initialize qakulib with the external wallet
           const qakulib = await getQakulib(signer);
           
@@ -80,6 +105,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       
       // Fallback to qakulib identity if external wallet not available or connection failed
       console.log("Using qakulib identity as fallback");
+      setUsingExternalWallet(false);
       const qakulib = await getQakulib();
       
       // Safely check if identity and address exist and address is a function
@@ -89,6 +115,8 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
           const addressValue = qakulib.identity.address();
           setWalletAddress(addressValue);
           setConnected(true);
+          // Clear ENS name when using internal wallet
+          setEnsName(null);
         } catch (error) {
           console.error("Error calling qakulib identity address function:", error);
           toast({
@@ -118,16 +146,23 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     
     // Add event listener for account changes if external wallet is available
     if (checkExternalWallet()) {
-      window.ethereum.on('accountsChanged', (accounts: string[]) => {
+      window.ethereum.on('accountsChanged', async (accounts: string[]) => {
         console.log("Account changed:", accounts);
         if (accounts.length > 0) {
           setWalletAddress(accounts[0]);
+          
+          // Update ENS name for new account
+          if (ethProvider) {
+            await lookupEnsName(ethProvider, accounts[0]);
+          }
         } else {
           // User disconnected their wallet
           setWalletAddress(null);
           setConnected(false);
           setEthProvider(null);
           setEthersSigner(null);
+          setEnsName(null);
+          setUsingExternalWallet(false);
         }
       });
       
@@ -145,17 +180,19 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         window.ethereum.removeAllListeners?.('chainChanged');
       }
     };
-  }, []);
+  }, [ethProvider]);
 
   return (
     <WalletContext.Provider
       value={{
         walletAddress,
+        ensName,
         connecting,
         connected,
         connect,
         ethProvider,
         ethersSigner,
+        usingExternalWallet,
       }}
     >
       {children}
