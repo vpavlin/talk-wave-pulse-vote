@@ -267,8 +267,9 @@ export const publishEvent = async (title:string, desc:string, moderation:boolean
   console.log("Publishing new event:", title, "using external wallet:", useExternalWallet);
   const qakulib = await getQakulib();
   
+  // Fix #1: Convert boolean to string to match parameter type
   // Create new QA event with useExternal parameter
-  const eventId = await qakulib.newQA(title, desc, true, [], moderation, useExternalWallet);
+  const eventId = await qakulib.newQA(title, desc, true, [], moderation, useExternalWallet ? "true" : "");
   
   console.log("Event published with ID:", eventId);
   
@@ -637,8 +638,9 @@ export const submitTalk = async (
     // Format talk data for submission
     const talkData = JSON.stringify({title, description, speaker, bio});
     
+    // Fix #2: Convert boolean to string to match parameter type
     // Submit the new question (talk) with useExternal parameter
-    const talkId = await qakulib.newQuestion(eventId, talkData, useExternalWallet);
+    const talkId = await qakulib.newQuestion(eventId, talkData, useExternalWallet ? "true" : "");
     
     console.log(`Talk submitted successfully with ID: ${talkId}`);
     return talkId;
@@ -660,8 +662,9 @@ export const voteTalk = async (eventId: string, talkId: string, useExternalWalle
     }
     
     // Cast vote for the talk with useExternal parameter
-    await qakulib.upvote(eventId, talkId, UpvoteType.QUESTION, useExternalWallet);
+    await qakulib.upvote(eventId, talkId, UpvoteType.QUESTION, useExternalWallet ? "true" : "");
     
+    // Fix #3: Pass the correct number of arguments (2 instead of 3)
     // Get the current user's wallet address
     const currentUserAddress = qakulib.identity?.address() || '';
     
@@ -703,8 +706,9 @@ export const closeEvent = async (eventId: string, useExternalWallet: boolean = f
       await qakulib.initQA(eventId);
     }
     
-    // Use the QA switch state function to close the event (false = closed) with useExternal parameter
-    await qakulib.switchQAState(eventId, false, useExternalWallet);
+    // Fix #3: Pass the correct number of arguments (2 instead of 3)
+    // Use the QA switch state function to close the event (false = closed)
+    await qakulib.switchQAState(eventId, false);
     
     console.log(`Event ${eventId} closed successfully`);
     return true;
