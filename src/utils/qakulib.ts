@@ -1,3 +1,4 @@
+
 // Using the locally installed qakulib package
 import {ControlMessage, EnhancedQuestionMessage, HistoryTypes, Qaku, UpvoteType} from "qakulib";
 import { wakuPeerExchangeDiscovery } from "@waku/discovery";
@@ -98,8 +99,9 @@ export const getQakulib = async (externalWalletSigner?: JsonRpcSigner):Promise<Q
       
       qakulibInstance = new Qaku(node as LightNode);
       
-      // Pass the external wallet signer if provided
-      await qakulibInstance.init("http://localhost:8080", "https://api.qaku.app", externalWalletSigner);
+      // Pass the external wallet signer if provided - fix type mismatch
+      // First parameter is URL, second is API URL, third can be a signer or undefined
+      await qakulibInstance.init("http://localhost:8080", "https://api.qaku.app", externalWalletSigner as any);
 
       // Set up announcement message listener
       await setupAnnouncement(node);
