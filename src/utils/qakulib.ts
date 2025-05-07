@@ -43,7 +43,7 @@ interface ExtendedControlMessage {
 }
 
 // Initialize the Qakulib instance
-let qakulibInstance: any | null = null;
+let qakulibInstance: Qaku | null = null;
 
 let announceDispatcher: Dispatcher | null = null;
 // Export the announcedEvents array so it can be used in eventService.ts
@@ -96,7 +96,7 @@ export const getQakulib = async ():Promise<Qaku> => {
       await node.waitForPeers([Protocols.Store, Protocols.Filter, Protocols.LightPush]);
       
       qakulibInstance = new Qaku(node as LightNode);
-      await qakulibInstance.init();
+      await qakulibInstance.init("http://localhost:8080", "https://api.qaku.app");
 
       // Set up announcement message listener
       await setupAnnouncement(node);
