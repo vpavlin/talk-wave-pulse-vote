@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +7,7 @@ import { ThumbsUp, Trophy, User, Calendar, CheckCheck } from "lucide-react";
 import { format } from "date-fns";
 import ReactMarkdown from "react-markdown";
 import { useWallet } from "@/contexts/WalletContext";
+import { getQakulib } from '@/utils/qakulib';
 
 interface Talk {
   id: string;
@@ -32,6 +33,7 @@ interface TalkCardProps {
 
 const TalkCard = ({ talk, onVote, renderActions }: TalkCardProps) => {
   const { walletAddress } = useWallet();
+  const [name, setName] = useState(talk.speaker)
   
   const formatDate = (dateString: string | number | Date) => {
     try {
@@ -63,6 +65,16 @@ const TalkCard = ({ talk, onVote, renderActions }: TalkCardProps) => {
             talk.walletAddress.toLowerCase() === walletAddress.toLowerCase());
   }, [talk, walletAddress]);
 
+  useEffect(() => {
+    if (!talk.speaker.startsWith("0x")) return
+    const loadEns = async () => {
+      const qakulib = await getQakulib()
+      const name = await qakulib.externalWallet.getName(talk.speaker)
+      setName(name)
+    }
+    loadEns()
+  }, [])
+
   return (
     <Card className="overflow-hidden border-purple-800/30 dark:border-purple-700/30 bg-white/90 dark:bg-gray-800/70 backdrop-blur hover:shadow-lg transition-shadow talk-card flex flex-col h-full">
       <CardHeader className="pb-2 relative">
@@ -77,7 +89,7 @@ const TalkCard = ({ talk, onVote, renderActions }: TalkCardProps) => {
         <div className="flex flex-wrap gap-2 text-sm text-gray-600 dark:text-gray-400 mt-2">
           <div className="flex items-center gap-1">
             <User className="h-4 w-4" />
-            <span>{talk.speaker}</span>
+            <span>{name}</span>
           </div>
           <div className="flex items-center gap-1">
             <Calendar className="h-4 w-4" />

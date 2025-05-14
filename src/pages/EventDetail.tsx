@@ -42,7 +42,7 @@ import AkashApiKeyDialog from "@/components/AkashApiKeyDialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { acceptTalk } from "@/utils/qakulib";
+import { acceptTalk, getQakulib } from "@/utils/qakulib";
 
 interface TalkSuggestion {
   title: string;
@@ -115,7 +115,7 @@ const EventDetail = () => {
   const [isGeneratingSuggestion, setIsGeneratingSuggestion] = useState(false);
   const [suggestionData, setSuggestionData] = useState<TalkSuggestion | null>(null);
   const { toast } = useToast();
-  const { connected, connect } = useWallet();
+  const { connected, connect, usingExternalWallet } = useWallet();
   const queryClient = useQueryClient();
   
   const { data: event, refetch, isLoading, isError } = useQuery({
@@ -260,7 +260,8 @@ const EventDetail = () => {
         talkData.title, 
         talkData.description, 
         talkData.speaker,
-        talkData.bio
+        talkData.bio,
+        usingExternalWallet
       );
       
       if (talkId) {
@@ -610,7 +611,7 @@ const EventDetail = () => {
                   {event?.ownerAddress && (
                     <div className="flex items-center text-gray-600 dark:text-gray-400 text-sm">
                       <Wallet className="h-4 w-4 mr-2 flex-shrink-0" />
-                      <span>Created by: {formatWalletAddress(event.ownerAddress)}</span>
+                      <span>Created by: {event.externalWallet || formatWalletAddress(event.ownerAddress)}</span>
                     </div>
                   )}
                   

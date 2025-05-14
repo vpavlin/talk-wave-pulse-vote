@@ -3,6 +3,8 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { getQakulib } from "@/utils/qakulib";
 import { BrowserProvider, JsonRpcSigner } from "ethers";
+import { ExternalWallet } from "qakulib";
+import { Console } from "console";
 
 interface WalletContextType {
   walletAddress: string | null;
@@ -61,13 +63,16 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   // Function to connect/refresh the wallet
   const connect = async () => {
     try {
+      if (connecting) return
       setConnecting(true);
+
+      let provider:BrowserProvider
 
       // Check if external wallet (window.ethereum) is available
       if (checkExternalWallet()) {
         try {
           console.log("External wallet detected, connecting...");
-          const provider = new BrowserProvider(window.ethereum);
+          provider = new BrowserProvider(window.ethereum);
           
           // Request account access
           const accounts = await provider.send("eth_requestAccounts", []);
@@ -83,9 +88,13 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
           // Look up ENS name if available
           await lookupEnsName(provider, address);
-          
-          // Initialize qakulib with the external wallet
-          const qakulib = await getQakulib(signer);
+
+          console.log("Setting up external wallet", provider)
+
+          const qakulib = await getQakulib(provider);
+          qakulib.externalWallet = new ExternalWallet(provider, qakulib.identity)
+          await qakulib.externalWallet.initExternalAddress();
+
           
           toast({
             title: "Wallet Connected",
@@ -106,7 +115,7 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       // Fallback to qakulib identity if external wallet not available or connection failed
       console.log("Using qakulib identity as fallback");
       setUsingExternalWallet(false);
-      const qakulib = await getQakulib();
+      const qakulib = await getQakulib(provider);
       
       // Safely check if identity and address exist and address is a function
       if (qakulib && qakulib.identity && qakulib.identity.address && typeof qakulib.identity.address === 'function') {

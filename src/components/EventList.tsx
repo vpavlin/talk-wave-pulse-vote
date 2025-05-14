@@ -13,6 +13,7 @@ import { Form, FormField, FormItem, FormControl } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
+import { getQakulib } from "@/utils/qakulib";
 
 interface EventListProps {
   events: Event[];
@@ -234,7 +235,7 @@ const EventList = ({ events, onAnnounceEvent }: EventListProps) => {
             {event.ownerAddress && (
               <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
                 <Wallet className="h-3 w-3 mr-1" />
-                <span>Created by: {formatWalletAddress(event.ownerAddress)}</span>
+                <span>Created by: {event.externalWallet || formatWalletAddress(event.ownerAddress)}</span>
               </div>
             )}
           </div>

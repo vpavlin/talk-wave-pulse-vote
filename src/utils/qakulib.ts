@@ -5,7 +5,7 @@ import { derivePubsubTopicsFromNetworkConfig } from "@waku/utils"
 import { createLightNode, IWaku, LightNode, Protocols } from '@waku/sdk';
 import { createDecoder, createEncoder, DecodedMessage } from '@waku/sdk';
 import { Dispatcher, DispatchMetadata, Signer, Store } from "waku-dispatcher";
-import { JsonRpcSigner } from "ethers";
+import { BrowserProvider, JsonRpcSigner } from "ethers";
 
 // Define an extended interface for the talk without extending EnhancedQuestionMessage
 interface ExtendedTalk {
@@ -19,6 +19,7 @@ interface ExtendedTalk {
   signer?: string;
   timestamp?: string | number | Date;
   answer?: string; // Add answer property to track if a talk has been accepted
+  author?: string;
 }
 
 // Define an extended interface for the control message without extending ControlMessage
@@ -41,6 +42,7 @@ interface ExtendedControlMessage {
   enabled?: boolean; // Add enabled property to track if event is open/closed
   announced?: boolean;
   questionsCount?: number; // Add count of questions from history
+  externalWallet?: string;
 }
 
 // Initialize the Qakulib instance
@@ -72,9 +74,10 @@ let announceEventListeners: any[] = [];
 let initializing = false
 let initPromise: Promise<Qaku>;
 
-export const getQakulib = async (externalWalletSigner?: JsonRpcSigner):Promise<Qaku> => {
+export const getQakulib = async (externalWalletSigner?: BrowserProvider):Promise<Qaku> => {
   if (initializing) return initPromise
   if (!initializing && !qakulibInstance) {
+
     initializing = true;
 
     initPromise = new Promise(async (resolve) => {
@@ -100,7 +103,7 @@ export const getQakulib = async (externalWalletSigner?: JsonRpcSigner):Promise<Q
       
       // Pass the external wallet signer if provided - fix type mismatch
       // First parameter is URL, second is API URL, third can be a signer or undefined
-      await qakulibInstance.init("http://localhost:8080", "https://api.qaku.app", externalWalletSigner as any);
+      await qakulibInstance.init("http://localhost:8080", "https://api.qaku.app", externalWalletSigner);
 
       // Set up announcement message listener
       await setupAnnouncement(node);
@@ -269,7 +272,7 @@ export const publishEvent = async (title:string, desc:string, moderation:boolean
   
   // Fix #1: Convert boolean to string to match parameter type
   // Create new QA event with useExternal parameter
-  const eventId = await qakulib.newQA(title, desc, true, [], moderation, useExternalWallet ? "true" : "");
+  const eventId = await qakulib.newQA(title, desc, true, [], moderation, undefined, useExternalWallet);
   
   console.log("Event published with ID:", eventId);
   
@@ -490,6 +493,7 @@ export const getEventById = async (eventId: string): Promise<ExtendedControlMess
       title: event.controlState?.title,
       description: event.controlState?.description,
       owner: event.controlState?.owner,
+      externalWallet: event.controlState?.delegationInfo?.externalAddress,
       timestamp: event.controlState?.timestamp,
       updated: event.controlState?.updated,
       enabled: event.controlState?.enabled // Default to true if not explicitly set to false
@@ -572,8 +576,13 @@ export const getTalks = async (eventId: string): Promise<ExtendedTalk[]> => {
         upvotedByMe: talk.upvotedByMe,
         signer: talk.signer,
         timestamp: talk.timestamp,
-        answer: talk.answers.length > 0 && talk.answers[0].content // Include answer field to track accepted talks
+        answer: talk.answers.length > 0 && talk.answers[0].content, // Include answer field to track accepted talks
+        author: talk.delegationInfo && talk.delegationInfo.externalAddress
       };
+
+      console.log(talk.delegationInfo)
+
+      console.log("Author: ", extendedTalk.author)
       
       // Add voterAddresses property based on upvoters
       extendedTalk.voterAddresses = [];
@@ -628,19 +637,22 @@ export const submitTalk = async (
   try {
     console.log(`Submitting talk "${title}" by ${speaker} using external wallet: ${useExternalWallet}`);
     const qakulib = await getQakulib();
+    console.log(qakulib.externalWallet)
     
     // Make sure the QA is initialized
     if (!qakulib.qas.has(eventId)) {
       console.log(`Event ${eventId} not initialized yet, initializing...`);
       await qakulib.initQA(eventId);
     }
+
+    console.log("use External Wallet: ", useExternalWallet)
     
     // Format talk data for submission
     const talkData = JSON.stringify({title, description, speaker, bio});
     
     // Fix #2: Convert boolean to string to match parameter type
     // Submit the new question (talk) with useExternal parameter
-    const talkId = await qakulib.newQuestion(eventId, talkData, useExternalWallet ? "true" : "");
+    const talkId = await qakulib.newQuestion(eventId, talkData, speaker, useExternalWallet);
     
     console.log(`Talk submitted successfully with ID: ${talkId}`);
     return talkId;
@@ -662,7 +674,7 @@ export const voteTalk = async (eventId: string, talkId: string, useExternalWalle
     }
     
     // Cast vote for the talk with useExternal parameter
-    await qakulib.upvote(eventId, talkId, UpvoteType.QUESTION, useExternalWallet ? "true" : "");
+    await qakulib.upvote(eventId, talkId, UpvoteType.QUESTION, useExternalWallet);
     
     // Fix #3: Pass the correct number of arguments (2 instead of 3)
     // Get the current user's wallet address

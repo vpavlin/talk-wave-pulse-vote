@@ -15,7 +15,7 @@ import { getQakulib } from "@/utils/qakulib"; // Import getQakulib to access ann
 const Index = () => {
   const [isCreateEventOpen, setIsCreateEventOpen] = useState(false);
   const { toast } = useToast();
-  const { connected, walletAddress } = useWallet();
+  const { connected, walletAddress, ethProvider, usingExternalWallet } = useWallet();
   const queryClient = useQueryClient();
   
   useEffect(() => {
@@ -23,16 +23,17 @@ const Index = () => {
   }, [walletAddress, connected, queryClient]);
   
   useEffect(() => {
+    if (!ethProvider) return
     const initQakulib = async () => {
       try {
-        await getQakulib();
+        await getQakulib(ethProvider);
       } catch (error) {
         console.error("Error initializing Qakulib:", error);
       }
     };
     
     initQakulib();
-  }, []);
+  }, [ethProvider]);
   
   const { data: events = [], isLoading, isError } = useQuery({
     queryKey: ['events'],
@@ -60,7 +61,8 @@ const Index = () => {
         eventData.website,
         eventData.contact,
         eventData.bannerImage,
-        eventData.announce
+        eventData.announce,
+        usingExternalWallet,
       );
       
       if (eventId) {

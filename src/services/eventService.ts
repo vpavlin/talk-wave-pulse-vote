@@ -8,7 +8,8 @@ import {
   closeEvent as closeEventInQakulib,
   acceptTalk as acceptTalkInQakulib,
   announcedEvents,
-  announceEvent as announceEventToQakulib
+  announceEvent as announceEventToQakulib,
+  getQakulib
 } from "@/utils/qakulib";
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -45,6 +46,7 @@ export interface Event {
   enabled?: boolean;
   announced?: boolean;
   questionsCount?: number;
+  externalWallet?: string;
 }
 
 const HIDDEN_EVENTS_KEY = "lightning-talk-hidden-events";
@@ -83,7 +85,8 @@ export const fetchEvents = async (): Promise<Event[]> => {
     console.log("Combined events:", combinedEvents);
     
     const processedEvents = [];
-    
+    const qakulib = await getQakulib()
+
     for (const event of combinedEvents) {
       const isHidden = hiddenEventIds.includes(event.id);
       const isClosed = event.enabled === false;
@@ -91,6 +94,15 @@ export const fetchEvents = async (): Promise<Event[]> => {
       const eventTalks = (!isHidden && !isClosed && rawEvents.some(e => e.id === event.id)) 
         ? await fetchTalksFromQakulib(event.id) 
         : [];
+
+      let name = ""
+      console.log("External wallet: ", event.externalWallet)
+      if (qakulib.externalWallet && qakulib.externalWallet.externalAddress && event.externalWallet) {
+        name = await qakulib.externalWallet.getName(event.externalWallet)
+        console.log(name)
+      } else {
+        name = event.externalWallet
+      }
       
       processedEvents.push({
         id: event.id,
@@ -107,6 +119,7 @@ export const fetchEvents = async (): Promise<Event[]> => {
         enabled: event.enabled !== false,
         announced: event.announced,
         questionsCount: event.questionsCount,
+        externalWallet: name,
         talks: (eventTalks || []).map(talk => ({
           id: talk.hash,
           title: extractTalkData(talk.question || '').title || 'Unknown Talk',
@@ -158,8 +171,18 @@ export const fetchEventById = async (eventId: string): Promise<Event | null> => 
   }
   
   console.log("Raw event:", event);
+
+  const qakulib = await getQakulib()
   
   const isClosed = event.enabled === false;
+
+  let name = ""
+  if (qakulib.externalWallet && qakulib.externalWallet.externalAddress) {
+    name = await qakulib.externalWallet.getName(event.externalWallet)
+    console.log(name)
+  } else {
+    name = event.externalWallet
+  }
   
   return {
     id: event.id,
@@ -176,11 +199,12 @@ export const fetchEventById = async (eventId: string): Promise<Event | null> => 
     enabled: event.enabled,
     announced: event.announced,
     questionsCount: event.questionsCount,
+    externalWallet: name,
     talks: (event.talks || []).map(talk => ({
       id: talk.hash,
       title: extractTalkData(talk.question || '').title || 'Unknown Talk',
       description: extractTalkData(talk.question || '').description || '',
-      speaker: extractTalkData(talk.question || '').speaker || 'Anonymous',
+      speaker: talk.author || extractTalkData(talk.question || '').speaker || 'Anonymous',
       bio: extractTalkData(talk.question || '').bio,
       votes: talk.upvotes || 0,
       voterAddresses: talk.voterAddresses || [],
@@ -220,7 +244,8 @@ export const createEvent = async (
   website?: string,
   contact?: string,
   bannerImage?: string,
-  announce: boolean = true
+  announce: boolean = true,
+  useExternalWallet?: boolean
 ): Promise<string | null> => {
   try {
     const descriptionWithMetadata = JSON.stringify({
@@ -232,7 +257,7 @@ export const createEvent = async (
       bannerImage
     });
     
-    const eventId = await publishEventToQakulib(title, descriptionWithMetadata, true);
+    const eventId = await publishEventToQakulib(title, descriptionWithMetadata, true, useExternalWallet);
     
     if (announce) {
       console.log("Announcing event to global channel");
@@ -253,11 +278,12 @@ export const createTalk = async (
   title: string,
   description: string,
   speaker: string,
-  bio?: string
+  bio?: string,
+  useExternalWallet?: boolean
 ): Promise<string | null> => {
   try {
     const talkData = JSON.stringify({ title, description, speaker, bio });
-    return await submitTalkToQakulib(eventId, title, description, speaker, bio);
+    return await submitTalkToQakulib(eventId, title, description, speaker, bio, useExternalWallet);
   } catch (error) {
     console.error("Error creating talk:", error);
     return null;
