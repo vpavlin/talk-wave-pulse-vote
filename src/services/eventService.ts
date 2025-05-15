@@ -177,9 +177,8 @@ export const fetchEventById = async (eventId: string): Promise<Event | null> => 
   const isClosed = event.enabled === false;
 
   let name = ""
-  if (qakulib.externalWallet && qakulib.externalWallet.externalAddress) {
+  if (qakulib.externalWallet && qakulib.externalWallet.externalAddress && event.externalWallet) {
     name = await qakulib.externalWallet.getName(event.externalWallet)
-    console.log(name)
   } else {
     name = event.externalWallet
   }
