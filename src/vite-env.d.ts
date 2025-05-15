@@ -3,5 +3,5 @@
 
 interface Window {
   ethereum?: any;
+  Buffer: typeof Buffer;
 }
-
