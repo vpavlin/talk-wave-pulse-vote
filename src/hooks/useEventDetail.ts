@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
@@ -361,20 +360,6 @@ export const useEventDetail = (eventId: string) => {
     }
   };
 
-  const renderWebsiteLink = (website: string) => {
-    const formattedUrl = website.startsWith('http') ? website : `https://${website}`;
-    return (
-      <a 
-        href={formattedUrl} 
-        target="_blank" 
-        rel="noopener noreferrer"
-        className="text-purple-600 dark:text-purple-400 hover:underline break-all"
-      >
-        {website}
-      </a>
-    );
-  };
-
   return {
     event,
     isLoading,
@@ -403,7 +388,6 @@ export const useEventDetail = (eventId: string) => {
     handleAcceptTalk,
     handleAcceptTalkSubmit,
     formatWalletAddress,
-    formatEventDate,
-    renderWebsiteLink
+    formatEventDate
   };
 };

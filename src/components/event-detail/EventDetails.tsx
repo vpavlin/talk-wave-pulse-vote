@@ -14,16 +14,28 @@ interface EventDetailsProps {
   formatEventDate: (dateString: string | undefined) => string;
   formatWalletAddress: (address: string | undefined) => string;
   onCloseEvent: () => void;
-  renderWebsiteLink: (website: string) => React.ReactNode;
 }
 
 const EventDetails = ({ 
   event, 
   formatEventDate, 
   formatWalletAddress, 
-  onCloseEvent,
-  renderWebsiteLink 
+  onCloseEvent
 }: EventDetailsProps) => {
+  const renderWebsiteLink = (website: string) => {
+    const formattedUrl = website.startsWith('http') ? website : `https://${website}`;
+    return (
+      <a 
+        href={formattedUrl} 
+        target="_blank" 
+        rel="noopener noreferrer"
+        className="text-purple-600 dark:text-purple-400 hover:underline break-all"
+      >
+        {website}
+      </a>
+    );
+  };
+
   const eventBanner = event?.bannerImage ? (
     <div className="w-full h-48 md:h-64 mb-6 rounded-lg overflow-hidden">
       <img 

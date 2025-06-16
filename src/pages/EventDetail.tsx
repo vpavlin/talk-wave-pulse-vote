@@ -43,8 +43,7 @@ const EventDetail = () => {
     handleAcceptTalk,
     handleAcceptTalkSubmit,
     formatEventDate,
-    formatWalletAddress,
-    renderWebsiteLink
+    formatWalletAddress
   } = useEventDetail(eventId);
 
   if (isLoading) {
@@ -72,7 +71,6 @@ const EventDetail = () => {
           formatEventDate={formatEventDate}
           formatWalletAddress={formatWalletAddress}
           onCloseEvent={handleCloseEvent}
-          renderWebsiteLink={renderWebsiteLink}
         />
         
         <EventActions 
